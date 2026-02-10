@@ -2,152 +2,216 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Spatial Analyzer (FIXED)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGIS Analisis Spasial - SDA Jaksel</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
-        :root { --navy: #0f172a; --gold: #f59e0b; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #sidebar { width: 320px; background: white; border-right: 4px solid var(--gold); padding: 20px; z-index: 1001; overflow-y: auto; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        #map { flex-grow: 1; background: #cbd5e1; }
-        .stasiun-item { background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; border-left: 5px solid var(--navy); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-upload { background: var(--navy); color: var(--gold); padding: 12px; display: block; text-align: center; cursor: pointer; border-radius: 6px; font-weight: bold; margin-bottom: 20px; text-decoration: none; border: none; width: 100%; }
-        #status { font-size: 0.8rem; font-weight: bold; padding: 10px; border-radius: 4px; background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; margin-bottom: 15px; }
+        :root { --navy: #0f172a; --gold: #f59e0b; --slate: #64748b; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+
+        /* SIDEBAR STYLE */
+        #sidebar { width: 360px; background: white; border-right: 4px solid var(--gold); display: flex; flex-direction: column; z-index: 1001; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+        .sidebar-header { background: var(--navy); color: white; padding: 25px 20px; border-bottom: 5px solid var(--gold); }
+        .sidebar-content { padding: 20px; flex-grow: 1; overflow-y: auto; background: #f8fafc; }
+        
+        h2 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
+        h3 { font-size: 0.85rem; color: var(--slate); text-transform: uppercase; margin-top: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+
+        /* UPLOAD BOX */
+        .upload-box { background: white; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; transition: 0.3s; }
+        .upload-box:hover { border-color: var(--navy); background: #f1f5f9; }
+        .btn-file { background: var(--navy); color: var(--gold); padding: 10px 20px; border-radius: 6px; cursor: pointer; display: inline-block; font-weight: bold; font-size: 0.8rem; margin-top: 10px; }
+
+        /* STATUS & LIST */
+        #db-status { font-size: 0.75rem; padding: 8px; border-radius: 5px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .station-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--gold); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .station-card b { color: var(--navy); font-size: 0.9rem; }
+        .station-card p { margin: 5px 0 0 0; font-size: 0.8rem; color: #475569; }
+
+        #map { flex-grow: 1; height: 100vh; background: #e2e8f0; }
+
+        /* LOADING SPINNER */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--gold); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2 style="font-size: 1.2rem; margin-top: 0;">ANALISIS SPASIAL</h2>
-    <div id="status">Menghubungkan ke Database...</div>
+    <div class="sidebar-header">
+        <h2>WEBGIS ANALYZER</h2>
+        <div style="font-size: 0.7rem; color: var(--gold); margin-top: 5px;">Suku Dinas SDA Jakarta Selatan</div>
+    </div>
     
-    <label class="btn-upload">
-        UPLOAD GEOJSON AREA
-        <input type="file" id="upload-geojson" accept=".geojson" style="display:none">
-    </label>
-    
-    <div id="station-list-container">
-        <h3 style="font-size: 0.9rem; color: #64748b;">STASIUN TERDETEKSI:</h3>
-        <div id="station-list">Belum ada area yang diupload.</div>
+    <div class="sidebar-content">
+        <div id="db-status" style="background: #fef3c7; color: #92400e;">
+            <div class="loader"></div> Menghubungkan Google Sheets...
+        </div>
+
+        <h3>1. Input Catchment Area</h3>
+        <div class="upload-box">
+            <p style="font-size: 0.75rem; margin-bottom: 10px;">Upload file <b>.geojson</b><br>(UTM Zone 48S atau WGS84)</p>
+            <label class="btn-file">
+                PILIH FILE
+                <input type="file" id="upload-geojson" accept=".geojson" style="display:none">
+            </label>
+        </div>
+
+        <h3>2. Hasil Analisis Pengaruh</h3>
+        <div id="result-list">
+            <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: 20px;">
+                Belum ada data area diupload.
+            </p>
+        </div>
+        
+        <button onclick="location.reload()" style="width:100%; margin-top:30px; padding:10px; background:#fee2e2; color:#b91c1c; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">RESET ANALISIS</button>
     </div>
 </div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
 <script>
-    // --- KONFIGURASI DATABASE ---
-    const RAW_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
-    // Menggunakan Proxy AllOrigins untuk menembus blokir CORS browser lokal
-    const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(RAW_CSV_URL);
-
+    // --- KONFIGURASI ---
+    const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
+    const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_CSV);
+    
     const UTM_48S = "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs";
     const WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
 
-    const map = L.map('map').setView([-6.28, 106.81], 11);
+    const map = L.map('map', { zoomControl: false }).setView([-6.28, 106.81], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
     let allStations = [];
     let catchmentLayer;
+    let analysisGroup = L.layerGroup().addTo(map);
     let stationGroup = L.layerGroup().addTo(map);
 
-    // 1. FUNGSI AMBIL DATA (Penyembuh CORS)
-    async function loadDataFromSheets() {
-        const statusEl = document.getElementById('status');
+    // 1. AMBIL DATA DARI GOOGLE SHEETS
+    async function initData() {
+        const statusBox = document.getElementById('db-status');
         try {
             const response = await fetch(PROXY_URL);
-            if (!response.ok) throw new Error('Koneksi Gagal');
             const csvText = await response.text();
             
             Papa.parse(csvText, {
-                header: true,
-                skipEmptyLines: true,
+                header: true, skipEmptyLines: true,
                 complete: function(results) {
                     allStations = results.data.map(row => {
-                        // Mencari kolom fleksibel (Lat/lat/Latitude)
-                        let latVal = row.Lat || row.lat || row.Latitude || row.latitude;
-                        let lngVal = row.Lng || row.lng || row.Longitude || row.longitude;
-                        
-                        if (latVal && lngVal) {
-                            return {
-                                nama: row.Nama_Stasiun || row.STASIUN || "Stasiun Hujan",
-                                lat: parseFloat(latVal.toString().replace(',', '.')),
-                                lng: parseFloat(lngVal.toString().replace(',', '.'))
-                            };
+                        let lat = parseFloat(String(row.Lat || row.lat).replace(',', '.'));
+                        let lng = parseFloat(String(row.Lng || row.lng).replace(',', '.'));
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            return turf.point([lng, lat], { nama: row.Nama_Stasiun || "Stasiun Hujan" });
                         }
                         return null;
-                    }).filter(d => d !== null && !isNaN(d.lat));
+                    }).filter(d => d !== null);
 
-                    renderMarkers();
-                    statusEl.innerText = `✅ ${allStations.length} Stasiun Dimuat`;
-                    statusEl.style.background = "#f0fdf4";
-                    statusEl.style.color = "#166534";
-                    statusEl.style.borderColor = "#bbf7d0";
+                    plotStations();
+                    statusBox.innerHTML = `✅ ${allStations.length} Stasiun Terdeteksi`;
+                    statusBox.style.background = "#dcfce7"; statusBox.style.color = "#166534";
                 }
             });
-        } catch (err) {
-            statusEl.innerText = "❌ Gagal memuat data. Cek koneksi internet.";
-            console.error(err);
+        } catch (e) {
+            statusBox.innerHTML = "❌ Gagal Terhubung Database";
+            statusBox.style.background = "#fee2e2"; statusBox.style.color = "#991b1b";
         }
     }
 
-    function renderMarkers() {
+    function plotStations() {
         stationGroup.clearLayers();
-        allStations.forEach(st => {
-            L.circleMarker([st.lat, st.lng], {
+        allStations.forEach(pt => {
+            L.circleMarker([pt.geometry.coordinates[1], pt.geometry.coordinates[0]], {
                 radius: 6, fillColor: "red", color: "white", weight: 2, fillOpacity: 1
-            }).addTo(stationGroup).bindPopup(`<b>Stasiun: ${st.nama}</b>`);
+            }).addTo(stationGroup).bindPopup(`<b>${pt.properties.nama}</b>`);
         });
     }
 
-    // 2. FUNGSI UPLOAD AREA & DETEKSI SPASIAL
+    // 2. PROSES UPLOAD GEOJSON
     document.getElementById('upload-geojson').addEventListener('change', function(e) {
+        const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(event) {
-            const geojsonData = JSON.parse(event.target.result);
-            if(catchmentLayer) map.removeLayer(catchmentLayer);
-
-            catchmentLayer = L.geoJSON(geojsonData, {
-                coordsToLatLng: function(coords) {
-                    if (Math.abs(coords[0]) > 1000) { // Fix UTM
-                        const p = proj4(UTM_48S, WGS84, [coords[0], coords[1]]);
-                        return new L.LatLng(p[1], p[0]);
-                    }
-                    return new L.LatLng(coords[1], coords[0]);
-                },
-                style: { color: "#3b82f6", weight: 3, fillOpacity: 0.2 }
-            }).addTo(map);
-
-            map.fitBounds(catchmentLayer.getBounds());
-            checkInside(geojsonData);
+            const geojson = JSON.parse(event.target.result);
+            runAnalysis(geojson);
         };
-        reader.readAsText(e.target.files[0]);
+        reader.readAsText(file);
     });
 
-    function checkInside(geojson) {
-        const listDiv = document.getElementById('station-list');
-        listDiv.innerHTML = "";
-        
-        // Ambil fitur pertama dari geojson
+    function runAnalysis(geojson) {
+        analysisGroup.clearLayers();
+        if(catchmentLayer) map.removeLayer(catchmentLayer);
+
+        // Tampilkan Area (Handling UTM/WGS84)
+        catchmentLayer = L.geoJSON(geojson, {
+            coordsToLatLng: function(coords) {
+                if (Math.abs(coords[0]) > 1000) {
+                    const p = proj4(UTM_48S, WGS84, [coords[0], coords[1]]);
+                    return new L.LatLng(p[1], p[0]);
+                }
+                return new L.LatLng(coords[1], coords[0]);
+            },
+            style: { color: "#3b82f6", weight: 3, fillOpacity: 0.1 }
+        }).addTo(map);
+        map.fitBounds(catchmentLayer.getBounds());
+
+        // Normalisasi Poligon untuk Analisis Turf
         let poly = geojson.features ? geojson.features[0] : geojson;
-        let count = 0;
+        if (poly.geometry.coordinates[0][0][0] > 1000) {
+            poly = turf.rewind(turf.transformCoord(poly, UTM_48S, WGS84));
+        }
 
-        allStations.forEach(st => {
-            let pt = turf.point([st.lng, st.lat]);
-            // Turf butuh poligon yang bersih
-            if (turf.booleanPointInPolygon(pt, poly)) {
-                count++;
-                listDiv.innerHTML += `<div class="stasiun-item">📍 <b>${st.nama}</b><br><small>${st.lat}, ${st.lng}</small></div>`;
-            }
-        });
+        // Cari Stasiun di Dalam Area
+        let ptsIn = allStations.filter(pt => turf.booleanPointInPolygon(pt, poly));
+        const resultDiv = document.getElementById('result-list');
+        resultDiv.innerHTML = "";
 
-        if(count === 0) listDiv.innerHTML = "<p style='color:red'>Tidak ada stasiun ditemukan di dalam area poligon ini.</p>";
+        if (ptsIn.length === 0) {
+            resultDiv.innerHTML = "<p style='color:red; font-size:0.8rem; text-align:center;'>⚠️ Tidak ada stasiun ditemukan di dalam area poligon ini.</p>";
+        } 
+        else if (ptsIn.length === 1) {
+            // Kasus 1 Stasiun
+            let luasHa = turf.area(poly) / 10000;
+            resultDiv.innerHTML = `
+                <div class="station-card">
+                    <b>${ptsIn[0].properties.nama}</b>
+                    <p>Pengaruh: 100%<br>Luas: ${luasHa.toFixed(2)} Ha</p>
+                </div>`;
+            L.geoJSON(poly, {style: {fillColor: "#3b82f6", fillOpacity: 0.3}}).addTo(analysisGroup);
+        } 
+        else {
+            // Kasus Banyak Stasiun (Thiessen)
+            const collection = turf.featureCollection(ptsIn);
+            const options = { bbox: turf.bbox(poly) };
+            const voronoi = turf.voronoi(collection, options);
+
+            voronoi.features.forEach((v, i) => {
+                const clipped = turf.intersect(v, poly);
+                if (clipped) {
+                    let luasHa = turf.area(clipped) / 10000;
+                    let stName = ptsIn[i].properties.nama;
+                    
+                    L.geoJSON(clipped, {
+                        style: { color: "orange", weight: 2, fillOpacity: 0.3 }
+                    }).addTo(analysisGroup).bindPopup(`Stasiun: ${stName}<br>Luas: ${luasHa.toFixed(2)} Ha`);
+
+                    resultDiv.innerHTML += `
+                        <div class="station-card">
+                            <b>${stName}</b>
+                            <p>Luas Pengaruh: ${luasHa.toFixed(2)} Ha</p>
+                        </div>`;
+                }
+            });
+        }
     }
 
-    loadDataFromSheets();
+    initData();
 </script>
 </body>
 </html>
