@@ -2,49 +2,53 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - KML & JSON Processor</title>
+    <title>SDA Jaksel - Thiessen Auto-Parameter</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: #0f172a; }
         #sidebar { width: 450px; background: #1e293b; color: white; padding: 25px; z-index: 1000; overflow-y: auto; border-right: 4px solid #f59e0b; }
         #map { flex: 1; }
-        .card { background: #0f172a; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #334155; }
-        .st-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #e2e8f0; margin-top: 10px; }
+        .card { background: #0f172a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        .btn-file { background: #f59e0b; color: #0f172a; padding: 12px; border-radius: 8px; cursor: pointer; display: block; text-align: center; font-weight: bold; }
+        #output-box { margin-top: 20px; display: none; }
+        .st-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #e2e8f0; }
         .st-table th { background: #334155; padding: 10px; border: 1px solid #475569; color: #f59e0b; text-align: left; }
         .st-table td { padding: 8px; border: 1px solid #334155; }
+        .total-row { font-weight: bold; background: #0f172a; color: #fff; }
         .label-stasiun { background: rgba(15, 23, 42, 0.8); border: 1px solid #f59e0b; color: white; font-weight: bold; font-size: 10px; padding: 2px 5px; border-radius: 4px; white-space: nowrap; }
-        input[type="file"] { font-size: 0.7rem; margin-top: 5px; color: #94a3b8; }
-        h4 { margin: 0 0 5px 0; font-size: 0.9rem; color: #f59e0b; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h2>SPATIAL ANALYZER</h2>
-    <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 20px;">Sudin SDA Jakarta Selatan</p>
+    <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 25px;">Sudin SDA Jakarta Selatan</p>
     
     <div class="card">
-        <h4>1. Data Stasiun (KML / JSON)</h4>
-        <input type="file" id="inputStasiun" accept=".kml,.json,.geojson">
-        <p id="stasiunStatus" style="font-size: 0.7rem; color: #10b981; margin-top:5px;"></p>
+        <label style="font-weight: bold; font-size: 0.9rem;">Cukup Upload Watershed:</label><br><br>
+        <input type="file" id="fileInput" accept=".json,.geojson" style="display:none">
+        <label for="fileInput" class="btn-file">PILIH WATERSHED.JSON</label>
+        <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 10px;">*Sistem otomatis menggunakan database 22 stasiun hujan tetap.</p>
     </div>
 
-    <div class="card">
-        <h4>2. Data Watershed (JSON)</h4>
-        <input type="file" id="inputWatershed" accept=".json,.geojson">
-    </div>
-
-    <div id="output-box" style="display:none;">
-        <h3 style="font-size: 1rem; color: #f59e0b; border-bottom: 1px solid #475569; padding-bottom: 10px;">Parameter Pengaruh:</h3>
+    <div id="output-box">
+        <h3 style="font-size: 1rem; color: #f59e0b; border-bottom: 1px solid #475569; padding-bottom: 10px;">Detail Parameter Pengaruh:</h3>
         <table class="st-table">
             <thead>
                 <tr>
                     <th>Nama Stasiun</th>
                     <th>Luas (Ha)</th>
-                    <th>Koefisien</th>
+                    <th>Koefisien (C)</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td>TOTAL</td>
+                    <td id="total-luas">0</td>
+                    <td id="total-koef">1.0000</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -54,65 +58,50 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-<script src="https://unpkg.com/@mapbox/togeojson"></script>
 
 <script>
-    let stasiunPoints = [];
+    // DATABASE 22 STASIUN TETAP (SUDAH TERKUNCI)
+    const STASIUN_FIXED = [
+        { n: "Katulampa", lat: -6.63317, lng: 106.837077 },
+        { n: "Depok", lat: -6.40065, lng: 106.831897 },
+        { n: "Manggarai", lat: -6.20742, lng: 106.848569 },
+        { n: "Karet", lat: -6.1981, lng: 106.810097 },
+        { n: "Setiabudi Timur", lat: -6.20462, lng: 106.829385 },
+        { n: "Melati", lat: -6.20084, lng: 106.817982 },
+        { n: "Istana", lat: -6.17165, lng: 106.8270424 },
+        { n: "Krukut Hulu", lat: -6.34434, lng: 106.799081 },
+        { n: "Sunter Hulu", lat: -6.31785, lng: 106.9211 },
+        { n: "Pesanggrahan", lat: -6.39708, lng: 106.77181 },
+        { n: "Angke Hulu", lat: -6.21835, lng: 106.694467 },
+        { n: "Tanjungan", lat: -6.10669, lng: 106.725882 },
+        { n: "Tomang Barat", lat: -6.1671, lng: 106.78001 },
+        { n: "Teluk Gong", lat: -6.1335, lng: 106.777649 },
+        { n: "Pulo Gadung", lat: -6.19097, lng: 106.904213 },
+        { n: "Sunter Kodamar", lat: -6.15508, lng: 106.886893 },
+        { n: "Rawa Badak", lat: -6.12107, lng: 106.896744 },
+        { n: "Pompa Cideng", lat: -6.17355, lng: 106.806328 },
+        { n: "Stasiun Meteorologi Kemayoran", lat: -6.15559, lng: 106.84 },
+        { n: "Halim Perdana Kusuma Jakarta", lat: -6.27036, lng: 106.88926 },
+        { n: "Stasiun Klimatologi Jawa Barat (Bogor)", lat: -6.5, lng: 106.75 },
+        { n: "Stasiun Klimatologi Banten", lat: -6.26151, lng: 106.75084 }
+    ];
+
     const utmProj = "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs";
     const wgsProj = "+proj=longlat +datum=WGS84 +no_defs";
 
     const map = L.map('map', { zoomControl: false }).setView([-6.28, 106.81], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.4 }).addTo(map);
+
     const layerUtama = L.layerGroup().addTo(map);
 
-    // 1. Handling Input Stasiun (Bisa KML atau JSON)
-    document.getElementById('inputStasiun').onchange = function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(ev) {
-            let geojson;
-            const content = ev.target.result;
+    // Render stasiun di peta saat aplikasi dibuka
+    const stationPts = STASIUN_FIXED.map(s => {
+        const m = L.circleMarker([s.lat, s.lng], { radius: 5, fillColor: 'red', color: '#fff', fillOpacity: 1 }).addTo(map);
+        m.bindTooltip(s.n, { permanent: true, className: 'label-stasiun', direction: 'top', offset: [0, -5] });
+        return turf.point([s.lng, s.lat], s);
+    });
 
-            if (file.name.endsWith('.kml')) {
-                // Jika KML, konversi ke GeoJSON menggunakan togeojson
-                const parser = new DOMParser();
-                const kml = parser.parseFromString(content, "text/xml");
-                geojson = toGeoJSON.kml(kml);
-            } else {
-                // Jika sudah JSON/GeoJSON
-                geojson = JSON.parse(content);
-            }
-
-            // Ekstrak titik-titik stasiun
-            stasiunPoints = [];
-            geojson.features.forEach(f => {
-                if (f.geometry.type === 'Point') {
-                    const name = f.properties.name || "Tanpa Nama";
-                    const coords = f.geometry.coordinates;
-                    
-                    const marker = L.circleMarker([coords[1], coords[0]], { 
-                        radius: 5, fillColor: 'red', color: '#fff', fillOpacity: 1 
-                    }).addTo(map);
-                    
-                    marker.bindTooltip(name, { permanent: true, className: 'label-stasiun', direction: 'top' });
-                    
-                    stasiunPoints.push(turf.point([coords[0], coords[1]], { name: name }));
-                }
-            });
-
-            document.getElementById('stasiunStatus').innerText = `✅ Berhasil memuat ${stasiunPoints.length} stasiun.`;
-        };
-
-        reader.readAsText(file);
-    };
-
-    // 2. Handling Input Watershed (Tetap JSON karena UTM)
-    document.getElementById('inputWatershed').onchange = function(e) {
-        if (stasiunPoints.length === 0) {
-            alert("Upload data stasiun dulu, Bos!");
-            return;
-        }
+    document.getElementById('fileInput').onchange = function(e) {
         const reader = new FileReader();
         reader.onload = function(ev) {
             extractParameters(JSON.parse(ev.target.result));
@@ -123,8 +112,6 @@
     function extractParameters(json) {
         layerUtama.clearLayers();
         let geom = json.geometries ? json.geometries[0] : (json.features ? json.features[0].geometry : json);
-        
-        // Konversi Koordinat UTM ke WGS84
         let coords = geom.coordinates.map(ring => ring.map(c => {
             let p = proj4(utmProj, wgsProj, [c[0], c[1]]);
             return [p[0], p[1]];
@@ -135,7 +122,7 @@
         map.fitBounds(L.geoJSON(dasPoly).getBounds());
 
         const bbox = turf.bbox(dasPoly);
-        const voronoi = turf.voronoi(turf.featureCollection(stasiunPoints), { 
+        const voronoi = turf.voronoi(turf.featureCollection(stationPts), { 
             bbox: [bbox[0]-1, bbox[1]-1, bbox[2]+1, bbox[3]+1] 
         });
 
@@ -146,8 +133,7 @@
             const intersect = turf.intersect(v, dasPoly);
             if (intersect) {
                 const luas = turf.area(intersect) / 10000;
-                const namaSt = stasiunPoints[i].properties.name;
-                dataHasil.push({ nama: namaSt, luas: luas });
+                dataHasil.push({ nama: STASIUN_FIXED[i].n, luas: luas });
                 totalLuas += luas;
                 L.geoJSON(intersect, { style: { color: '#f59e0b', weight: 1.5, fillOpacity: 0.3 } }).addTo(layerUtama);
             }
@@ -157,8 +143,15 @@
         tbody.innerHTML = "";
         dataHasil.forEach(item => {
             const koef = item.luas / totalLuas;
-            tbody.innerHTML += `<tr><td>${item.nama}</td><td>${item.luas.toFixed(2)}</td><td>${koef.toFixed(4)}</td></tr>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.nama}</td>
+                    <td>${item.luas.toFixed(2)}</td>
+                    <td>${koef.toFixed(4)}</td>
+                </tr>`;
         });
+
+        document.getElementById('total-luas').innerText = totalLuas.toFixed(2);
         document.getElementById('output-box').style.display = 'block';
     }
 </script>
