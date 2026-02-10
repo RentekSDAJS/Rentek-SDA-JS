@@ -3,216 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDA Jaksel - Engineering Control Center</title>
+    <title>WebGIS Analisis Spasial - SDA Jaksel</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
-        :root {
-            --primary: #0f172a; /* Navy Deep */
-            --accent: #f59e0b;  /* Gold */
-            --glow: rgba(245, 158, 11, 0.4);
-            --card-bg: rgba(255, 255, 255, 0.95);
-        }
+        :root { --navy: #0f172a; --gold: #f59e0b; --slate: #64748b; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            background: #e2e8f0;
-            /* Background berpola teknik/grid */
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 30px 30px;
-            color: var(--primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+        /* SIDEBAR STYLE */
+        #sidebar { width: 360px; background: white; border-right: 4px solid var(--gold); display: flex; flex-direction: column; z-index: 1001; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+        .sidebar-header { background: var(--navy); color: white; padding: 25px 20px; border-bottom: 5px solid var(--gold); }
+        .sidebar-content { padding: 20px; flex-grow: 1; overflow-y: auto; background: #f8fafc; }
+        
+        h2 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
+        h3 { font-size: 0.85rem; color: var(--slate); text-transform: uppercase; margin-top: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
 
-        /* GLASS HEADER */
-        #main-header {
-            background: var(--primary);
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-            position: relative;
-            border-bottom: 8px solid var(--accent);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+        /* UPLOAD BOX */
+        .upload-box { background: white; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; transition: 0.3s; }
+        .upload-box:hover { border-color: var(--navy); background: #f1f5f9; }
+        .btn-file { background: var(--navy); color: var(--gold); padding: 10px 20px; border-radius: 6px; cursor: pointer; display: inline-block; font-weight: bold; font-size: 0.8rem; margin-top: 10px; }
 
-        .header-content {
-            position: relative;
-            z-index: 2;
-        }
+        /* STATUS & LIST */
+        #db-status { font-size: 0.75rem; padding: 8px; border-radius: 5px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .station-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--gold); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .station-card b { color: var(--navy); font-size: 0.9rem; }
+        .station-card p { margin: 5px 0 0 0; font-size: 0.8rem; color: #475569; }
 
-        .header-title {
-            font-size: 2.8rem;
-            font-weight: 900;
-            margin: 0;
-            letter-spacing: -1px;
-            text-transform: uppercase;
-            text-shadow: 2px 2px 0px var(--accent);
-        }
+        #map { flex-grow: 1; height: 100vh; background: #e2e8f0; }
 
-        .header-subtitle {
-            color: var(--accent);
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 10px;
-            letter-spacing: 2px;
-        }
-
-        /* DASHBOARD GRID */
-        .container {
-            max-width: 1200px;
-            margin: -40px auto 50px auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            z-index: 10;
-        }
-
-        /* CARD STYLE */
-        .calc-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 40px;
-            text-align: left;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255,255,255,0.3);
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-            text-decoration: none; /* Menghilangkan garis bawah link pada card */
-        }
-
-        .calc-card:hover {
-            transform: translateY(-15px) scale(1.02);
-            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.2);
-            border-color: var(--accent);
-        }
-
-        /* ICON SHAPE */
-        .icon-circle {
-            width: 70px;
-            height: 70px;
-            background: var(--primary);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.2rem;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 20px var(--glow);
-            border: 2px solid var(--accent);
-        }
-
-        .calc-card h2 {
-            font-size: 1.6rem;
-            font-weight: 900;
-            margin: 0 0 15px 0;
-            color: var(--primary);
-        }
-
-        .calc-card p {
-            color: #475569;
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 30px;
-            height: 80px;
-        }
-
-        /* BUTTON PULSE */
-        .btn-launch {
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 800;
-            text-align: center;
-            text-transform: uppercase;
-            border: none;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin-top: auto;
-        }
-
-        .btn-launch:hover {
-            background: var(--accent);
-            color: var(--primary);
-            box-shadow: 0 0 20px var(--accent);
-        }
-
-        /* BADGE */
-        .status-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 900;
-            background: #dcfce7;
-            color: #166534;
-            text-transform: uppercase;
-        }
-
-        .badge-new {
-            background: #e0f2fe;
-            color: #0369a1;
-        }
-
-        footer {
-            margin-top: auto;
-            padding: 40px;
-            text-align: center;
-            color: #64748b;
-            font-size: 0.9rem;
-        }
+        /* LOADING SPINNER */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--gold); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<header id="main-header">
-    <div class="header-content">
-        <div class="header-title">SDA CALCULATOR ONLINE</div>
-        <div class="header-subtitle">SEKSI PERENCANAAN SUKU DINAS SUMBER DAYA AIR JAKARTA SELATAN</div>
+<div id="sidebar">
+    <div class="sidebar-header">
+        <h2>WEBGIS ANALYZER</h2>
+        <div style="font-size: 0.7rem; color: var(--gold); margin-top: 5px;">Suku Dinas SDA Jakarta Selatan</div>
     </div>
-</header>
+    
+    <div class="sidebar-content">
+        <div id="db-status" style="background: #fef3c7; color: #92400e;">
+            <div class="loader"></div> Menghubungkan Google Sheets...
+        </div>
 
-<div class="container">
-    <div class="calc-card">
-        <span class="status-badge">Ready v2.1</span>
-        <div class="icon-circle">💧</div>
-        <h2>Pump Storage Simulator</h2>
-        <p>Optimasi kapasitas waduk dan manajemen pompa untuk pengendalian banjir wilayah Jakarta Selatan.</p>
-        <a href="pump-storage.html" class="btn-launch">Buka Simulator <span>→</span></a>
-    </div>
+        <h3>1. Input Catchment Area</h3>
+        <div class="upload-box">
+            <p style="font-size: 0.75rem; margin-bottom: 10px;">Upload file <b>.geojson</b><br>(UTM Zone 48S atau WGS84)</p>
+            <label class="btn-file">
+                PILIH FILE
+                <input type="file" id="upload-geojson" accept=".geojson" style="display:none">
+            </label>
+        </div>
 
-    <div class="calc-card">
-        <span class="status-badge">Ready v7.35</span>
-        <div class="icon-circle">⚙️</div>
-        <h2>Pipe Energy Calculator</h2>
-        <p>Analisis distribusi tekanan, head loss, dan verifikasi spesifikasi material pipa perencanaan.</p>
-        <a href="pipe-energy.html" class="btn-launch">Buka Calculator <span>→</span></a>
-    </div>
-
-    <div class="calc-card">
-        <span class="status-badge badge-new">New Feature</span>
-        <div class="icon-circle">🌍</div>
-        <h2>Spatial Area Analyzer</h2>
-        <p>Analisis spasial Catchment Area, konversi koordinat UTM, dan deteksi stasiun hujan secara otomatis.</p>
-        <a href="peta-spasial.html" class="btn-launch">Buka WebGIS <span>→</span></a>
+        <h3>2. Hasil Analisis Pengaruh</h3>
+        <div id="result-list">
+            <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: 20px;">
+                Belum ada data area diupload.
+            </p>
+        </div>
+        
+        <button onclick="location.reload()" style="width:100%; margin-top:30px; padding:10px; background:#fee2e2; color:#b91c1c; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">RESET ANALISIS</button>
     </div>
 </div>
 
-<footer>
-    <strong>AsproXSudinJS</strong> • 2026 Engineering Portal<br>
-    Seksi Perencanaan - Sudin Sumber Daya Air Jakarta Selatan
-</footer>
+<div id="map"></div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<script>
+    // --- KONFIGURASI ---
+    const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
+    const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_CSV);
+    
+    const UTM_48S = "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs";
+    const WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
+
+    const map = L.map('map', { zoomControl: false }).setView([-6.28, 106.81], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    let allStations = [];
+    let catchmentLayer;
+    let analysisGroup = L.layerGroup().addTo(map);
+    let stationGroup = L.layerGroup().addTo(map);
+
+    // 1. AMBIL DATA DARI GOOGLE SHEETS
+    async function initData() {
+        const statusBox = document.getElementById('db-status');
+        try {
+            const response = await fetch(PROXY_URL);
+            const csvText = await response.text();
+            
+            Papa.parse(csvText, {
+                header: true, skipEmptyLines: true,
+                complete: function(results) {
+                    allStations = results.data.map(row => {
+                        let lat = parseFloat(String(row.Lat || row.lat).replace(',', '.'));
+                        let lng = parseFloat(String(row.Lng || row.lng).replace(',', '.'));
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            return turf.point([lng, lat], { nama: row.Nama_Stasiun || "Stasiun Hujan" });
+                        }
+                        return null;
+                    }).filter(d => d !== null);
+
+                    plotStations();
+                    statusBox.innerHTML = `✅ ${allStations.length} Stasiun Terdeteksi`;
+                    statusBox.style.background = "#dcfce7"; statusBox.style.color = "#166534";
+                }
+            });
+        } catch (e) {
+            statusBox.innerHTML = "❌ Gagal Terhubung Database";
+            statusBox.style.background = "#fee2e2"; statusBox.style.color = "#991b1b";
+        }
+    }
+
+    function plotStations() {
+        stationGroup.clearLayers();
+        allStations.forEach(pt => {
+            L.circleMarker([pt.geometry.coordinates[1], pt.geometry.coordinates[0]], {
+                radius: 6, fillColor: "red", color: "white", weight: 2, fillOpacity: 1
+            }).addTo(stationGroup).bindPopup(`<b>${pt.properties.nama}</b>`);
+        });
+    }
+
+    // 2. PROSES UPLOAD GEOJSON
+    document.getElementById('upload-geojson').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const geojson = JSON.parse(event.target.result);
+            runAnalysis(geojson);
+        };
+        reader.readAsText(file);
+    });
+
+    function runAnalysis(geojson) {
+        analysisGroup.clearLayers();
+        if(catchmentLayer) map.removeLayer(catchmentLayer);
+
+        // Tampilkan Area (Handling UTM/WGS84)
+        catchmentLayer = L.geoJSON(geojson, {
+            coordsToLatLng: function(coords) {
+                if (Math.abs(coords[0]) > 1000) {
+                    const p = proj4(UTM_48S, WGS84, [coords[0], coords[1]]);
+                    return new L.LatLng(p[1], p[0]);
+                }
+                return new L.LatLng(coords[1], coords[0]);
+            },
+            style: { color: "#3b82f6", weight: 3, fillOpacity: 0.1 }
+        }).addTo(map);
+        map.fitBounds(catchmentLayer.getBounds());
+
+        // Normalisasi Poligon untuk Analisis Turf
+        let poly = geojson.features ? geojson.features[0] : geojson;
+        if (poly.geometry.coordinates[0][0][0] > 1000) {
+            poly = turf.rewind(turf.transformCoord(poly, UTM_48S, WGS84));
+        }
+
+        // Cari Stasiun di Dalam Area
+        let ptsIn = allStations.filter(pt => turf.booleanPointInPolygon(pt, poly));
+        const resultDiv = document.getElementById('result-list');
+        resultDiv.innerHTML = "";
+
+        if (ptsIn.length === 0) {
+            resultDiv.innerHTML = "<p style='color:red; font-size:0.8rem; text-align:center;'>⚠️ Tidak ada stasiun ditemukan di dalam area poligon ini.</p>";
+        } 
+        else if (ptsIn.length === 1) {
+            // Kasus 1 Stasiun
+            let luasHa = turf.area(poly) / 10000;
+            resultDiv.innerHTML = `
+                <div class="station-card">
+                    <b>${ptsIn[0].properties.nama}</b>
+                    <p>Pengaruh: 100%<br>Luas: ${luasHa.toFixed(2)} Ha</p>
+                </div>`;
+            L.geoJSON(poly, {style: {fillColor: "#3b82f6", fillOpacity: 0.3}}).addTo(analysisGroup);
+        } 
+        else {
+            // Kasus Banyak Stasiun (Thiessen)
+            const collection = turf.featureCollection(ptsIn);
+            const options = { bbox: turf.bbox(poly) };
+            const voronoi = turf.voronoi(collection, options);
+
+            voronoi.features.forEach((v, i) => {
+                const clipped = turf.intersect(v, poly);
+                if (clipped) {
+                    let luasHa = turf.area(clipped) / 10000;
+                    let stName = ptsIn[i].properties.nama;
+                    
+                    L.geoJSON(clipped, {
+                        style: { color: "orange", weight: 2, fillOpacity: 0.3 }
+                    }).addTo(analysisGroup).bindPopup(`Stasiun: ${stName}<br>Luas: ${luasHa.toFixed(2)} Ha`);
+
+                    resultDiv.innerHTML += `
+                        <div class="station-card">
+                            <b>${stName}</b>
+                            <p>Luas Pengaruh: ${luasHa.toFixed(2)} Ha</p>
+                        </div>`;
+                }
+            });
+        }
+    }
+
+    initData();
+</script>
 </body>
 </html>
