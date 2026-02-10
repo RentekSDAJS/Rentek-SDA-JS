@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>SDA Jaksel - Spatial Analyzer PRO</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; }
+        #sidebar { width: 360px; background: #1e293b; color: white; padding: 25px; z-index: 1000; overflow-y: auto; box-shadow: 4px 0 10px rgba(0,0,0,0.5); }
+        #map { flex: 1; background: #334155; }
+        .card { background: #334155; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #475569; }
+        .btn-upload { background: #f59e0b; color: #1e293b; padding: 12px; border-radius: 8px; cursor: pointer; display: block; text-align: center; font-weight: bold; margin-top: 10px; }
+        #result { background: #075985; padding: 20px; border-radius: 12px; margin-top: 20px; display: none; border-left: 6px solid #f59e0b; }
+        .st-list-item { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.85rem; border-bottom: 2px solid #475569; }
+        h2 { color: #f59e0b; margin: 0 0 10px 0; font-size: 1.4rem; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>SDA JAKSEL</h2>
+    <p style="font-size: 0.8rem; opacity: 0.8;">Analisis Curah Hujan Wilayah (Thiessen Polygon)</p>
+    <hr style="border: 0.5px solid #475569; margin: 20px 0;">
+
+    <div class="card">
+        <label style="font-weight: bold; font-size: 0.9rem;">1. Pilih File GeoJSON:</label>
+        <input type="file" id="geo-input" accept=".geojson" style="display: none;">
+        <label for="geo-input" class="btn-upload">AMBIL FILE</label>
+        <div id="status" style="font-size: 0.75rem; margin-top: 10px; color: #94a3b8;">Status: Menunggu file...</div>
+    </div>
+
+    <div id="result">
+        <span style="font-size: 0.7rem; font-weight: bold; letter-spacing: 1px;">RERATA CURAH HUJAN:</span>
+        <div id="rain-val" style="font-size: 2.5rem; font-weight: 800; color: #facc15;">0 <small style="font-size: 1rem;">mm</small></div>
+    </div>
+
+    <h3 style="font-size: 1rem; margin-top: 25px;">Distribusi Pengaruh:</h3>
+    <div id="station-detail"></div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+
+<script>
+    // Database Internal Stasiun (Pastikan Angka Hujan 'h' benar)
+    const STATIONS = [
+        { n: "Katulampa", lat: -6.6331, lng: 106.8370, h: 25 },
+        { n: "Depok", lat: -6.4006, lng: 106.8318, h: 10 },
+        { n: "Manggarai", lat: -6.2074, lng: 106.8485, h: 5 },
+        { n: "Karet", lat: -6.1981, lng: 106.8100, h: 0 },
+        { n: "Istana", lat: -6.1716, lng: 106.8270, h: 8 },
+        { n: "Pesanggrahan", lat: -6.3970, lng: 106.7718, h: 40 },
+        { n: "Sunter Hulu", lat: -6.3178, lng: 106.9211, h: 20 },
+        { n: "Krukut Hulu", lat: -6.3443, lng: 106.7990, h: 30 },
+        { n: "Halim", lat: -6.2703, lng: 106.8892, h: 22 },
+        { n: "St. Klimatologi Bogor", lat: -6.5000, lng: 106.7500, h: 50 },
+        { n: "Angke Hulu", lat: -6.2183, lng: 106.6944, h: 15 }
+    ];
+
+    const UTM_48S = "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs";
+    const WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
+
+    // Inisialisasi Peta
+    const map = L.map('map', { zoomControl: false }).setView([-6.28, 106.81], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.7 }).addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    const dataLayer = L.layerGroup().addTo(map);
+    const stationPts = STATIONS.map(s => turf.point([s.lng, s.lat], s));
+
+    // Marker Stasiun
+    stationPts.forEach(pt => {
+        L.circleMarker([pt.properties.lat, pt.properties.lng], {
+            radius: 6, color: '#fff', weight: 2, fillColor: '#ef4444', fillOpacity: 1
+        }).addTo(map).bindPopup(pt.properties.n);
+    });
+
+    // Handle File
+    document.getElementById('geo-input').onchange = function(e) {
+        const file = e.target.files[0];
+        const status = document.getElementById('status');
+        if (!file) return;
+
+        status.innerText = "Processing...";
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                let rawData = JSON.parse(event.target.result);
+                processSpatial(rawData);
+                status.innerText = "✅ Berhasil: " + file.name;
+            } catch(err) {
+                console.error(err);
+                status.innerText = "❌ File Error: " + err.message;
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    function processSpatial(json) {
+        dataLayer.clearLayers();
+        
+        // Perbaiki Struktur: Pastikan ini FeatureCollection
+        let collection = json.type === "FeatureCollection" ? json : turf.featureCollection([json.type === "Feature" ? json : turf.feature(json)]);
+        
+        // Deteksi & Konversi UTM otomatis
+        collection.features.forEach(f => {
+            if (f.geometry.coordinates[0][0][0] > 1000) {
+                f.geometry.coordinates = f.geometry.coordinates.map(ring => 
+                    ring.map(c => {
+                        let p = proj4(UTM_48S, WGS84, [c[0], c[1]]);
+                        return [p[0], p[1]];
+                    })
+                );
+            }
+        });
+
+        // Tampilkan Area di Peta
+        const areaLayer = L.geoJSON(collection, {
+            style: { color: '#38bdf8', weight: 3, fillOpacity: 0.15 }
+        }).addTo(dataLayer);
+        map.fitBounds(areaLayer.getBounds());
+
+        // Analisis Thiessen
+        const poly = collection.features[0];
+        const bbox = turf.bbox(poly);
+        const voronoi = turf.voronoi(turf.featureCollection(stationPts), {
+            bbox: [bbox[0]-0.8, bbox[1]-0.8, bbox[2]+0.8, bbox[3]+0.8]
+        });
+
+        let totalWxA = 0, totalArea = 0;
+        const listUI = document.getElementById('station-detail');
+        listUI.innerHTML = "";
+
+        voronoi.features.forEach((v, i) => {
+            const clip = turf.intersect(v, poly);
+            if (clip) {
+                const a = turf.area(clip) / 10000; // Ha
+                const st = STATIONS[i];
+                totalWxA += (st.h * a);
+                totalArea += a;
+
+                L.geoJSON(clip, { style: { color: '#f59e0b', weight: 1.5, fillOpacity: 0.4 } }).addTo(dataLayer);
+                listUI.innerHTML += `
+                    <div class="st-list-item">
+                        <b style="color:#facc15">${st.n}</b><br>
+                        Hujan: ${st.h} mm | Luas: ${a.toFixed(2)} Ha
+                    </div>`;
+            }
+        });
+
+        if (totalArea > 0) {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('rain-val').innerHTML = (totalWxA / totalArea).toFixed(2) + " <small style='font-size:1rem'>mm</small>";
+        }
+    }
+</script>
+</body>
+</html>
