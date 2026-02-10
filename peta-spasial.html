@@ -4,37 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebGIS Analisis Spasial - SDA Jaksel</title>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <style>
         :root { --navy: #0f172a; --gold: #f59e0b; --slate: #64748b; }
         body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
-
-        /* SIDEBAR STYLE */
         #sidebar { width: 360px; background: white; border-right: 4px solid var(--gold); display: flex; flex-direction: column; z-index: 1001; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
         .sidebar-header { background: var(--navy); color: white; padding: 25px 20px; border-bottom: 5px solid var(--gold); }
         .sidebar-content { padding: 20px; flex-grow: 1; overflow-y: auto; background: #f8fafc; }
-        
         h2 { margin: 0; font-size: 1.2rem; letter-spacing: 1px; }
         h3 { font-size: 0.85rem; color: var(--slate); text-transform: uppercase; margin-top: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-
-        /* UPLOAD BOX */
-        .upload-box { background: white; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; transition: 0.3s; }
-        .upload-box:hover { border-color: var(--navy); background: #f1f5f9; }
+        .upload-box { background: white; border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; }
         .btn-file { background: var(--navy); color: var(--gold); padding: 10px 20px; border-radius: 6px; cursor: pointer; display: inline-block; font-weight: bold; font-size: 0.8rem; margin-top: 10px; }
-
-        /* STATUS & LIST */
-        #db-status { font-size: 0.75rem; padding: 8px; border-radius: 5px; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        #db-status { font-size: 0.75rem; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; font-weight: bold; border: 1px solid #ddd; }
         .station-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid var(--gold); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .station-card b { color: var(--navy); font-size: 0.9rem; }
-        .station-card p { margin: 5px 0 0 0; font-size: 0.8rem; color: #475569; }
-
         #map { flex-grow: 1; height: 100vh; background: #e2e8f0; }
-
-        /* LOADING SPINNER */
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--gold); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -44,32 +27,18 @@
         <h2>WEBGIS ANALYZER</h2>
         <div style="font-size: 0.7rem; color: var(--gold); margin-top: 5px;">Suku Dinas SDA Jakarta Selatan</div>
     </div>
-    
     <div class="sidebar-content">
-        <div id="db-status" style="background: #fef3c7; color: #92400e;">
-            <div class="loader"></div> Menghubungkan Google Sheets...
-        </div>
-
+        <div id="db-status">Menghubungkan Database...</div>
         <h3>1. Input Catchment Area</h3>
         <div class="upload-box">
-            <p style="font-size: 0.75rem; margin-bottom: 10px;">Upload file <b>.geojson</b><br>(UTM Zone 48S atau WGS84)</p>
-            <label class="btn-file">
-                PILIH FILE
-                <input type="file" id="upload-geojson" accept=".geojson" style="display:none">
-            </label>
+            <p style="font-size: 0.75rem; margin-bottom: 10px;">Upload file <b>.geojson</b></p>
+            <label class="btn-file">PILIH FILE <input type="file" id="upload-geojson" accept=".geojson" style="display:none"></label>
         </div>
-
         <h3>2. Hasil Analisis Pengaruh</h3>
-        <div id="result-list">
-            <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin-top: 20px;">
-                Belum ada data area diupload.
-            </p>
-        </div>
-        
-        <button onclick="location.reload()" style="width:100%; margin-top:30px; padding:10px; background:#fee2e2; color:#b91c1c; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.75rem;">RESET ANALISIS</button>
+        <div id="result-list"><p style="font-size: 0.8rem; color: #94a3b8; text-align: center;">Belum ada area diupload.</p></div>
+        <button onclick="location.reload()" style="width:100%; margin-top:30px; padding:10px; background:#fee2e2; color:#b91c1c; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">RESET ANALISIS</button>
     </div>
 </div>
-
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -78,9 +47,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
 <script>
-    // --- KONFIGURASI ---
-    const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
-    const PROXY_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SHEET_CSV);
+    // Link CSV Langsung (Sudah disederhanakan)
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
     
     const UTM_48S = "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs";
     const WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
@@ -90,38 +58,38 @@
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     let allStations = [];
-    let catchmentLayer;
-    let analysisGroup = L.layerGroup().addTo(map);
-    let stationGroup = L.layerGroup().addTo(map);
+    let catchmentLayer, analysisGroup = L.layerGroup().addTo(map), stationGroup = L.layerGroup().addTo(map);
 
-    // 1. AMBIL DATA DARI GOOGLE SHEETS
-    async function initData() {
+    // 1. Ambil data dengan PapaParse secara langsung (Lebih Stabil di GitHub)
+    function initData() {
         const statusBox = document.getElementById('db-status');
-        try {
-            const response = await fetch(PROXY_URL);
-            const csvText = await response.text();
-            
-            Papa.parse(csvText, {
-                header: true, skipEmptyLines: true,
-                complete: function(results) {
-                    allStations = results.data.map(row => {
-                        let lat = parseFloat(String(row.Lat || row.lat).replace(',', '.'));
-                        let lng = parseFloat(String(row.Lng || row.lng).replace(',', '.'));
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            return turf.point([lng, lat], { nama: row.Nama_Stasiun || "Stasiun Hujan" });
-                        }
-                        return null;
-                    }).filter(d => d !== null);
+        Papa.parse(CSV_URL, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                allStations = results.data.map(row => {
+                    let lat = parseFloat(String(row.Lat || row.lat).replace(',', '.'));
+                    let lng = parseFloat(String(row.Lng || row.lng).replace(',', '.'));
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        return turf.point([lng, lat], { nama: row.Nama_Stasiun || "Stasiun Hujan" });
+                    }
+                    return null;
+                }).filter(d => d !== null);
 
+                if(allStations.length > 0) {
                     plotStations();
                     statusBox.innerHTML = `✅ ${allStations.length} Stasiun Terdeteksi`;
                     statusBox.style.background = "#dcfce7"; statusBox.style.color = "#166534";
+                } else {
+                    statusBox.innerHTML = "❌ Data Kosong / Salah Kolom";
+                    statusBox.style.background = "#fee2e2";
                 }
-            });
-        } catch (e) {
-            statusBox.innerHTML = "❌ Gagal Terhubung Database";
-            statusBox.style.background = "#fee2e2"; statusBox.style.color = "#991b1b";
-        }
+            },
+            error: function() {
+                statusBox.innerHTML = "❌ Gagal Load CSV";
+            }
+        });
     }
 
     function plotStations() {
@@ -133,22 +101,20 @@
         });
     }
 
-    // 2. PROSES UPLOAD GEOJSON
     document.getElementById('upload-geojson').addEventListener('change', function(e) {
-        const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(event) {
             const geojson = JSON.parse(event.target.result);
             runAnalysis(geojson);
         };
-        reader.readAsText(file);
+        reader.readAsText(e.target.files[0]);
     });
 
     function runAnalysis(geojson) {
         analysisGroup.clearLayers();
         if(catchmentLayer) map.removeLayer(catchmentLayer);
 
-        // Tampilkan Area (Handling UTM/WGS84)
+        // Render Area
         catchmentLayer = L.geoJSON(geojson, {
             coordsToLatLng: function(coords) {
                 if (Math.abs(coords[0]) > 1000) {
@@ -161,7 +127,7 @@
         }).addTo(map);
         map.fitBounds(catchmentLayer.getBounds());
 
-        // Normalisasi Poligon untuk Analisis Turf
+        // Konversi poligon ke WGS84 untuk Turf
         let poly = geojson.features ? geojson.features[0] : geojson;
         if (poly.geometry.coordinates[0][0][0] > 1000) {
             poly = turf.rewind(turf.transformCoord(poly, UTM_48S, WGS84));
@@ -173,23 +139,11 @@
         resultDiv.innerHTML = "";
 
         if (ptsIn.length === 0) {
-            resultDiv.innerHTML = "<p style='color:red; font-size:0.8rem; text-align:center;'>⚠️ Tidak ada stasiun ditemukan di dalam area poligon ini.</p>";
-        } 
-        else if (ptsIn.length === 1) {
-            // Kasus 1 Stasiun
-            let luasHa = turf.area(poly) / 10000;
-            resultDiv.innerHTML = `
-                <div class="station-card">
-                    <b>${ptsIn[0].properties.nama}</b>
-                    <p>Pengaruh: 100%<br>Luas: ${luasHa.toFixed(2)} Ha</p>
-                </div>`;
-            L.geoJSON(poly, {style: {fillColor: "#3b82f6", fillOpacity: 0.3}}).addTo(analysisGroup);
-        } 
-        else {
-            // Kasus Banyak Stasiun (Thiessen)
+            resultDiv.innerHTML = "<p style='color:red; font-size:0.8rem; text-align:center;'>⚠️ Tidak ada stasiun di dalam poligon.</p>";
+        } else {
+            // Jalankan Poligon Thiessen
             const collection = turf.featureCollection(ptsIn);
-            const options = { bbox: turf.bbox(poly) };
-            const voronoi = turf.voronoi(collection, options);
+            const voronoi = turf.voronoi(collection, { bbox: turf.bbox(poly) });
 
             voronoi.features.forEach((v, i) => {
                 const clipped = turf.intersect(v, poly);
@@ -198,14 +152,10 @@
                     let stName = ptsIn[i].properties.nama;
                     
                     L.geoJSON(clipped, {
-                        style: { color: "orange", weight: 2, fillOpacity: 0.3 }
-                    }).addTo(analysisGroup).bindPopup(`Stasiun: ${stName}<br>Luas: ${luasHa.toFixed(2)} Ha`);
+                        style: { color: "orange", weight: 2, fillOpacity: 0.4 }
+                    }).addTo(analysisGroup).bindPopup(`${stName}: ${luasHa.toFixed(2)} Ha`);
 
-                    resultDiv.innerHTML += `
-                        <div class="station-card">
-                            <b>${stName}</b>
-                            <p>Luas Pengaruh: ${luasHa.toFixed(2)} Ha</p>
-                        </div>`;
+                    resultDiv.innerHTML += `<div class="station-card"><b>${stName}</b><p>Luas: ${luasHa.toFixed(2)} Ha</p></div>`;
                 }
             });
         }
