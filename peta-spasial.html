@@ -2,298 +2,201 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDA Jaksel - Analisis Hujan Spasial</title>
-    
+    <title>SDA Jaksel - Advanced Spatial Hydrology</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <style>
-        :root {
-            --primary: #0f172a;
-            --secondary: #1e293b;
-            --accent: #f59e0b;
-            --text: #f8fafc;
-            --success: #10b981;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            height: 100vh;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--primary);
-            color: var(--text);
-        }
-
-        /* Sidebar Styling */
-        #sidebar {
-            width: 420px;
-            background: var(--secondary);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            border-right: 4px solid var(--accent);
-            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        h2 { color: var(--accent); margin-top: 0; font-size: 1.4rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #f59e0b; --text: #f8fafc; --teal: #2dd4bf; }
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
         
-        .instruction { font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px; }
-
-        .card {
-            background: var(--primary);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #334155;
-        }
-
-        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.9rem; }
-
-        input[type="text"], input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #475569;
-            background: #1e293b;
-            color: white;
-            box-sizing: border-box;
-            font-size: 0.85rem;
-        }
-
-        .btn {
-            background: var(--accent);
-            color: #0f172a;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            margin-top: 10px;
-            transition: all 0.2s;
-        }
-
-        .btn:hover { background: #fbbf24; transform: translateY(-1px); }
-
-        /* Results Table */
-        #resultsPanel { margin-top: 10px; }
-        .res-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-            margin-top: 10px;
-            background: #1e293b;
-        }
-        .res-table th, .res-table td {
-            padding: 10px;
-            border: 1px solid #334155;
-            text-align: center;
-        }
+        #sidebar { width: 500px; background: var(--panel); padding: 20px; overflow-y: auto; border-right: 4px solid var(--accent); box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
+        .card { background: var(--bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        h2 { color: var(--accent); margin-top: 0; font-size: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        h3 { color: var(--teal); font-size: 1rem; margin-bottom: 10px; }
+        
+        input[type="file"] { width: 100%; padding: 10px; background: #1e293b; color: white; border: 1px solid #475569; border-radius: 6px; }
+        .btn { background: var(--accent); color: #0f172a; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+        
+        .res-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 15px; }
+        .res-table th, .res-table td { padding: 8px; border: 1px solid #334155; text-align: left; }
         .res-table th { background: #334155; color: var(--accent); }
-
-        /* Map Styling */
-        #map { flex: 1; position: relative; }
+        .highlight { font-weight: bold; color: var(--teal); }
         
-        .loading-overlay {
-            display: none;
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 2000;
-        }
+        #map { flex: 1; }
+        .loading { display: none; color: var(--accent); font-weight: bold; text-align: center; margin: 10px 0; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>ANALISIS HIDROLOGI JS</h2>
-    <p class="instruction">Hitung Curah Hujan Rerata Wilayah (Thiessen) secara otomatis menggunakan data dari Google Sheets.</p>
+    <h2>DASHBOARD HIDROLOGI SDA JS</h2>
     
     <div class="card">
-        <label>1. File Catchment (KML/GeoJSON)</label>
+        <label><strong>Input Batas Catchment (KML/GeoJSON)</strong></label>
         <input type="file" id="inputCatchment" accept=".json,.geojson,.kml">
+        <button class="btn" id="btnProses" onclick="calculateAll()" style="display:none;">MULAI HITUNG ANALISIS</button>
+        <div id="loader" class="loading">Sedang Memproses Data...</div>
     </div>
 
-    <div class="card">
-        <label>2. Link CSV Google Sheets</label>
-        <input type="text" id="sheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv">
-        <button class="btn" onclick="calculateAverageRain()">HITUNG RERATA WILAYAH</button>
-    </div>
-
-    <div id="resultsPanel" style="display:none;">
+    <div id="spatialResult" style="display:none;">
         <div class="card">
-            <label style="color: var(--success)">✓ Hasil Perhitungan Berhasil</label>
+            <h3>1. Matriks Pengaruh Spasial (Thiessen)</h3>
             <table class="res-table">
                 <thead>
-                    <tr><th>Tahun</th><th>P-Rerata (mm)</th></tr>
+                    <tr><th>Stasiun Pengaruh</th><th>Luas (km²)</th><th>Koefisien (Ci)</th></tr>
                 </thead>
-                <tbody id="body-result"></tbody>
+                <tbody id="body-spatial"></tbody>
             </table>
-            <button class="btn" style="background: #10b981; color: white; margin-top: 15px;" onclick="downloadCSV()">DOWNLOAD HASIL (.CSV)</button>
+        </div>
+    </div>
+
+    <div id="rainResult" style="display:none;">
+        <div class="card">
+            <h3>2. Rerata Hujan Wilayah (2000-2024)</h3>
+            <table class="res-table">
+                <thead>
+                    <tr><th>Tahun</th><th>P-Wilayah (mm)</th></tr>
+                </thead>
+                <tbody id="body-rain"></tbody>
+            </table>
+            <button class="btn" style="background: var(--teal); color: #000;" onclick="downloadData()">DOWNLOAD HASIL (.CSV)</button>
         </div>
     </div>
 </div>
 
 <div id="map"></div>
-<div id="loader" class="loading-overlay">Memproses Data...</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://unpkg.com/@mapbox/togeojson"></script>
 
 <script>
-    // Koordinat 22 Stasiun SDA Jaksel
+    // Link CSV Hardcoded (Input User)
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
+
+    // Koordinat Stasiun
     const STATIONS = [
-        { name: "Kemayoran", lat: -6.15559, lng: 106.84 },
-        { name: "Halim", lat: -6.27036, lng: 106.88926 },
-        { name: "Bogor", lat: -6.5, lng: 106.75 },
-        { name: "Banten", lat: -6.26151, lng: 106.75084 },
-        { name: "Katulampa", lat: -6.63317, lng: 106.837077 },
-        { name: "Depok", lat: -6.40065, lng: 106.831897 },
-        { name: "Manggarai", lat: -6.20742, lng: 106.848569 },
-        { name: "Karet", lat: -6.1981, lng: 106.810097 },
-        { name: "Setiabudi Timur", lat: -6.20462, lng: 106.829385 },
-        { name: "Melati", lat: -6.20084, lng: 106.817982 },
-        { name: "Istana", lat: -6.17165, lng: 106.8270424 },
-        { name: "Krukut Hulu", lat: -6.34434, lng: 106.799081 },
-        { name: "Sunter Hulu", lat: -6.31785, lng: 106.9211 },
-        { name: "Pesanggrahan", lat: -6.39708, lng: 106.77181 },
-        { name: "Angke Hulu", lat: -6.21835, lng: 106.694467 },
-        { name: "Tanjungan", lat: -6.10669, lng: 106.725882 },
-        { name: "Tomang Barat", lat: -6.1671, lng: 106.78001 },
-        { name: "Teluk Gong", lat: -6.1335, lng: 106.777649 },
-        { name: "Pulo Gadung", lat: -6.19097, lng: 106.904213 },
-        { name: "Sunter Kodamar", lat: -6.15508, lng: 106.886893 },
-        { name: "Rawa Badak", lat: -6.12107, lng: 106.896744 },
-        { name: "Pompa Cideng", lat: -6.17355, lng: 106.806328 }
+        { n: "Kemayoran", lat: -6.15559, lng: 106.84 },
+        { n: "Halim", lat: -6.27036, lng: 106.88926 },
+        { n: "Bogor", lat: -6.5, lng: 106.75 },
+        { n: "Banten", lat: -6.26151, lng: 106.75084 },
+        { n: "Katulampa", lat: -6.63317, lng: 106.837077 },
+        { n: "Depok", lat: -6.40065, lng: 106.831897 },
+        { n: "Manggarai", lat: -6.20742, lng: 106.848569 },
+        { n: "Karet", lat: -6.1981, lng: 106.810097 },
+        { n: "Setiabudi Timur", lat: -6.20462, lng: 106.829385 },
+        { n: "Melati", lat: -6.20084, lng: 106.817982 },
+        { n: "Istana", lat: -6.17165, lng: 106.8270424 },
+        { n: "Krukut Hulu", lat: -6.34434, lng: 106.799081 },
+        { n: "Sunter Hulu", lat: -6.31785, lng: 106.9211 },
+        { n: "Pesanggrahan", lat: -6.39708, lng: 106.77181 },
+        { n: "Angke Hulu", lat: -6.21835, lng: 106.694467 },
+        { n: "Tanjungan", lat: -6.10669, lng: 106.725882 },
+        { n: "Tomang Barat", lat: -6.1671, lng: 106.78001 },
+        { n: "Teluk Gong", lat: -6.1335, lng: 106.777649 },
+        { n: "Pulo Gadung", lat: -6.19097, lng: 106.904213 },
+        { n: "Sunter Kodamar", lat: -6.15508, lng: 106.886893 },
+        { n: "Rawa Badak", lat: -6.12107, lng: 106.896744 },
+        { n: "Pompa Cideng", lat: -6.17355, lng: 106.806328 }
     ];
 
-    let thiessenCoefficients = {};
-    const map = L.map('map').setView([-6.28, 106.82], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.4 }).addTo(map);
-    const analysisLayer = L.layerGroup().addTo(map);
+    let thiessenData = [];
+    let catchmentGeoJSON = null;
 
-    // Render Markers
-    const stationPoints = STATIONS.map(s => {
-        L.circleMarker([s.lat, s.lng], { radius: 5, color: '#f59e0b', fillOpacity: 0.8 }).addTo(map).bindTooltip(s.name);
-        return turf.point([s.lng, s.lat], { name: s.name });
+    const map = L.map('map').setView([-6.28, 106.82], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.3 }).addTo(map);
+    const layerGroup = L.layerGroup().addTo(map);
+
+    const stationPts = STATIONS.map(s => {
+        L.circleMarker([s.lat, s.lng], { radius: 4, color: '#f59e0b' }).addTo(map).bindTooltip(s.n);
+        return turf.point([s.lng, s.lat], { name: s.n });
     });
 
-    // Handle Catchment Upload
     document.getElementById('inputCatchment').onchange = function(e) {
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(ev) {
-            let geojson;
-            if (file.name.endsWith('.kml')) {
-                geojson = toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml"));
-            } else {
-                geojson = JSON.parse(ev.target.result);
-            }
-            runThiessenAnalysis(geojson);
+            catchmentGeoJSON = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
+            document.getElementById('btnProses').style.display = 'block';
         };
         reader.readAsText(file);
     };
 
-    function runThiessenAnalysis(geojson) {
-        analysisLayer.clearLayers();
-        const polygon = geojson.features ? geojson.features[0] : geojson;
-        L.geoJSON(polygon, { style: { color: 'red', weight: 2, fillOpacity: 0.1 } }).addTo(analysisLayer);
+    async function calculateAll() {
+        document.getElementById('loader').style.display = 'block';
+        layerGroup.clearLayers();
+
+        // 1. Spasial Analysis
+        const polygon = catchmentGeoJSON.features ? catchmentGeoJSON.features[0] : catchmentGeoJSON;
+        L.geoJSON(polygon, { style: { color: 'red', weight: 2, fillOpacity: 0.05 } }).addTo(layerGroup);
+        map.fitBounds(L.geoJSON(polygon).getBounds());
 
         const bbox = turf.bbox(polygon);
-        const voronoi = turf.voronoi(turf.featureCollection(stationPoints), { 
-            bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] 
-        });
+        const voronoi = turf.voronoi(turf.featureCollection(stationPts), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
 
         let totalArea = 0;
-        thiessenCoefficients = {};
+        thiessenData = [];
 
         voronoi.features.forEach((cell, i) => {
             const intersect = turf.intersect(cell, polygon);
             if (intersect) {
-                const area = turf.area(intersect);
-                const stationName = STATIONS[i].name;
-                thiessenCoefficients[stationName] = area;
+                const area = turf.area(intersect) / 1000000; // km2
+                thiessenData.push({ name: STATIONS[i].n, area: area });
                 totalArea += area;
-                L.geoJSON(intersect, { style: { color: '#38bdf8', weight: 1, fillOpacity: 0.3 } }).addTo(analysisLayer);
+                L.geoJSON(intersect, { style: { color: '#38bdf8', weight: 1, fillOpacity: 0.2 } }).addTo(layerGroup);
             }
         });
 
-        // Normalize (Ai / A_total)
-        for (let name in thiessenCoefficients) {
-            thiessenCoefficients[name] /= totalArea;
-        }
-        alert("Poligon Thiessen Terbentuk & Koefisien Berhasil Dihitung!");
-    }
+        // Tampilkan Tabel Spasial
+        let spatialHtml = "";
+        thiessenData.forEach(item => {
+            item.ci = item.area / totalArea;
+            spatialHtml += `<tr><td>${item.name}</td><td>${item.area.toFixed(2)}</td><td class="highlight">${item.ci.toFixed(4)}</td></tr>`;
+        });
+        document.getElementById('body-spatial').innerHTML = spatialHtml;
+        document.getElementById('spatialResult').style.display = 'block';
 
-    async function calculateAverageRain() {
-        const url = document.getElementById('sheetUrl').value;
-        if (Object.keys(thiessenCoefficients).length === 0) return alert("Silakan upload file catchment terlebih dahulu!");
-        
-        document.getElementById('loader').style.display = 'block';
-
+        // 2. Rain Data Analysis
         try {
-            const res = await fetch(url);
-            const csvText = await res.text();
-            const rows = csvText.split('\n').filter(r => r.trim() !== "");
-            
-            // Cleaning headers (handle newlines from excel)
-            const headers = rows[0].split(',').map(h => h.trim().replace(/[\r\n]/g, " ").replace(/"/g, ""));
-            
-            let htmlTable = "";
-            for (let i = 1; i < rows.length; i++) {
-                const cols = rows[i].split(',');
-                if (cols.length < 5) continue;
+            const res = await fetch(SHEET_CSV_URL);
+            const csv = await res.text();
+            const lines = csv.split('\n').filter(l => l.trim() !== "");
+            const headers = lines[0].split(',').map(h => h.trim().replace(/[\r\n]/g, " ").replace(/"/g, ""));
 
+            let rainHtml = "";
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',');
                 const tahun = cols[0];
-                let weightedSum = 0;
+                let p_wilayah = 0;
 
                 headers.forEach((h, idx) => {
-                    // Matching spreadsheet column names with our station database
-                    for (let stName in thiessenCoefficients) {
-                        if (h.toLowerCase().includes(stName.toLowerCase()) || stName.toLowerCase().includes(h.toLowerCase())) {
-                            const rainValue = parseFloat(cols[idx]) || 0;
-                            weightedSum += rainValue * thiessenCoefficients[stName];
-                            break;
-                        }
+                    const stMatch = thiessenData.find(t => h.toLowerCase().includes(t.name.toLowerCase()) || t.name.toLowerCase().includes(h.toLowerCase()));
+                    if (stMatch) {
+                        const rainVal = parseFloat(cols[idx]) || 0;
+                        p_wilayah += rainVal * stMatch.ci;
                     }
                 });
 
-                if (weightedSum > 0) {
-                    htmlTable += `<tr><td>${tahun}</td><td><strong>${weightedSum.toFixed(2)}</strong></td></tr>`;
-                }
+                if (p_wilayah > 0) rainHtml += `<tr><td>${tahun}</td><td class="highlight">${p_wilayah.toFixed(2)}</td></tr>`;
             }
+            document.getElementById('body-rain').innerHTML = rainHtml;
+            document.getElementById('rainResult').style.display = 'block';
+        } catch (e) { alert("Error mengambil data hujan!"); }
 
-            document.getElementById('body-result').innerHTML = htmlTable;
-            document.getElementById('resultsPanel').style.display = 'block';
-        } catch (error) {
-            alert("Gagal menarik data dari Google Sheets. Pastikan link CSV benar.");
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
+        document.getElementById('loader').style.display = 'none';
     }
 
-    function downloadCSV() {
-        let csvContent = "data:text/csv;charset=utf-8,Tahun,Hujan_Rerata_Wilayah_mm\n";
-        const rows = document.querySelectorAll("#body-result tr");
-        rows.forEach(r => {
-            csvContent += r.cells[0].innerText + "," + r.cells[1].innerText + "\n";
+    function downloadData() {
+        let csv = "Tahun,P_Rerata_Wilayah_mm\n";
+        document.querySelectorAll("#body-rain tr").forEach(tr => {
+            csv += tr.cells[0].innerText + "," + tr.cells[1].innerText + "\n";
         });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Hasil_Rerata_Wilayah_SDAJS.csv");
-        document.body.appendChild(link);
-        link.click();
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Rekap_Hujan_Wilayah_JS.csv';
+        a.click();
     }
 </script>
-
 </body>
 </html>
