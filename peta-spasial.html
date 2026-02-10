@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>SDA Jaksel - Peta Spasial Analyzer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; display: flex; height: 100vh; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        #sidebar { width: 360px; background: #0f172a; color: white; padding: 25px; z-index: 1000; box-shadow: 3px 0 10px rgba(0,0,0,0.5); }
+        #map { flex: 1; background: #cbd5e1; }
+        .upload-box { background: #1e293b; padding: 15px; border-radius: 10px; border: 2px dashed #334155; margin: 20px 0; }
+        #hasil-rerata { background: #075985; padding: 15px; border-radius: 10px; margin-top: 20px; display: none; border-left: 6px solid #f59e0b; }
+        .st-card { background: #334155; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; }
+        h2 { color: #f59e0b; font-size: 1.3rem; margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>PETA SPASIAL</h2>
+    <p style="font-size: 0.8rem; opacity: 0.7;">Seksi Perencanaan SDA Jakarta Selatan</p>
+    <hr style="border: 0.5px solid #334155;">
+
+    <div class="upload-box">
+        <label style="font-size: 0.9rem; font-weight: bold;">1. Upload File GeoJSON:</label><br><br>
+        <input type="file" id="input-geojson" accept=".geojson" style="color: white; font-size: 0.8rem;">
+    </div>
+
+    <div id="hasil-rerata">
+        <span style="font-size: 0.75rem;">CURAH HUJAN WILAYAH:</span>
+        <div id="text-hujan" style="font-size: 2rem; font-weight: 800; color: #facc15;">0 mm</div>
+    </div>
+
+    <h3 style="font-size: 0.9rem; margin-top: 25px;">Stasiun Terdeteksi:</h3>
+    <div id="stasiun-list">
+        <p style="font-size: 0.8rem; opacity: 0.5;">Belum ada analisis...</p>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+
+<script>
+    // Database internal 22 stasiun
+    const DATA_MASTER = [
+        { n: "Katulampa", lat: -6.6331, lng: 106.8370, h: 20 },
+        { n: "Depok", lat: -6.4006, lng: 106.8318, h: 15 },
+        { n: "Manggarai", lat: -6.2074, lng: 106.8485, h: 10 },
+        { n: "Karet", lat: -6.1981, lng: 106.8100, h: 0 },
+        { n: "Istana", lat: -6.1716, lng: 106.8270, h: 12 },
+        { n: "Pesanggrahan", lat: -6.3970, lng: 106.7718, h: 25 },
+        { n: "Sunter Hulu", lat: -6.3178, lng: 106.9211, h: 18 },
+        { n: "Krukut Hulu", lat: -6.3443, lng: 106.7990, h: 22 },
+        { n: "Halim", lat: -6.2703, lng: 106.8892, h: 30 },
+        { n: "St. Klimatologi Banten", lat: -6.2615, lng: 106.7508, h: 15 },
+        { n: "St. Klimatologi Bogor", lat: -6.5000, lng: 106.7500, h: 40 },
+        { n: "Angke Hulu", lat: -6.2183, lng: 106.6944, h: 12 }
+    ];
+
+    let map, layerAnalisis, catchmentLayer;
+
+    // FUNGSI LOAD: Menjamin library sudah masuk sebelum menjalankan peta
+    window.addEventListener('load', function() {
+        if (typeof L !== 'undefined') {
+            initPeta();
+        } else {
+            console.error("Leaflet gagal dimuat!");
+        }
+    });
+
+    function initPeta() {
+        map = L.map('map').setView([-6.28, 106.81], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        layerAnalisis = L.layerGroup().addTo(map);
+
+        // Pasang marker awal
+        DATA_MASTER.forEach(st => {
+            L.circleMarker([st.lat, st.lng], {
+                radius: 5, color: 'white', weight: 1.5, fillColor: 'red', fillOpacity: 1
+            }).addTo(map).bindPopup(st.n);
+        });
+    }
+
+    document.getElementById('input-geojson').onchange = function(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const geojson = JSON.parse(event.target.result);
+                prosesThiessen(geojson);
+            } catch(err) {
+                alert("File GeoJSON rusak!");
+            }
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+
+    function prosesThiessen(data) {
+        layerAnalisis.clearLayers();
+        if(catchmentLayer) map.removeLayer(catchmentLayer);
+
+        // Render Area
+        catchmentLayer = L.geoJSON(data, {
+            style: { color: '#38bdf8', weight: 3, fillOpacity: 0.1 }
+        }).addTo(map);
+        map.fitBounds(catchmentLayer.getBounds());
+
+        const poly = data.features ? data.features[0] : data;
+        const bbox = turf.bbox(poly);
+        
+        // Buat Voronoi
+        const ptsTurf = DATA_MASTER.map(st => turf.point([st.lng, st.lat], st));
+        const voronoi = turf.voronoi(turf.featureCollection(ptsTurf), {
+            bbox: [bbox[0]-0.5, bbox[1]-0.5, bbox[2]+0.5, bbox[3]+0.5]
+        });
+
+        let totalWxA = 0, totalA = 0;
+        const listHTML = document.getElementById('stasiun-list');
+        listHTML.innerHTML = "";
+
+        voronoi.features.forEach((v, i) => {
+            const potong = turf.intersect(v, poly);
+            if (potong) {
+                const luas = turf.area(potong) / 10000;
+                const st = ptsTurf[i].properties;
+
+                totalWxA += (st.h * luas);
+                totalA += luas;
+
+                L.geoJSON(potong, { style: { color: 'orange', weight: 1.5, fillOpacity: 0.3 } }).addTo(layerAnalisis);
+                listHTML.innerHTML += `<div class="st-card"><b>${st.n}</b><br>H: ${st.h} mm | L: ${luas.toFixed(2)} Ha</div>`;
+            }
+        });
+
+        if (totalA > 0) {
+            const hasil = totalWxA / totalA;
+            document.getElementById('hasil-rerata').style.display = 'block';
+            document.getElementById('text-hujan').innerText = hasil.toFixed(2) + " mm";
+        }
+    }
+</script>
+</body>
+</html>
