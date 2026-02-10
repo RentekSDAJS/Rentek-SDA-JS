@@ -2,17 +2,17 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Spatial Analyzer</title>
+    <title>SDA Jaksel - Spatial Analyzer Final</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --navy: #0f172a; --gold: #f59e0b; }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; }
-        #sidebar { width: 380px; background: white; border-right: 4px solid var(--gold); display: flex; flex-direction: column; z-index: 1001; }
-        .sidebar-header { background: var(--navy); color: white; padding: 20px; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        #sidebar { width: 360px; background: white; border-right: 4px solid var(--gold); display: flex; flex-direction: column; z-index: 1001; }
+        .sidebar-header { background: var(--navy); color: white; padding: 20px; border-bottom: 4px solid var(--gold); }
         .sidebar-content { padding: 20px; flex-grow: 1; overflow-y: auto; background: #f8fafc; }
-        .upload-box { border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 12px; }
-        #summary { background: #e0f2fe; padding: 15px; border-radius: 10px; margin-top: 15px; display: none; border: 1px solid #bae6fd; }
-        .st-card { background: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid var(--gold); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .upload-box { background: white; border: 2px dashed #cbd5e1; padding: 15px; text-align: center; border-radius: 12px; margin-bottom: 20px; }
+        #result-box { background: #e0f2fe; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #bae6fd; display: none; }
+        .st-card { background: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; border-left: 5px solid var(--gold); box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 0.85rem; }
         #map { flex-grow: 1; height: 100vh; }
     </style>
 </head>
@@ -20,22 +20,24 @@
 
 <div id="sidebar">
     <div class="sidebar-header">
-        <h2>SPATIAL ANALYZER</h2>
+        <h2 style="margin:0; font-size:1.2rem;">SPATIAL ANALYZER</h2>
         <div style="font-size: 0.7rem; color: var(--gold);">Sudin SDA Jakarta Selatan</div>
     </div>
     <div class="sidebar-content">
-        <h3>1. Upload Catchment</h3>
+        <h3>1. Upload GeoJSON</h3>
         <div class="upload-box">
             <input type="file" id="upload-geojson" accept=".geojson">
         </div>
 
-        <div id="summary">
-            <div style="font-size: 0.75rem;">Rerata Hujan Wilayah:</div>
-            <div id="result-val" style="font-size: 2rem; font-weight: 800; color: #0369a1;">0 mm</div>
+        <div id="result-box">
+            <div style="font-size: 0.75rem; color: #0369a1;">Rerata Hujan Wilayah:</div>
+            <div id="final-rain" style="font-size: 1.8rem; font-weight: 800; color: #0c4a6e;">0 mm</div>
         </div>
 
-        <h3>2. Detail Stasiun Pengaruh</h3>
-        <div id="list-area"></div>
+        <h3>2. Analisis Stasiun</h3>
+        <div id="station-list">
+            <p style="color: #94a3b8; font-size: 0.8rem; text-align: center;">Upload GeoJSON untuk memulai analisis.</p>
+        </div>
     </div>
 </div>
 <div id="map"></div>
@@ -45,43 +47,62 @@
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 
 <script>
-    const script = document.createElement('script');
-    // Menambahkan timestamp unik agar browser tidak mengambil data cache lama
-    script.src = 'data-stasiun.js?v=' + new Date().getTime();
-    document.head.appendChild(script);
+    // DATA DITANAM DI SINI (DATABASE INTERNAL)
+    // Update angka 'h' (hujan) di sini jika ada data baru
+    const DATA_MASTER = [
+        { n: "Katulampa", lt: -6.63317, lg: 106.837077, h: 10 },
+        { n: "Depok", lt: -6.40065, lg: 106.831897, h: 15 },
+        { n: "Manggarai", lt: -6.20742, lg: 106.848569, h: 5 },
+        { n: "Karet", lt: -6.1981, lg: 106.810097, h: 0 },
+        { n: "Setiabudi Timur", lt: -6.20462, lg: 106.829385, h: 20 },
+        { n: "Melati", lt: -6.20084, lg: 106.817982, h: 12 },
+        { n: "Istana", lt: -6.17165, lg: 106.8270424, h: 8 },
+        { n: "Krukut Hulu", lt: -6.34434, lg: 106.799081, h: 30 },
+        { n: "Sunter Hulu", lt: -6.31785, lg: 106.9211, h: 25 },
+        { n: "Pesanggrahan", lt: -6.39708, lg: 106.77181, h: 40 },
+        { n: "Angke Hulu", lt: -6.21835, lg: 106.694467, h: 0 },
+        { n: "Tanjungan", lt: -6.10669, lg: 106.725882, h: 5 },
+        { n: "Tomang Barat", lt: -6.1671, lg: 106.78001, h: 10 },
+        { n: "Teluk Gong", lt: -6.1335, lg: 106.777649, h: 12 },
+        { n: "Pulo Gadung", lt: -6.19097, lg: 106.904213, h: 18 },
+        { n: "Sunter Kodamar", lt: -6.15508, lg: 106.886893, h: 20 },
+        { n: "Rawa Badak", lt: -6.12107, lg: 106.896744, h: 5 },
+        { n: "Pompa Cideng", lt: -6.17355, lg: 106.806328, h: 7 },
+        { n: "St. Meteorologi Kemayoran", lt: -6.15559, lg: 106.84, h: 15 },
+        { n: "Halim Perdana Kusuma", lt: -6.27036, lg: 106.88926, h: 22 },
+        { n: "St. Klimatologi Jawa Barat", lt: -6.5, lg: 106.75, h: 35 },
+        { n: "St. Klimatologi Banten", lt: -6.26151, lg: 106.75084, h: 28 }
+    ];
 
-    script.onload = function() {
-        console.log("Database stasiun berhasil dimuat!");
-        initMap();
-    };
-</script>
-
-<script>
     const UTM_48S = "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs";
     const WGS84 = "+proj=longlat +datum=WGS84 +no_defs";
-    let map, analysisGroup, catchmentLayer;
 
-    function initMap() {
-        map = L.map('map').setView([-6.28, 106.81], 11);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        analysisGroup = L.layerGroup().addTo(map);
+    const map = L.map('map', { zoomControl: false }).setView([-6.28, 106.81], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Plot semua stasiun dari data-stasiun.js
-        STASIUN_DATABASE.forEach(st => {
-            L.circleMarker([st.lat, st.lng], { radius: 5, color: 'red' }).addTo(map).bindPopup(st.nama);
-        });
-    }
+    const allStations = DATA_MASTER.map(d => turf.point([d.lg, d.lt], { nama: d.n, hujan: d.h }));
+    const analysisGroup = L.layerGroup().addTo(map);
+    let catchmentLayer;
+
+    // Gambar titik stasiun merah
+    allStations.forEach(pt => {
+        L.circleMarker([pt.geometry.coordinates[1], pt.geometry.coordinates[0]], {
+            radius: 5, fillColor: "red", color: "white", weight: 2, fillOpacity: 1
+        }).addTo(map).bindPopup(pt.properties.nama);
+    });
 
     document.getElementById('upload-geojson').addEventListener('change', function(e) {
         const reader = new FileReader();
-        reader.onload = (event) => processGeoJSON(JSON.parse(event.target.result));
+        reader.onload = (ev) => runAnalysis(JSON.parse(ev.target.result));
         reader.readAsText(e.target.files[0]);
     });
 
-    function processGeoJSON(geojson) {
+    function runAnalysis(geojson) {
         analysisGroup.clearLayers();
         if(catchmentLayer) map.removeLayer(catchmentLayer);
 
+        // Render Area Biru
         catchmentLayer = L.geoJSON(geojson, {
             coordsToLatLng: function(coords) {
                 if (Math.abs(coords[0]) > 1000) {
@@ -89,50 +110,53 @@
                     return new L.LatLng(p[1], p[0]);
                 }
                 return new L.LatLng(coords[1], coords[0]);
-            }
+            },
+            style: { color: "#3b82f6", weight: 3, fillOpacity: 0.1 }
         }).addTo(map);
         map.fitBounds(catchmentLayer.getBounds());
 
+        // Normalisasi Poligon
         let poly = geojson.features ? geojson.features[0] : geojson;
         if (poly.geometry.coordinates[0][0][0] > 1000) {
             poly = turf.rewind(turf.transformCoord(poly, UTM_48S, WGS84));
         }
 
-        calculateThiessen(poly);
-    }
-
-    function calculateThiessen(poly) {
-        const pts = STASIUN_DATABASE.map(st => turf.point([st.lng, st.lat], st));
+        // Thiessen Logic
         const bbox = turf.bbox(poly);
-        const voronoi = turf.voronoi(turf.featureCollection(pts), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
+        const voronoi = turf.voronoi(turf.featureCollection(allStations), { 
+            bbox: [bbox[0]-0.5, bbox[1]-0.5, bbox[2]+0.5, bbox[3]+0.5] 
+        });
 
+        const listDiv = document.getElementById('station-list');
+        listDiv.innerHTML = "";
         let totalWeight = 0, totalArea = 0;
-        const listArea = document.getElementById('list-area');
-        listArea.innerHTML = "";
 
         voronoi.features.forEach((v, i) => {
-            const intersection = turf.intersect(v, poly);
-            if (intersection) {
-                const area = turf.area(intersection) / 10000; // Ha
-                const st = pts[i].properties;
+            const intersect = turf.intersect(v, poly);
+            if (intersect) {
+                const area = turf.area(intersect) / 10000; // Hektar
+                const st = allStations[i].properties;
                 
                 totalWeight += (st.hujan * area);
                 totalArea += area;
 
-                L.geoJSON(intersection, { style: { color: 'orange', fillOpacity: 0.3 } }).addTo(analysisGroup);
+                L.geoJSON(intersect, { 
+                    style: { color: "orange", weight: 2, fillOpacity: 0.4 } 
+                }).addTo(analysisGroup).bindPopup(`${st.nama}: ${area.toFixed(2)} Ha`);
 
-                listArea.innerHTML += `
+                listDiv.innerHTML += `
                     <div class="st-card">
                         <b>${st.nama}</b><br>
-                        Hujan: ${st.hujan} mm<br>
-                        <small>Luas: ${area.toFixed(2)} Ha</small>
+                        Hujan: ${st.hujan} mm | Luas: ${area.toFixed(2)} Ha
                     </div>`;
             }
         });
 
-        const rerata = totalArea > 0 ? totalWeight / totalArea : 0;
-        document.getElementById('summary').style.display = 'block';
-        document.getElementById('result-val').innerText = rerata.toFixed(2) + " mm";
+        if (totalArea > 0) {
+            const rerata = totalWeight / totalArea;
+            document.getElementById('result-box').style.display = 'block';
+            document.getElementById('final-rain').innerText = rerata.toFixed(2) + " mm";
+        }
     }
 </script>
 </body>
