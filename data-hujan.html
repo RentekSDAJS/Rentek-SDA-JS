@@ -6,90 +6,85 @@
     <title>SDA Data Hub - Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root { --navy: #0f172a; --gold: #d4af37; --green: #10b981; --red: #ef4444; }
-        
-        /* Reset & Base */
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #f1f5f9; 
-            margin: 0; 
-            padding: 0; /* Padding dipindah ke container */
-            color: #1e293b;
-        }
+    :root { --navy: #0f172a; --gold: #d4af37; --green: #10b981; --red: #ef4444; }
+    
+    /* Reset & Base */
+    body { 
+        font-family: 'Plus Jakarta Sans', sans-serif; 
+        background: #f1f5f9; 
+        margin: 0; 
+        padding: 0; 
+        color: #1e293b;
+    }
 
-        /* HEADER - FIXED OVERLAP FIXED */
-        #top-header {
-            position: sticky; /* Sticky lebih aman agar tidak meniban konten */
-            top: 0; 
-            left: 0; 
-            right: 0; 
-            min-height: 70px;
-            background: var(--navy); 
-            color: white; 
-            display: flex; 
-            align-items: center;
-            justify-content: space-between; 
-            padding: 10px 25px; 
-            border-bottom: 5px solid var(--gold); 
-            z-index: 1000;
-            box-sizing: border-box;
-        }
-        
-        .header-left { display: flex; flex-direction: column; gap: 2px; }
-        .main-title { font-weight: 900; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
-        .sub-title { font-size: 0.75rem; color: var(--gold); font-weight: 600; opacity: 0.9; }
-        .credit-tag { font-size: 0.75rem; font-weight: 800; opacity: 0.8; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 4px; }
+    /* HEADER - KITA KEMBALIKAN KE FIXED DENGAN Z-INDEX TINGGI */
+    #top-header {
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        right: 0; 
+        height: 85px; /* Tinggi tetap */
+        background: var(--navy); 
+        color: white; 
+        display: flex; 
+        align-items: center;
+        justify-content: space-between; 
+        padding: 0 25px; 
+        border-bottom: 5px solid var(--gold); 
+        z-index: 2000; /* Lebih tinggi dari elemen manapun */
+        box-sizing: border-box;
+    }
+    
+    .header-left { display: flex; flex-direction: column; gap: 2px; }
+    .main-title { font-weight: 900; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
+    .sub-title { font-size: 0.75rem; color: var(--gold); font-weight: 600; opacity: 0.9; }
+    .credit-tag { font-size: 0.75rem; font-weight: 800; opacity: 0.8; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 4px; }
 
-        /* Responsivitas Header untuk Mobile */
-        @media (max-width: 600px) {
-            .main-title { font-size: 1rem; }
-            .sub-title { font-size: 0.65rem; }
-            .credit-tag { display: none; } /* Sembunyikan di HP agar lega */
-        }
+    /* CONTAINER - INI KUNCI AGAR TIDAK KETIBAN */
+    .container { 
+        max-width: 1100px; 
+        margin: 0 auto; 
+        padding: 110px 20px 40px 20px; /* Padding atas 110px (85px header + 25px jarak) */
+        display: none; 
+        box-sizing: border-box;
+    }
 
-        /* CONTAINER */
-        .container { 
-            max-width: 1100px; 
-            margin: 0 auto; 
-            padding: 20px; /* Memberi jarak dari tepi layar */
-            display: none; 
-        }
+    /* Card Styles */
+    .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    
+    /* Stats Box */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+    .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
+    .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.65rem; text-transform: uppercase; display: block; margin-bottom: 5px; }
+    .stat-box span { font-size: 1.1rem; font-weight: bold; }
 
-        /* Card Styles */
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        /* Stats Box */
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
-        .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.65rem; text-transform: uppercase; display: block; margin-bottom: 5px; }
-        .stat-box span { font-size: 1.1rem; font-weight: bold; }
+    /* Form Styles */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; }
+    input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
+    
+    .btn-save { background: var(--navy); color: var(--gold); padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; }
+    .btn-logout { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
+    
+    /* Table Styles */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { background: #f8fafc; color: var(--navy); padding: 15px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+    .btn-del { color: var(--red); font-weight: bold; cursor: pointer; border: 1px solid var(--red); padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
 
-        @media (max-width: 500px) {
-            .stats-grid { grid-template-columns: 1fr; } /* Stack ke bawah di HP */
-        }
+    /* Overlays */
+    #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+    #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
 
-        /* Form Styles */
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; }
-        .form-grid label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; color: #64748b; }
-        input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; transition: 0.3s; }
-        input:focus, select:focus { outline: none; border-color: var(--gold); }
-        
-        .btn-save { background: var(--navy); color: var(--gold); padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; transition: 0.3s; }
-        .btn-save:hover { filter: brightness(1.2); }
-        
-        .btn-logout { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; transition: 0.3s; }
-        .btn-logout:hover { background: var(--red); color: white; }
-        
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #f8fafc; color: var(--navy); padding: 15px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
-        .btn-del { color: var(--red); font-weight: bold; cursor: pointer; border: 1px solid var(--red); padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
-
-        /* Overlays */
-        #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
-    </style>
+    /* Responsive Mobile */
+    @media (max-width: 600px) {
+        #top-header { height: auto; padding: 10px 15px; flex-direction: column; text-align: center; gap: 5px; }
+        .container { padding-top: 140px; } /* Ruang lebih untuk header yang memanjang ke bawah di mobile */
+        .stats-grid { grid-template-columns: 1fr; }
+        .main-title { font-size: 1rem; }
+        .sub-title { font-size: 0.65rem; }
+        .credit-tag { display: none; }
+    }
+</style>
 </head>
 <body>
 
