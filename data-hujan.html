@@ -6,63 +6,73 @@
     <title>Rainfall Data Hub - SDA Jaksel</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --navy: #0f172a; --gold: #d4af37; --bg: #f1f5f9; }
+        :root { --navy: #0f172a; --gold: #d4af37; --bg: #f1f5f9; --green: #10b981; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         
-        /* Proteksi Login Sederhana */
         #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .auth-card { background: white; padding: 40px; border-radius: 20px; text-align: center; border-top: 6px solid var(--gold); }
         
         .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 10px; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
-        .stat-box small { color: var(--gold); font-weight: bold; }
+        .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
         
-        select { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid var(--navy); font-weight: bold; margin-bottom: 20px; }
-        
-        table { width: 100%; border-collapse: collapse; }
+        .action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        select { flex-grow: 1; padding: 12px; border-radius: 10px; border: 2px solid var(--navy); font-weight: bold; }
+        .btn-add { background: var(--navy); color: var(--gold); border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { background: var(--navy); color: var(--gold); padding: 12px; text-align: left; font-size: 0.8rem; }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        tr:nth-child(even) { background: #f8fafc; }
         
-        .btn-edit { color: #2563eb; font-weight: bold; text-decoration: none; font-size: 0.8rem; }
-        .btn-excel { background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        .btn-edit { color: #2563eb; font-weight: bold; text-decoration: none; font-size: 0.8rem; border: 1px solid #2563eb; padding: 4px 8px; border-radius: 4px; }
+        .btn-excel { background: var(--green); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.85rem; }
+
+        /* Modal Tambah Data */
+        #addModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 2000; }
+        .modal-card { background: white; padding: 30px; border-radius: 15px; width: 350px; }
+        .modal-card input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div id="authOverlay">
     <div class="auth-card">
-        <h2>SDA Data Access</h2>
-        <input type="password" id="passInput" style="padding:10px; margin:10px 0; width:200px; border-radius:5px; border:1px solid #ddd;" placeholder="Password">
+        <h2 style="color:var(--navy)">SDA Data Access</h2>
+        <input type="password" id="passInput" style="padding:12px; margin:15px 0; width:220px; border-radius:8px; border:1px solid #ddd; text-align:center;" placeholder="••••••••">
         <br>
-        <button onclick="login()" style="background:var(--navy); color:var(--gold); border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">MASUK</button>
+        <button onclick="login()" style="background:var(--navy); color:var(--gold); border:none; padding:12px 30px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">UNLOCKED</button>
     </div>
 </div>
 
 <div class="container" id="mainContainer">
     <div class="header">
         <h2 style="margin:0; color:var(--navy);">Rainfall Historical Hub</h2>
-        <button onclick="exportTableToExcel('rainTable', 'data-hujan-jaksel')" class="btn-excel">DOWNLOAD EXCEL</button>
+        <button onclick="exportTableToExcel('rainTable')" class="btn-excel">DOWNLOAD EXCEL</button>
     </div>
 
     <div class="stats-grid">
         <div class="stat-box">
-            <small>RERATA STASIUN</small><br>
-            <span id="avgStat">0</span> mm
+            <small>Rerata (mm)</small><br>
+            <span id="avgStat" style="font-size: 1.2rem; font-weight: bold;">0</span>
         </div>
         <div class="stat-box">
-            <small>HUJAN TERTINGGI</small><br>
-            <span id="maxStat">0</span> mm
+            <small>Tertinggi (mm)</small><br>
+            <span id="maxStat" style="font-size: 1.2rem; font-weight: bold;">0</span>
         </div>
         <div class="stat-box">
-            <small>TAHUN TERKINI</small><br>
-            <span id="latestYear">-</span>
+            <small>Rentang Tahun</small><br>
+            <span id="yearRange" style="font-size: 1.2rem; font-weight: bold;">-</span>
         </div>
     </div>
 
-    <select id="stationSelect" onchange="renderData()"></select>
+    <div class="action-bar">
+        <select id="stationSelect" onchange="renderData()"></select>
+        <button class="btn-add" onclick="showAddModal()">+ TAMBAH TAHUN</button>
+    </div>
 
     <div style="overflow-x: auto;">
         <table id="rainTable">
@@ -70,11 +80,26 @@
                 <tr>
                     <th>TAHUN</th>
                     <th>CURAH HUJAN (mm)</th>
-                    <th>AKSI</th>
+                    <th>MANAJEMEN</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
+    </div>
+</div>
+
+<div id="addModal">
+    <div class="modal-card">
+        <h3 style="margin-top:0; color:var(--navy)">Tambah Data Baru</h3>
+        <label style="font-size: 0.8rem;">Tahun (Contoh: 2025)</label>
+        <input type="number" id="newYear" placeholder="2025">
+        <label style="font-size: 0.8rem;">Nilai Hujan (mm)</label>
+        <input type="number" step="0.1" id="newVal" placeholder="0.0">
+        <p style="font-size: 0.7rem; color: #666;">*Data akan diarahkan ke GitHub untuk penyimpanan permanen.</p>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button onclick="saveNewData()" style="flex:1; background:var(--green); color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">SIMPAN</button>
+            <button onclick="document.getElementById('addModal').style.display='none'" style="flex:1; background:#ef4444; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">BATAL</button>
+        </div>
     </div>
 </div>
 
@@ -92,18 +117,21 @@
     }
 
     async function init() {
-        const r = await fetch('data/hujan/all-data.json');
-        data = await r.json();
-        data.sort((a,b) => b.tahun - a.tahun);
-        
-        const sel = document.getElementById('stationSelect');
-        stasiun.forEach((s, i) => {
-            let o = document.createElement('option');
-            o.value = `st_${(i+1).toString().padStart(2,'0')}`;
-            o.textContent = s;
-            sel.appendChild(o);
-        });
-        renderData();
+        try {
+            const r = await fetch('data/hujan/all-data.json');
+            data = await r.json();
+            // 1. URUTKAN DARI TAHUN TERLAMA (Ascending)
+            data.sort((a,b) => a.tahun - b.tahun);
+            
+            const sel = document.getElementById('stationSelect');
+            stasiun.forEach((s, i) => {
+                let o = document.createElement('option');
+                o.value = `st_${(i+1).toString().padStart(2,'0')}`;
+                o.textContent = s;
+                sel.appendChild(o);
+            });
+            renderData();
+        } catch (e) { alert("Data gagal dimuat!"); }
     }
 
     function renderData() {
@@ -119,32 +147,36 @@
             
             tbody.innerHTML += `<tr>
                 <td><strong>${d.tahun}</strong></td>
-                <td>${val} mm</td>
-                <td><a href="https://github.com/RentekSDAJS/Calculator-Online---Rentek-SDA-JS/edit/main/data/hujan/all-data.json" target="_blank" class="btn-edit">EDIT</a></td>
+                <td>${val.toLocaleString('id-ID')} mm</td>
+                <td><a href="https://github.com/RentekSDAJS/Calculator-Online---Rentek-SDA-JS/edit/main/data/hujan/all-data.json" target="_blank" class="btn-edit">EDIT / HAPUS</a></td>
             </tr>`;
         });
         
         document.getElementById('avgStat').textContent = (total / data.length).toFixed(2);
         document.getElementById('maxStat').textContent = max;
-        document.getElementById('latestYear').textContent = data[0].tahun;
+        document.getElementById('yearRange').textContent = `${data[0].tahun} - ${data[data.length-1].tahun}`;
     }
 
-    function exportTableToExcel(tableID, filename = ''){
-        let downloadLink;
-        let dataType = 'application/vnd.ms-excel';
+    function showAddModal() {
+        document.getElementById('addModal').style.display = 'flex';
+        document.getElementById('newYear').value = data[data.length-1].tahun + 1;
+    }
+
+    function saveNewData() {
+        // Karena ini static web, kita arahkan user untuk edit file JSON secara langsung
+        alert("Sistem akan membuka file Database. Silakan tambahkan baris tahun baru di bagian bawah file tersebut.");
+        window.open('https://github.com/RentekSDAJS/Calculator-Online---Rentek-SDA-JS/edit/main/data/hujan/all-data.json', '_blank');
+        document.getElementById('addModal').style.display = 'none';
+    }
+
+    function exportTableToExcel(tableID){
         let tableSelect = document.getElementById(tableID);
         let tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
-        filename = filename?filename+'.xls':'excel_data.xls';
-        downloadLink = document.createElement("a");
+        let downloadLink = document.createElement("a");
         document.body.appendChild(downloadLink);
-        if(navigator.msSaveOrOpenBlob){
-            let blob = new Blob(['\ufeff', tableHTML], { type: dataType });
-            navigator.msSaveOrOpenBlob( blob, filename);
-        }else{
-            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
-            downloadLink.download = filename;
-            downloadLink.click();
-        }
+        downloadLink.href = 'data:application/vnd.ms-excel,' + tableHTML;
+        downloadLink.download = 'rekap-hujan-sda-jaksel.xls';
+        downloadLink.click();
     }
 </script>
 </body>
