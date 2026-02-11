@@ -9,42 +9,53 @@
         :root { --navy: #0f172a; --gold: #d4af37; --bg: #f1f5f9; --green: #10b981; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         
+        /* Layar Kunci */
         #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .auth-card { background: white; padding: 40px; border-radius: 20px; text-align: center; border-top: 6px solid var(--gold); }
+        .auth-card { background: white; padding: 40px; border-radius: 20px; text-align: center; border-top: 6px solid var(--gold); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
         
+        /* Container Utama */
         .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 10px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         
+        /* Box Statistik */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
         .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
+        .stat-box span { font-size: 1.2rem; font-weight: bold; display: block; margin-top: 5px; }
         
+        /* Bar Aksi */
         .action-bar { display: flex; gap: 10px; margin-bottom: 20px; }
-        select { flex-grow: 1; padding: 12px; border-radius: 10px; border: 2px solid var(--navy); font-weight: bold; }
-        .btn-add { background: var(--navy); color: var(--gold); border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        select { flex-grow: 1; padding: 12px; border-radius: 10px; border: 2px solid var(--navy); font-weight: bold; font-family: inherit; cursor: pointer; }
+        .btn-add { background: var(--navy); color: var(--gold); border: none; padding: 0 20px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-add:hover { background: #1e293b; }
 
+        /* Tabel Data */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: var(--navy); color: var(--gold); padding: 12px; text-align: left; font-size: 0.8rem; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
+        th { background: var(--navy); color: var(--gold); padding: 15px; text-align: left; font-size: 0.8rem; letter-spacing: 1px; }
+        td { padding: 15px; border-bottom: 1px solid #eee; font-size: 0.95rem; }
         tr:nth-child(even) { background: #f8fafc; }
         
-        .btn-edit { color: #2563eb; font-weight: bold; text-decoration: none; font-size: 0.8rem; border: 1px solid #2563eb; padding: 4px 8px; border-radius: 4px; }
-        .btn-excel { background: var(--green); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.85rem; }
+        .btn-edit { color: #2563eb; font-weight: bold; text-decoration: none; font-size: 0.8rem; border: 1px solid #2563eb; padding: 5px 10px; border-radius: 6px; transition: 0.2s; }
+        .btn-edit:hover { background: #2563eb; color: white; }
+        .btn-excel { background: var(--green); color: white; padding: 12px 20px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 0.85rem; }
 
-        /* Modal Tambah Data */
-        #addModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 2000; }
-        .modal-card { background: white; padding: 30px; border-radius: 15px; width: 350px; }
-        .modal-card input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        /* Modal Tambah Tahun */
+        #addModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 2000; }
+        .modal-card { background: white; padding: 30px; border-radius: 20px; width: 350px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        .modal-card h3 { margin-top: 0; color: var(--navy); border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+        .modal-card input { width: 100%; padding: 12px; margin: 10px 0 20px 0; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        .modal-btns { display: flex; gap: 10px; }
+        .modal-btns button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="authOverlay">
     <div class="auth-card">
-        <h2 style="color:var(--navy)">SDA Data Access</h2>
-        <input type="password" id="passInput" style="padding:12px; margin:15px 0; width:220px; border-radius:8px; border:1px solid #ddd; text-align:center;" placeholder="••••••••">
-        <br>
-        <button onclick="login()" style="background:var(--navy); color:var(--gold); border:none; padding:12px 30px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">UNLOCKED</button>
+        <h2 style="margin:0; color:var(--navy)">SDA Data Hub Login</h2>
+        <p style="color:#64748b; font-size:0.9rem">Masukkan password untuk mengelola data</p>
+        <input type="password" id="passInput" style="padding:12px; margin:15px 0; width:100%; border-radius:8px; border:2px solid #ddd; text-align:center;" placeholder="••••••••">
+        <button onclick="login()" style="background:var(--navy); color:var(--gold); border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">BUKA DATABASE</button>
     </div>
 </div>
 
@@ -56,16 +67,16 @@
 
     <div class="stats-grid">
         <div class="stat-box">
-            <small>Rerata (mm)</small><br>
-            <span id="avgStat" style="font-size: 1.2rem; font-weight: bold;">0</span>
+            <small>Rerata Stasiun</small>
+            <span id="avgStat">0</span>
         </div>
         <div class="stat-box">
-            <small>Tertinggi (mm)</small><br>
-            <span id="maxStat" style="font-size: 1.2rem; font-weight: bold;">0</span>
+            <small>Curah Tertinggi</small>
+            <span id="maxStat">0</span>
         </div>
         <div class="stat-box">
-            <small>Rentang Tahun</small><br>
-            <span id="yearRange" style="font-size: 1.2rem; font-weight: bold;">-</span>
+            <small>Rentang Tahun</small>
+            <span id="yearRange">-</span>
         </div>
     </div>
 
@@ -78,9 +89,9 @@
         <table id="rainTable">
             <thead>
                 <tr>
-                    <th>TAHUN</th>
+                    <th>TAHUN (Kronologis)</th>
                     <th>CURAH HUJAN (mm)</th>
-                    <th>MANAJEMEN</th>
+                    <th>AKSI</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -90,15 +101,13 @@
 
 <div id="addModal">
     <div class="modal-card">
-        <h3 style="margin-top:0; color:var(--navy)">Tambah Data Baru</h3>
-        <label style="font-size: 0.8rem;">Tahun (Contoh: 2025)</label>
-        <input type="number" id="newYear" placeholder="2025">
-        <label style="font-size: 0.8rem;">Nilai Hujan (mm)</label>
-        <input type="number" step="0.1" id="newVal" placeholder="0.0">
-        <p style="font-size: 0.7rem; color: #666;">*Data akan diarahkan ke GitHub untuk penyimpanan permanen.</p>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button onclick="saveNewData()" style="flex:1; background:var(--green); color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">SIMPAN</button>
-            <button onclick="document.getElementById('addModal').style.display='none'" style="flex:1; background:#ef4444; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">BATAL</button>
+        <h3>Input Tahun Baru</h3>
+        <p style="font-size:0.85rem; color:#64748b">Sistem akan menyiapkan baris baru di database GitHub Anda.</p>
+        <label style="font-weight:bold; font-size:0.8rem">TAHUN BARU:</label>
+        <input type="number" id="newYear">
+        <div class="modal-btns">
+            <button onclick="saveNewData()" style="background:var(--green); color:white;">LANJUTKAN</button>
+            <button onclick="document.getElementById('addModal').style.display='none'" style="background:#ef4444; color:white;">BATAL</button>
         </div>
     </div>
 </div>
@@ -113,15 +122,16 @@
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('mainContainer').style.display = 'block';
             init();
-        } else { alert("Akses Ditolak!"); }
+        } else { alert("Password Salah, Bos!"); }
     }
 
     async function init() {
         try {
             const r = await fetch('data/hujan/all-data.json');
             data = await r.json();
-            // 1. URUTKAN DARI TAHUN TERLAMA (Ascending)
-            data.sort((a,b) => a.tahun - b.tahun);
+            
+            // --- PERBAIKAN 1: URUTAN DARI TERLAMA (ASCENDING) ---
+            data.sort((a,b) => a.tahun - b.tahun); 
             
             const sel = document.getElementById('stationSelect');
             stasiun.forEach((s, i) => {
@@ -131,7 +141,7 @@
                 sel.appendChild(o);
             });
             renderData();
-        } catch (e) { alert("Data gagal dimuat!"); }
+        } catch (e) { alert("Database gagal dimuat!"); }
     }
 
     function renderData() {
@@ -152,19 +162,21 @@
             </tr>`;
         });
         
-        document.getElementById('avgStat').textContent = (total / data.length).toFixed(2);
-        document.getElementById('maxStat').textContent = max;
+        document.getElementById('avgStat').textContent = (total / data.length).toFixed(2) + " mm";
+        document.getElementById('maxStat').textContent = max + " mm";
         document.getElementById('yearRange').textContent = `${data[0].tahun} - ${data[data.length-1].tahun}`;
     }
 
+    // --- PERBAIKAN 2: FORM TAMBAH DATA ---
     function showAddModal() {
         document.getElementById('addModal').style.display = 'flex';
+        // Set otomatis tahun selanjutnya
         document.getElementById('newYear').value = data[data.length-1].tahun + 1;
     }
 
     function saveNewData() {
-        // Karena ini static web, kita arahkan user untuk edit file JSON secara langsung
-        alert("Sistem akan membuka file Database. Silakan tambahkan baris tahun baru di bagian bawah file tersebut.");
+        const yr = document.getElementById('newYear').value;
+        alert("PENTING: Silakan tambah baris baru di GitHub untuk tahun " + yr + ". Format: { \"tahun\": " + yr + ", ... }");
         window.open('https://github.com/RentekSDAJS/Calculator-Online---Rentek-SDA-JS/edit/main/data/hujan/all-data.json', '_blank');
         document.getElementById('addModal').style.display = 'none';
     }
@@ -175,7 +187,7 @@
         let downloadLink = document.createElement("a");
         document.body.appendChild(downloadLink);
         downloadLink.href = 'data:application/vnd.ms-excel,' + tableHTML;
-        downloadLink.download = 'rekap-hujan-sda-jaksel.xls';
+        downloadLink.download = 'rekap_hujan_sda.xls';
         downloadLink.click();
     }
 </script>
