@@ -3,39 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Data Hujan - SDA Jaksel</title>
+    <title>Rekap Data Hujan - SDA Jakarta Selatan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
-        .container { max-width: 600px; margin: 0 auto; }
-        h2 { color: #333; }
-        .controls { margin-bottom: 20px; background: #eee; padding: 15px; border-radius: 5px; }
-        select { padding: 8px; width: 100%; font-size: 16px; margin-top: 10px; }
-        
-        /* Gaya tabel agar rapi saat di-copy ke Excel */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #000; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        
-        .btn-copy-info { font-size: 12px; color: #666; margin-bottom: 10px; display: block; }
-        .back-link { text-decoration: none; color: blue; font-size: 14px; }
+        :root {
+            --navy-deep: #0f172a;    /* Midnight Navy */
+            --gold-accent: #d4af37;  /* Luxury Gold */
+            --gold-soft: #fcf8e8;    /* Background Gold Muda */
+            --bg-color: #f1f5f9;
+            --text-color: #1e293b;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 40px 20px;
+            color: var(--text-color);
+        }
+
+        .container { 
+            max-width: 750px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+            border-top: 8px solid var(--navy-deep); /* Aksen Navy di atas */
+        }
+
+        .back-link { 
+            text-decoration: none; 
+            color: var(--navy-deep); 
+            font-size: 0.875rem; 
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 25px;
+            transition: color 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-link:hover { color: var(--gold-accent); }
+
+        h2 { 
+            margin-top: 0; 
+            font-weight: 800; 
+            font-size: 1.8rem;
+            color: var(--navy-deep);
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid var(--gold-accent);
+            display: inline-block;
+            padding-bottom: 5px;
+            margin-bottom: 30px;
+        }
+
+        .controls { 
+            margin-bottom: 30px; 
+            padding: 25px; 
+            background: var(--navy-deep); 
+            border-radius: 12px; 
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        label { 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+            display: block;
+            margin-bottom: 10px;
+            color: var(--gold-accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select { 
+            padding: 12px 15px; 
+            width: 100%; 
+            font-size: 1rem; 
+            border-radius: 8px; 
+            border: 2px solid var(--gold-accent);
+            background-color: white;
+            color: var(--navy-deep);
+            font-weight: 600;
+            outline: none;
+        }
+
+        .copy-hint { 
+            font-size: 0.8rem; 
+            color: #64748b; 
+            margin-bottom: 15px; 
+            display: block;
+            font-style: italic;
+        }
+
+        /* Tabel Rekap Luxury */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 10px;
+            background: white;
+        }
+
+        th, td { 
+            border: 1px solid #e2e8f0; 
+            padding: 14px 20px; 
+            text-align: left; 
+        }
+
+        th { 
+            background-color: var(--navy-deep); 
+            color: var(--gold-accent);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        tr:nth-child(even) { background-color: var(--gold-soft); }
+
+        tr:hover { background-color: #f8fafc; border: 1px solid var(--gold-accent); }
+
+        td strong { color: var(--navy-deep); font-size: 1.1rem; }
+
+        .loading { padding: 40px; text-align: center; font-weight: 600; color: var(--navy-deep); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="index.html" class="back-link">← Kembali ke Dashboard</a>
-    <h2>Rekap Tahunan Per Stasiun</h2>
+    <a href="index.html" class="back-link">← Dashboard</a>
+    <br>
+    <h2>Rekapitulasi Stasiun</h2>
     
     <div class="controls">
-        <label>Pilih Stasiun:</label>
+        <label>Pilih Lokasi Stasiun</label>
         <select id="stationSelect" onchange="loadRekap()">
             </select>
     </div>
 
-    <span class="btn-copy-info">* Anda bisa langsung blok tabel di bawah dan Copy (Ctrl+C) ke Excel.</span>
+    <span class="copy-hint">
+        * Seleksi tabel di bawah dan gunakan Ctrl+C untuk menyalin data ke Excel.
+    </span>
     
     <div id="rekapArea">
-        <p>Memuat database...</p>
+        <div class="loading">Menghubungkan ke database...</div>
     </div>
 </div>
 
@@ -52,9 +163,7 @@
         try {
             const resp = await fetch('data/hujan/all-data.json');
             rawData = await resp.json();
-            
-            // Urutkan data berdasarkan tahun 2000 ke atas
-            rawData.sort((a, b) => a.tahun - b.tahun);
+            rawData.sort((a, b) => b.tahun - a.tahun);
 
             const select = document.getElementById('stationSelect');
             stationNames.forEach((name, i) => {
@@ -66,7 +175,7 @@
 
             loadRekap();
         } catch (e) {
-            document.getElementById('rekapArea').innerHTML = "Gagal mengambil file all-data.json";
+            document.getElementById('rekapArea').innerHTML = "<div class='loading' style='color:red'>Database tidak terdeteksi.</div>";
         }
     }
 
@@ -79,7 +188,7 @@
                 <thead>
                     <tr>
                         <th>Tahun</th>
-                        <th>${name} (mm)</th>
+                        <th>Data Curah Hujan: ${name} (mm)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,8 +197,8 @@
         rawData.forEach(item => {
             tableHtml += `
                 <tr>
-                    <td>${item.tahun}</td>
-                    <td>${item[key] || 0}</td>
+                    <td><strong>${item.tahun}</strong></td>
+                    <td><strong>${item[key] || 0}</strong></td>
                 </tr>
             `;
         });
