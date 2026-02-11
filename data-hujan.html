@@ -3,147 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Management Data Hujan - SDA Jakarta Selatan</title>
+    <title>Rainfall Data Hub - SDA Jaksel</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --navy: #0f172a;
-            --gold: #d4af37;
-            --bg: #f1f5f9;
-        }
-
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg); 
-            margin: 0; padding: 20px; 
-        }
-
-        /* Tampilan Login */
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--navy); display: flex; align-items: center; justify-content: center;
-            z-index: 9999; color: white;
-        }
-
-        .login-box {
-            background: white; padding: 40px; border-radius: 20px;
-            color: var(--navy); text-align: center; width: 300px;
-            border-top: 5px solid var(--gold);
-        }
-
-        input[type="password"] {
-            width: 100%; padding: 12px; margin: 20px 0;
-            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
-        }
-
-        .btn-login {
-            background: var(--navy); color: var(--gold); border: none;
-            padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
-
-        /* Tampilan Main */
-        .container { 
-            max-width: 900px; margin: 0 auto; background: white; 
-            padding: 30px; border-radius: 20px; display: none; /* Sembunyi sebelum login */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        :root { --navy: #0f172a; --gold: #d4af37; --bg: #f1f5f9; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
         
-        .btn-add {
-            background: #10b981; color: white; text-decoration: none;
-            padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 0.8rem;
-        }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-        th { background: var(--navy); color: var(--gold); }
-        tr:nth-child(even) { background: #fcf8e8; }
-
-        .action-btns { display: flex; gap: 5px; }
-        .btn-edit { color: blue; text-decoration: none; font-size: 0.8rem; font-weight: bold; }
-        .btn-delete { color: red; text-decoration: none; font-size: 0.8rem; font-weight: bold; }
+        /* Proteksi Login Sederhana */
+        #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .auth-card { background: white; padding: 40px; border-radius: 20px; text-align: center; border-top: 6px solid var(--gold); }
+        
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
+        .stat-box small { color: var(--gold); font-weight: bold; }
+        
+        select { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid var(--navy); font-weight: bold; margin-bottom: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { background: var(--navy); color: var(--gold); padding: 12px; text-align: left; font-size: 0.8rem; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        
+        .btn-edit { color: #2563eb; font-weight: bold; text-decoration: none; font-size: 0.8rem; }
+        .btn-excel { background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="loginOverlay">
-    <div class="login-box">
-        <h3>Restricted Access</h3>
-        <p>Masukkan Password Admin:</p>
-        <input type="password" id="passInput" placeholder="Password">
-        <button class="btn-login" onclick="checkPass()">MASUK</button>
+<div id="authOverlay">
+    <div class="auth-card">
+        <h2>SDA Data Access</h2>
+        <input type="password" id="passInput" style="padding:10px; margin:10px 0; width:200px; border-radius:5px; border:1px solid #ddd;" placeholder="Password">
+        <br>
+        <button onclick="login()" style="background:var(--navy); color:var(--gold); border:none; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">MASUK</button>
     </div>
 </div>
 
-<div class="container" id="mainContent">
-    <div class="header-flex">
-        <h2 style="color: var(--navy);">Database Management</h2>
-        <a href="/admin/#/collections/hujan/new" class="btn-add">+ TAMBAH TAHUN BARU</a>
+<div class="container" id="mainContainer">
+    <div class="header">
+        <h2 style="margin:0; color:var(--navy);">Rainfall Historical Hub</h2>
+        <button onclick="exportTableToExcel('rainTable', 'data-hujan-jaksel')" class="btn-excel">DOWNLOAD EXCEL</button>
     </div>
 
-    <div style="background: #fefce8; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #fef08a;">
-        <label>Pilih Stasiun untuk Dikelola:</label>
-        <select id="stationSelect" onchange="loadData()" style="width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px;">
-            </select>
+    <div class="stats-grid">
+        <div class="stat-box">
+            <small>RERATA STASIUN</small><br>
+            <span id="avgStat">0</span> mm
+        </div>
+        <div class="stat-box">
+            <small>HUJAN TERTINGGI</small><br>
+            <span id="maxStat">0</span> mm
+        </div>
+        <div class="stat-box">
+            <small>TAHUN TERKINI</small><br>
+            <span id="latestYear">-</span>
+        </div>
     </div>
 
-    <div id="tableArea"></div>
+    <select id="stationSelect" onchange="renderData()"></select>
+
+    <div style="overflow-x: auto;">
+        <table id="rainTable">
+            <thead>
+                <tr>
+                    <th>TAHUN</th>
+                    <th>CURAH HUJAN (mm)</th>
+                    <th>AKSI</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // Silakan ganti password-nya di sini
-    const SECRET_PASS = "admin123"; 
+    const P = "admin123";
+    let data = [];
+    const stasiun = ["Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
 
-    function checkPass() {
-        const input = document.getElementById('passInput').value;
-        if(input === SECRET_PASS) {
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
+    function login() {
+        if(document.getElementById('passInput').value === P) {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainContainer').style.display = 'block';
             init();
-        } else {
-            alert("Password Salah!");
-        }
+        } else { alert("Akses Ditolak!"); }
     }
-
-    let rawData = [];
-    const stationNames = ["Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
 
     async function init() {
-        const resp = await fetch('data/hujan/all-data.json');
-        rawData = await resp.json();
-        rawData.sort((a, b) => a.tahun - b.tahun);
-
-        const select = document.getElementById('stationSelect');
-        stationNames.forEach((name, i) => {
-            let opt = document.createElement('option');
-            opt.value = `st_${(i+1).toString().padStart(2, '0')}`;
-            opt.textContent = name;
-            select.appendChild(opt);
+        const r = await fetch('data/hujan/all-data.json');
+        data = await r.json();
+        data.sort((a,b) => b.tahun - a.tahun);
+        
+        const sel = document.getElementById('stationSelect');
+        stasiun.forEach((s, i) => {
+            let o = document.createElement('option');
+            o.value = `st_${(i+1).toString().padStart(2,'0')}`;
+            o.textContent = s;
+            sel.appendChild(o);
         });
-        loadData();
+        renderData();
     }
 
-    function loadData() {
+    function renderData() {
         const key = document.getElementById('stationSelect').value;
-        const name = document.getElementById('stationSelect').options[document.getElementById('stationSelect').selectedIndex].text;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
         
-        let html = `<table><thead><tr><th>Tahun</th><th>Curah Hujan (mm)</th><th>Tindakan</th></tr></thead><tbody>`;
-        
-        rawData.forEach(item => {
-            html += `<tr>
-                <td><strong>${item.tahun}</strong></td>
-                <td>${item[key] || 0}</td>
-                <td class="action-btns">
-                    <a href="/admin/#/collections/hujan/entries/${item.tahun}" class="btn-edit">EDIT</a> | 
-                    <a href="/admin/#/collections/hujan/entries/${item.tahun}" class="btn-delete">HAPUS</a>
-                </td>
+        let total = 0, max = 0;
+        data.forEach(d => {
+            let val = parseFloat(d[key]) || 0;
+            total += val;
+            if(val > max) max = val;
+            
+            tbody.innerHTML += `<tr>
+                <td><strong>${d.tahun}</strong></td>
+                <td>${val} mm</td>
+                <td><a href="https://github.com/RentekSDAJS/Calculator-Online---Rentek-SDA-JS/edit/main/data/hujan/all-data.json" target="_blank" class="btn-edit">EDIT</a></td>
             </tr>`;
         });
-        html += `</tbody></table>`;
-        document.getElementById('tableArea').innerHTML = html;
+        
+        document.getElementById('avgStat').textContent = (total / data.length).toFixed(2);
+        document.getElementById('maxStat').textContent = max;
+        document.getElementById('latestYear').textContent = data[0].tahun;
+    }
+
+    function exportTableToExcel(tableID, filename = ''){
+        let downloadLink;
+        let dataType = 'application/vnd.ms-excel';
+        let tableSelect = document.getElementById(tableID);
+        let tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+        filename = filename?filename+'.xls':'excel_data.xls';
+        downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        if(navigator.msSaveOrOpenBlob){
+            let blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+            navigator.msSaveOrOpenBlob( blob, filename);
+        }else{
+            downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+            downloadLink.download = filename;
+            downloadLink.click();
+        }
     }
 </script>
-
 </body>
 </html>
