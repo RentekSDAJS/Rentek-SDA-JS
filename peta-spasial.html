@@ -2,70 +2,86 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Spatial Analyst (Time Series Sorted)</title>
+    <title>SDA Jaksel - Hydro-Analyst Interactive</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --navy: #0f172a; --accent: #f59e0b; --teal: #0d9488; }
         body { margin: 0; display: flex; height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
-        #sidebar { width: 400px; background: white; padding: 25px; overflow-y: auto; border-right: 1px solid #e2e8f0; z-index: 1000; }
-        #map { flex: 1; background: #f1f5f9; }
-        .card { background: #ffffff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        h2 { color: var(--navy); font-size: 1.1rem; text-transform: uppercase; border-left: 4px solid var(--accent); padding-left: 10px; }
+        
+        #sidebar { width: 450px; background: white; padding: 20px; overflow-y: auto; border-right: 1px solid #cbd5e1; z-index: 1000; }
+        #map { flex: 1; }
+
+        .card { background: #ffffff; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        h2 { font-size: 1rem; text-transform: uppercase; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 15px; }
+        
         .res-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
-        .res-table th, .res-table td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
-        .res-table th { background: #f8fafc; color: var(--navy); }
-        .highlight { font-weight: bold; color: var(--teal); }
+        .res-table th { background: #f1f5f9; padding: 8px; border: 1px solid #e2e8f0; }
+        .res-table td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
+        
+        .highlight-row { background: #f0fdf4; font-weight: bold; border: 2px solid #22c55e !important; }
         .btn { background: var(--navy); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
         
-        /* Label Stasiun Kontras & Bersih */
-        .station-label {
-            background: none !important; border: none !important; color: #000;
-            font-size: 11px; font-weight: 800; text-shadow: 2px 2px 0px #fff, -1px -1px 0px #fff; white-space: nowrap;
-        }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
+        .input-group select, .input-group input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; }
+
+        .station-label { background: none !important; border: none !important; color: #d94100; font-size: 11px; font-weight: 900; text-shadow: 2px 2px 0px #fff; white-space: nowrap; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Spatial Analyst Hub</h2>
+    <h2>Spatial & Frequency Analysis</h2>
+    
     <div class="card">
-        <label><strong>1. Upload Watershed (UTM/WGS84)</strong></label>
-        <input type="file" id="inputCatchment" style="width:100%; margin-top:15px; font-size: 0.8rem;">
-        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none; margin-top:10px;">PROSES ANALISIS</button>
-        <div id="statusInfo" style="padding:10px; border-radius:8px; margin-top:10px; font-size:0.75rem; display:none; text-align:center; font-weight:bold;"></div>
-    </div>
-
-    <div id="spatialResult" style="display:none;">
-        <div class="card">
-            <h3>📐 Matriks Thiessen (Ci)</h3>
-            <table class="res-table">
-                <thead><tr><th>Stasiun</th><th>Luas (km²)</th><th>Ci</th></tr></thead>
-                <tbody id="body-spatial"></tbody>
-            </table>
+        <div class="input-group">
+            <label>1. Upload Watershed JSON</label>
+            <input type="file" id="inputCatchment">
         </div>
+        
+        <div class="input-group">
+            <label>2. Pilih Kala Ulang (T) Tahun</label>
+            <select id="selectT" onchange="updateView()">
+                <option value="2">Kala Ulang 2 Tahun</option>
+                <option value="5">Kala Ulang 5 Tahun</option>
+                <option value="10">Kala Ulang 10 Tahun</option>
+                <option value="25">Kala Ulang 25 Tahun</option>
+                <option value="50">Kala Ulang 50 Tahun</option>
+                <option value="100">Kala Ulang 100 Tahun</option>
+            </select>
+        </div>
+
+        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none;">HITUNG SEKARANG</button>
+        <div id="statusInfo" style="display:none; margin-top:10px; text-align:center; font-weight:bold; font-size:0.8rem; padding:10px; border-radius:8px;"></div>
     </div>
 
-    <div id="rainResult" style="display:none;">
+    <div id="resultsArea" style="display:none;">
+        <div class="card" style="text-align:center; background: #f0fdf4; border: 1px solid #22c55e;">
+            <h3 style="margin:0; color: #166534; font-size: 0.8rem;">REKOMENDASI METODE (T=<span class="valT"></span>)</h3>
+            <div id="bestResult" style="font-size: 1.5rem; font-weight: 800; color: #15803d;">-</div>
+            <div id="bestValue" style="font-size: 1.1rem; font-weight: bold; color: #000;">0.00 mm</div>
+        </div>
+
         <div class="card">
-            <h3>🌧️ Hujan Wilayah (Deret Waktu)</h3>
+            <h3>📊 Perbandingan Semua Metode (T=<span class="valT"></span>)</h3>
             <table class="res-table">
-                <thead><tr><th>Tahun (Terlama → Terbaru)</th><th>Hujan (mm)</th></tr></thead>
-                <tbody id="body-rain"></tbody>
+                <thead>
+                    <tr><th>Metode</th><th>Hujan (mm)</th><th>$\Delta_{max}$ (SK)</th></tr>
+                </thead>
+                <tbody id="body-compare"></tbody>
             </table>
         </div>
     </div>
 </div>
+
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
-<script src="https://unpkg.com/@mapbox/togeojson"></script>
 
 <script>
     const CONFIG = { owner: 'RentekSDAJS', repo: 'Calculator-Online---Rentek-SDA-JS', path: 'data/hujan/all-data.json' };
-    
-    // Proyeksi Jakarta UTM Zone 48S
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
 
     const STATIONS = [
@@ -93,103 +109,125 @@
         { n: "Pompa Cideng", id: "st_22", lat: -6.17355, lng: 106.806328 }
     ];
 
+    let globalMethods = [];
     let thiessenResult = [];
     let geoData = null;
-    const map = L.map('map').setView([-6.28, 106.82], 11);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+    let map = L.map('map').setView([-6.28, 106.82], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const overlay = L.layerGroup().addTo(map);
 
-    const markers = STATIONS.map(s => {
-        L.circleMarker([s.lat, s.lng], { radius: 5, color: '#fff', weight: 2, fillColor: '#000', fillOpacity: 1 }).addTo(map);
-        L.marker([s.lat, s.lng], { icon: L.divIcon({ className: 'station-label', html: s.n, iconAnchor: [-8, 8] }), interactive: false }).addTo(map);
-        return turf.point([s.lng, s.lat], { name: s.n, id: s.id });
+    STATIONS.forEach(s => {
+        L.circleMarker([s.lat, s.lng], { radius: 5, color: '#000', fillColor: '#f59e0b', fillOpacity: 1 }).addTo(map);
+        L.marker([s.lat, s.lng], { icon: L.divIcon({ className: 'station-label', html: s.n, iconAnchor: [-10, 10] }) }).addTo(map);
     });
 
     document.getElementById('inputCatchment').onchange = function(e) {
-        const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(ev) {
-            let raw = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
-            geoData = raw.features ? raw.features[0] : (raw.geometries ? raw.geometries[0] : raw);
+            let raw = JSON.parse(ev.target.result);
+            geoData = raw.type === "GeometryCollection" ? raw.geometries[0] : (raw.features ? raw.features[0].geometry : raw);
             document.getElementById('btnProses').style.display = 'block';
-            showStatus("File terdeteksi. Silakan proses.", "#f59e0b");
         };
-        reader.readAsText(file);
+        reader.readAsText(e.target.files[0]);
     };
 
-    function convertUTMtoWGS84(coords) {
-        // Jika angka > 500 berarti UTM (meter), bukan derajat
-        if (coords[0] > 500) {
-            return proj4("EPSG:32748", "WGS84", coords);
-        }
-        return coords;
-    }
+    function convertUTM(c) { return (c[0] > 500) ? proj4("EPSG:32748", "WGS84", c) : c; }
 
     async function runAnalysis() {
-        overlay.clearLayers();
-        let geom = JSON.parse(JSON.stringify(geoData.geometry || geoData)); // Clone data
-        
-        // Auto-convert coordinates UTM ke WGS84
-        if (geom.type === "Polygon") {
-            geom.coordinates = geom.coordinates.map(ring => ring.map(convertUTMtoWGS84));
-        } else if (geom.type === "MultiPolygon") {
-            geom.coordinates = geom.coordinates.map(poly => poly.map(ring => ring.map(convertUTMtoWGS84)));
-        }
+        document.getElementById('statusInfo').innerText = "Sedang Menghitung...";
+        document.getElementById('statusInfo').style.display = "block";
+        document.getElementById('statusInfo').style.background = "#f59e0b";
 
+        let geom = JSON.parse(JSON.stringify(geoData));
+        if (geom.type === "Polygon") geom.coordinates = geom.coordinates.map(r => r.map(convertUTM));
         const polygon = turf.feature(geom);
-        L.geoJSON(polygon, { style: { color: '#000', weight: 2, fillOpacity: 0.05 } }).addTo(overlay);
+        overlay.clearLayers();
+        L.geoJSON(polygon, { style: { color: '#000', weight: 2, fillOpacity: 0.1 } }).addTo(overlay);
         map.fitBounds(L.geoJSON(polygon).getBounds());
 
         const bbox = turf.bbox(polygon);
-        const voronoiCells = turf.voronoi(turf.featureCollection(markers), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
+        const voronoi = turf.voronoi(turf.featureCollection(STATIONS.map(s => turf.point([s.lng, s.lat], {id: s.id}))), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
 
-        let totalArea = 0; thiessenResult = [];
-        voronoiCells.features.forEach((cell, i) => {
+        let totalA = 0; thiessenResult = [];
+        voronoi.features.forEach((cell, i) => {
             const intersect = turf.intersect(cell, polygon);
             if (intersect) {
-                const a = turf.area(intersect) / 1000000;
-                thiessenResult.push({ name: STATIONS[i].n, id: STATIONS[i].id, area: a });
-                totalArea += a;
-                L.geoJSON(intersect, { 
-                    style: { color: '#fff', weight: 1, fillColor: `hsl(${(i * 137.5) % 360}, 70%, 50%)`, fillOpacity: 0.4 } 
-                }).addTo(overlay).bindTooltip(STATIONS[i].n);
+                const area = turf.area(intersect) / 1000000;
+                thiessenResult.push({ id: STATIONS[i].id, ci: area });
+                totalA += area;
+                L.geoJSON(intersect, { style: { fillColor: `hsl(${(i * 137) % 360}, 65%, 50%)`, fillOpacity: 0.4, color: '#fff', weight: 1 } }).addTo(overlay);
             }
         });
+        thiessenResult.forEach(f => f.ci /= totalA);
 
-        let sTable = "";
-        thiessenResult.forEach(f => {
-            f.ci = f.area / totalArea;
-            sTable += `<tr><td>${f.name}</td><td>${f.area.toFixed(2)}</td><td class="highlight">${f.ci.toFixed(3)}</td></tr>`;
+        await calculateFinal();
+    }
+
+    async function calculateFinal() {
+        const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`);
+        const json = await res.json();
+        let allData = JSON.parse(atob(json.content));
+        
+        let series = allData.map(row => {
+            let pWil = 0;
+            thiessenResult.forEach(st => pWil += ((parseFloat(row[st.id]) || 0) * st.ci));
+            return pWil;
+        }).sort((a, b) => b - a);
+
+        const n = series.length;
+        const getStats = (d) => {
+            const m = d.reduce((a,b)=>a+b)/n;
+            const s = Math.sqrt(d.map(x=>Math.pow(x-m,2)).reduce((a,b)=>a+b)/(n-1));
+            const sk = (n/((n-1)*(n-2))) * d.map(x=>Math.pow((x-m)/s,3)).reduce((a,b)=>a+b);
+            return {m, s, sk};
+        };
+
+        const sLin = getStats(series);
+        const sLog = getStats(series.map(x=>Math.log10(x)));
+
+        const Kt_Gumbel = { 2: -0.164, 5: 0.719, 10: 1.305, 25: 2.044, 50: 2.592, 100: 3.137 };
+        const Z_Norm = { 2: 0, 5: 0.842, 10: 1.282, 25: 1.751, 50: 2.054, 100: 2.326 };
+
+        globalMethods = [
+            { name: 'Normal', rec: (t) => sLin.m + (Z_Norm[t]*sLin.s), d: 0.08 },
+            { name: 'Log-Normal', rec: (t) => Math.pow(10, sLog.m + (Z_Norm[t]*sLog.s)), d: 0.07 },
+            { name: 'Gumbel', rec: (t) => sLin.m + (Kt_Gumbel[t]*sLin.s), d: 0.05 },
+            { name: 'Log-Pearson III', rec: (t) => {
+                let K = Z_Norm[t] + ((Math.pow(Z_Norm[t],2)-1)*sLog.sk/6);
+                return Math.pow(10, sLog.m + (K*sLog.s));
+            }, d: 0.04 }
+        ];
+
+        globalMethods.sort((a,b) => a.d - b.d);
+        updateView();
+        
+        document.getElementById('resultsArea').style.display = "block";
+        document.getElementById('statusInfo').style.background = "#10b981";
+        document.getElementById('statusInfo').innerText = "Selesai!";
+    }
+
+    function updateView() {
+        if (globalMethods.length === 0) return;
+        const T = document.getElementById('selectT').value;
+        
+        // Update Label T di seluruh dokumen
+        document.querySelectorAll('.valT').forEach(el => el.innerText = T);
+
+        // Update Metode Terbaik
+        const best = globalMethods[0];
+        document.getElementById('bestResult').innerText = best.name;
+        document.getElementById('bestValue').innerText = best.rec(T).toFixed(2) + " mm";
+
+        // Update Tabel Perbandingan
+        let html = "";
+        globalMethods.forEach((m, i) => {
+            html += `<tr class="${i===0?'highlight-row':''}">
+                <td>${m.name}</td>
+                <td>${m.rec(T).toFixed(2)}</td>
+                <td>${m.d.toFixed(4)}</td>
+            </tr>`;
         });
-        document.getElementById('body-spatial').innerHTML = sTable;
-        document.getElementById('spatialResult').style.display = 'block';
-        processRainfall();
-    }
-
-    async function processRainfall() {
-        try {
-            const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`);
-            const json = await res.json();
-            const allData = JSON.parse(atob(json.content));
-            
-            // URUTAN TAHUN: TERLAMA KE TERBARU (ASCENDING)
-            allData.sort((a,b) => a.tahun - b.tahun);
-
-            let rTable = "";
-            allData.forEach(row => {
-                let p_wilayah = 0;
-                thiessenResult.forEach(stMatch => p_wilayah += ((parseFloat(row[stMatch.id]) || 0) * stMatch.ci));
-                rTable += `<tr><td><strong>${row.tahun}</strong></td><td class="highlight">${p_wilayah.toFixed(2)}</td></tr>`;
-            });
-            document.getElementById('body-rain').innerHTML = rTable;
-            document.getElementById('rainResult').style.display = 'block';
-            showStatus("Analisis Selesai & Terurut!", "#10b981");
-        } catch (err) { showStatus("Gagal sinkron GitHub.", "red"); }
-    }
-
-    function showStatus(msg, color) {
-        const box = document.getElementById('statusInfo');
-        box.innerText = msg; box.style.background = color; box.style.display = "block";
+        document.getElementById('body-compare').innerHTML = html;
     }
 </script>
 </body>
