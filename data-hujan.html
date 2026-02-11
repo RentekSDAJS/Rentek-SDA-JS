@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDA Data Hub - Full Control</title>
+    <title>SDA Data Hub - Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --navy: #0f172a; --gold: #d4af37; --green: #10b981; --red: #ef4444; }
@@ -11,7 +11,7 @@
         .container { max-width: 1100px; margin: 0 auto; display: none; }
         .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* Box Statistik */
+        /* Stats Box */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
         .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
@@ -20,12 +20,12 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; }
         input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
         .btn-save { background: var(--navy); color: var(--gold); padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; }
+        .btn-logout { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { background: var(--navy); color: var(--gold); padding: 15px; text-align: left; font-size: 0.75rem; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
         .btn-del { color: var(--red); font-weight: bold; cursor: pointer; border: 1px solid var(--red); padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
-        .btn-del:hover { background: var(--red); color: white; }
 
         #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
@@ -33,18 +33,26 @@
 </head>
 <body>
 
-<div id="loading"><h3 id="loadText">Sedang Memproses... ⏳</h3></div>
+<div id="loading"><h3>Sedang Memproses... ⏳</h3></div>
 
 <div id="authOverlay">
     <div style="background:white; padding:40px; border-radius:24px; text-align:center; width:350px;">
         <h2 style="color:var(--navy);">SDA Admin Hub</h2>
-        <input type="password" id="passCode" placeholder="Password: admin123" style="margin-bottom:10px; text-align:center;">
-        <input type="password" id="gitToken" placeholder="GitHub Token: ghp_xxxx" style="text-align:center;">
+        <input type="password" id="passCode" placeholder="Password Sistem" style="margin-bottom:10px; text-align:center;">
+        <input type="password" id="gitToken" placeholder="GitHub Token (ghp_...)" style="text-align:center;">
+        <div style="margin: 10px 0; font-size: 0.8rem; color: #64748b;">
+            <input type="checkbox" id="rememberMe" checked> Ingat saya di perangkat ini
+        </div>
         <button onclick="login()" style="background:var(--navy); color:var(--gold); padding:12px; width:100%; border-radius:8px; margin-top:15px; font-weight:bold; cursor:pointer; border:none;">MASUK</button>
     </div>
 </div>
 
 <div class="container" id="mainApp">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3 style="margin:0; color:var(--navy)">Engineering Control Center</h3>
+        <button class="btn-logout" onclick="logout()">LOGOUT / GANTI TOKEN</button>
+    </div>
+
     <div class="stats-grid">
         <div class="stat-box"><small>Rerata Stasiun</small><span id="avgStat">0</span></div>
         <div class="stat-box"><small>Hujan Tertinggi</small><span id="maxStat">0</span></div>
@@ -58,7 +66,7 @@
             <div><label>Stasiun</label><select id="inStation"></select></div>
             <div><label>Nilai (mm)</label><input type="number" step="0.1" id="inValue"></div>
         </div>
-        <button class="btn-save" onclick="updateData('save')">SIMPAN KE DATABASE</button>
+        <button class="btn-save" onclick="updateData()">SIMPAN KE DATABASE</button>
     </div>
 
     <div class="card">
@@ -80,13 +88,36 @@
     let allData = [], sha = '';
     const stasiunList = ["Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
 
+    // CEK AUTO LOGIN SAAT HALAMAN DIBUKA
+    window.onload = function() {
+        const savedToken = localStorage.getItem('gh_token');
+        const savedPass = localStorage.getItem('sda_pass');
+        if (savedToken && savedPass === "admin123") {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            fetchGitHubData();
+        }
+    };
+
     function login() {
-        if(document.getElementById('passCode').value === "admin123" && document.getElementById('gitToken').value.startsWith('ghp_')) {
-            localStorage.setItem('gh_token', document.getElementById('gitToken').value);
+        const pass = document.getElementById('passCode').value;
+        const token = document.getElementById('gitToken').value;
+        const remember = document.getElementById('rememberMe').checked;
+
+        if(pass === "admin123" && token.startsWith('ghp_')) {
+            if(remember) {
+                localStorage.setItem('gh_token', token);
+                localStorage.setItem('sda_pass', pass);
+            }
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             fetchGitHubData();
         } else { alert("Data Login Salah!"); }
+    }
+
+    function logout() {
+        localStorage.clear();
+        location.reload();
     }
 
     async function fetchGitHubData() {
@@ -98,6 +129,7 @@
         allData = JSON.parse(atob(j.content));
         
         const inS = document.getElementById('inStation'), viewS = document.getElementById('viewStation');
+        inS.innerHTML = ''; viewS.innerHTML = '';
         stasiunList.forEach((s, i) => {
             let val = `st_${(i+1).toString().padStart(2,'0')}`;
             inS.innerHTML += `<option value="${val}">${s}</option>`;
@@ -113,7 +145,7 @@
         allData.sort((a,b) => a.tahun - b.tahun);
 
         let total = 0, max = 0;
-        allData.forEach((d, index) => {
+        allData.forEach(d => {
             let v = parseFloat(d[key]) || 0;
             total += v; if(v > max) max = v;
             tbody.innerHTML += `<tr>
@@ -153,7 +185,7 @@
             headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: msg, content: btoa(JSON.stringify(allData, null, 2)), sha: sha })
         });
-        if(res.ok) location.reload(); else alert("Gagal Sinkron!");
+        if(res.ok) location.reload(); else { alert("Gagal Sinkron!"); document.getElementById('loading').style.display = 'none'; }
     }
 </script>
 </body>
