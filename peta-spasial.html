@@ -2,39 +2,25 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Spatial Rainfall Analyst Pro</title>
+    <title>SDA Jaksel - Spatial Analyst (Time Series Sorted)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --accent: #f59e0b; --text: #f8fafc; --teal: #2dd4bf; --blue: #3b82f6; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); }
-        
-        #sidebar { width: 450px; background: var(--panel); padding: 25px; overflow-y: auto; border-right: 4px solid var(--accent); z-index: 1000; box-shadow: 10px 0 20px rgba(0,0,0,0.3); }
-        #map { flex: 1; z-index: 1; }
-
-        .card { background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-        h2 { color: var(--accent); margin-top: 0; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        h3 { color: var(--teal); font-size: 0.9rem; margin: 10px 0; display: flex; align-items: center; gap: 8px; }
-        
-        .res-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; background: #111827; }
-        .res-table th, .res-table td { padding: 8px; border: 1px solid #334155; text-align: center; }
-        .res-table th { background: #334155; color: var(--accent); position: sticky; top: 0; }
+        :root { --navy: #0f172a; --accent: #f59e0b; --teal: #0d9488; }
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; }
+        #sidebar { width: 400px; background: white; padding: 25px; overflow-y: auto; border-right: 1px solid #e2e8f0; z-index: 1000; }
+        #map { flex: 1; background: #f1f5f9; }
+        .card { background: #ffffff; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        h2 { color: var(--navy); font-size: 1.1rem; text-transform: uppercase; border-left: 4px solid var(--accent); padding-left: 10px; }
+        .res-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; }
+        .res-table th, .res-table td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
+        .res-table th { background: #f8fafc; color: var(--navy); }
         .highlight { font-weight: bold; color: var(--teal); }
+        .btn { background: var(--navy); color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
         
-        .btn { background: var(--accent); color: #000; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s; text-transform: uppercase; }
-        .btn:hover { background: #fbbf24; transform: translateY(-2px); }
-
-        .status-box { padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; font-weight: 600; display: none; text-align: center; }
-
-        /* Custom Label Marker */
+        /* Label Stasiun Kontras & Bersih */
         .station-label {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
-            white-space: nowrap;
+            background: none !important; border: none !important; color: #000;
+            font-size: 11px; font-weight: 800; text-shadow: 2px 2px 0px #fff, -1px -1px 0px #fff; white-space: nowrap;
         }
     </style>
 </head>
@@ -42,49 +28,45 @@
 
 <div id="sidebar">
     <h2>Spatial Analyst Hub</h2>
-    
     <div class="card">
-        <label><strong>1. Upload Batas Catchment (KML/JSON)</strong></label>
-        <input type="file" id="inputCatchment" accept=".json,.geojson,.kml" style="width:100%; margin-top:15px; color:#94a3b8; font-size: 0.8rem;">
-        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none;">Mulai Analisis Spasial</button>
-        <div id="statusInfo" class="status-box"></div>
+        <label><strong>1. Upload Watershed (UTM/WGS84)</strong></label>
+        <input type="file" id="inputCatchment" style="width:100%; margin-top:15px; font-size: 0.8rem;">
+        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none; margin-top:10px;">PROSES ANALISIS</button>
+        <div id="statusInfo" style="padding:10px; border-radius:8px; margin-top:10px; font-size:0.75rem; display:none; text-align:center; font-weight:bold;"></div>
     </div>
 
     <div id="spatialResult" style="display:none;">
         <div class="card">
-            <h3>📐 Koefisien Thiessen (Ci)</h3>
-            <div style="max-height: 200px; overflow-y: auto;">
-                <table class="res-table">
-                    <thead>
-                        <tr><th>Stasiun</th><th>Luas (km²)</th><th>Ci</th></tr>
-                    </thead>
-                    <tbody id="body-spatial"></tbody>
-                </table>
-            </div>
+            <h3>📐 Matriks Thiessen (Ci)</h3>
+            <table class="res-table">
+                <thead><tr><th>Stasiun</th><th>Luas (km²)</th><th>Ci</th></tr></thead>
+                <tbody id="body-spatial"></tbody>
+            </table>
         </div>
     </div>
 
     <div id="rainResult" style="display:none;">
         <div class="card">
-            <h3>🌧️ Rerata Wilayah Tahunan</h3>
+            <h3>🌧️ Hujan Wilayah (Deret Waktu)</h3>
             <table class="res-table">
-                <thead>
-                    <tr><th>Tahun</th><th>Hujan Wilayah (mm)</th></tr>
-                </thead>
+                <thead><tr><th>Tahun (Terlama → Terbaru)</th><th>Hujan (mm)</th></tr></thead>
                 <tbody id="body-rain"></tbody>
             </table>
         </div>
     </div>
 </div>
-
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
 <script src="https://unpkg.com/@mapbox/togeojson"></script>
 
 <script>
     const CONFIG = { owner: 'RentekSDAJS', repo: 'Calculator-Online---Rentek-SDA-JS', path: 'data/hujan/all-data.json' };
+    
+    // Proyeksi Jakarta UTM Zone 48S
+    proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
 
     const STATIONS = [
         { n: "Kemayoran", id: "st_01", lat: -6.15559, lng: 106.84 },
@@ -113,32 +95,13 @@
 
     let thiessenResult = [];
     let geoData = null;
-    
     const map = L.map('map').setView([-6.28, 106.82], 11);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
     const overlay = L.layerGroup().addTo(map);
 
-    // Fungsi Warna Acak Berdasarkan Nama (Agar konsisten)
-    function getColor(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        return `hsl(${Math.abs(hash % 360)}, 70%, 50%)`;
-    }
-
-    // Inisialisasi Marker Stasiun dengan Label Jelas
     const markers = STATIONS.map(s => {
-        // Dot marker
-        L.circleMarker([s.lat, s.lng], { radius: 6, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 }).addTo(map);
-        
-        // Label Marker permanen
-        L.marker([s.lat, s.lng], {
-            icon: L.divIcon({
-                className: 'station-label',
-                html: s.n,
-                iconAnchor: [-10, 10]
-            })
-        }).addTo(map);
-
+        L.circleMarker([s.lat, s.lng], { radius: 5, color: '#fff', weight: 2, fillColor: '#000', fillOpacity: 1 }).addTo(map);
+        L.marker([s.lat, s.lng], { icon: L.divIcon({ className: 'station-label', html: s.n, iconAnchor: [-8, 8] }), interactive: false }).addTo(map);
         return turf.point([s.lng, s.lat], { name: s.n, id: s.id });
     });
 
@@ -146,46 +109,50 @@
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(ev) {
-            geoData = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
+            let raw = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
+            geoData = raw.features ? raw.features[0] : (raw.geometries ? raw.geometries[0] : raw);
             document.getElementById('btnProses').style.display = 'block';
-            showStatus("Catchment Ready. Silakan klik tombol.", "#3b82f6");
+            showStatus("File terdeteksi. Silakan proses.", "#f59e0b");
         };
         reader.readAsText(file);
     };
 
+    function convertUTMtoWGS84(coords) {
+        // Jika angka > 500 berarti UTM (meter), bukan derajat
+        if (coords[0] > 500) {
+            return proj4("EPSG:32748", "WGS84", coords);
+        }
+        return coords;
+    }
+
     async function runAnalysis() {
         overlay.clearLayers();
-        const polygon = geoData.features ? geoData.features[0] : geoData;
+        let geom = JSON.parse(JSON.stringify(geoData.geometry || geoData)); // Clone data
         
-        // Gambar Batas Luar
-        L.geoJSON(polygon, { style: { color: '#f8fafc', weight: 3, dashArray: '5, 10', fillOpacity: 0 } }).addTo(overlay);
+        // Auto-convert coordinates UTM ke WGS84
+        if (geom.type === "Polygon") {
+            geom.coordinates = geom.coordinates.map(ring => ring.map(convertUTMtoWGS84));
+        } else if (geom.type === "MultiPolygon") {
+            geom.coordinates = geom.coordinates.map(poly => poly.map(ring => ring.map(convertUTMtoWGS84)));
+        }
+
+        const polygon = turf.feature(geom);
+        L.geoJSON(polygon, { style: { color: '#000', weight: 2, fillOpacity: 0.05 } }).addTo(overlay);
         map.fitBounds(L.geoJSON(polygon).getBounds());
 
         const bbox = turf.bbox(polygon);
         const voronoiCells = turf.voronoi(turf.featureCollection(markers), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
 
-        let totalArea = 0;
-        thiessenResult = [];
-
+        let totalArea = 0; thiessenResult = [];
         voronoiCells.features.forEach((cell, i) => {
             const intersect = turf.intersect(cell, polygon);
             if (intersect) {
                 const a = turf.area(intersect) / 1000000;
-                const stName = STATIONS[i].n;
-                const stId = STATIONS[i].id;
-                
-                thiessenResult.push({ name: stName, id: stId, area: a });
+                thiessenResult.push({ name: STATIONS[i].n, id: STATIONS[i].id, area: a });
                 totalArea += a;
-
-                // Gambar Poligon dengan Warna Berbeda
                 L.geoJSON(intersect, { 
-                    style: { 
-                        color: '#fff', 
-                        weight: 1, 
-                        fillColor: getColor(stName), 
-                        fillOpacity: 0.5 
-                    } 
-                }).addTo(overlay).bindTooltip(`${stName}: ${a.toFixed(2)} km²`);
+                    style: { color: '#fff', weight: 1, fillColor: `hsl(${(i * 137.5) % 360}, 70%, 50%)`, fillOpacity: 0.4 } 
+                }).addTo(overlay).bindTooltip(STATIONS[i].n);
             }
         });
 
@@ -196,35 +163,28 @@
         });
         document.getElementById('body-spatial').innerHTML = sTable;
         document.getElementById('spatialResult').style.display = 'block';
-
         processRainfall();
     }
 
     async function processRainfall() {
         try {
-            showStatus("Fetching data dari GitHub...", "#f59e0b");
             const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`);
             const json = await res.json();
             const allData = JSON.parse(atob(json.content));
+            
+            // URUTAN TAHUN: TERLAMA KE TERBARU (ASCENDING)
+            allData.sort((a,b) => a.tahun - b.tahun);
 
             let rTable = "";
-            allData.sort((a,b) => b.tahun - a.tahun);
-
             allData.forEach(row => {
                 let p_wilayah = 0;
-                thiessenResult.forEach(stMatch => {
-                    const val = parseFloat(row[stMatch.id]) || 0;
-                    p_wilayah += (val * stMatch.ci);
-                });
-                rTable += `<tr><td><strong>${row.tahun}</strong></td><td class="highlight">${p_wilayah.toFixed(2)} mm</td></tr>`;
+                thiessenResult.forEach(stMatch => p_wilayah += ((parseFloat(row[stMatch.id]) || 0) * stMatch.ci));
+                rTable += `<tr><td><strong>${row.tahun}</strong></td><td class="highlight">${p_wilayah.toFixed(2)}</td></tr>`;
             });
-
             document.getElementById('body-rain').innerHTML = rTable;
             document.getElementById('rainResult').style.display = 'block';
-            showStatus("Analisis Selesai!", "#10b981");
-        } catch (err) {
-            showStatus("Gagal sinkron GitHub.", "#ef4444");
-        }
+            showStatus("Analisis Selesai & Terurut!", "#10b981");
+        } catch (err) { showStatus("Gagal sinkron GitHub.", "red"); }
     }
 
     function showStatus(msg, color) {
