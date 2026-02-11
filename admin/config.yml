@@ -1,41 +1,21 @@
 backend:
-  name: github
-  repo: USERNAME_ANDA/NAMA_REPO_ANDA # GANTI DENGAN USERNAME/NAMA-REPO GITHUB ANDA
+  name: git-gateway
   branch: main
 
-# Pengaturan Login (Netlify Identity)
-publish_mode: editorial_workflow
-media_folder: "images"
+media_folder: "assets/uploads"
+public_folder: "/assets/uploads"
 
 collections:
-  - name: "database_hujan"
+  - name: "hujan"
     label: "Update Data Hujan"
-    folder: "data/hujan" # Data akan tersimpan sebagai file individual per tahun di folder ini
+    folder: "data/hujan"
     create: true
     slug: "{{year}}"
+    extension: "json"
+    format: "json"
     fields:
-      - {label: "Tahun", name: "year", widget: "string", hint: "Contoh: 2024"}
-      
-      # DAFTAR 22 STASIUN (Input Angka Desimal)
-      - {label: "Kemayoran (mm)", name: "kemayoran", widget: "number", value_type: "float", default: 0}
-      - {label: "Halim (mm)", name: "halim", widget: "number", value_type: "float", default: 0}
-      - {label: "Bogor (mm)", name: "bogor", widget: "number", value_type: "float", default: 0}
-      - {label: "Banten (mm)", name: "banten", widget: "number", value_type: "float", default: 0}
-      - {label: "Katulampa (mm)", name: "katulampa", widget: "number", value_type: "float", default: 0}
-      - {label: "Depok (mm)", name: "depok", widget: "number", value_type: "float", default: 0}
-      - {label: "Manggarai (mm)", name: "manggarai", widget: "number", value_type: "float", default: 0}
-      - {label: "Karet (mm)", name: "karet", widget: "number", value_type: "float", default: 0}
-      - {label: "Setiabudi Timur (mm)", name: "setiabudi_timur", widget: "number", value_type: "float", default: 0}
-      - {label: "Melati (mm)", name: "melati", widget: "number", value_type: "float", default: 0}
-      - {label: "Istana (mm)", name: "istana", widget: "number", value_type: "float", default: 0}
-      - {label: "Krukut Hulu (mm)", name: "krukut_hulu", widget: "number", value_type: "float", default: 0}
-      - {label: "Sunter Hulu (mm)", name: "sunter_hulu", widget: "number", value_type: "float", default: 0}
-      - {label: "Pesanggrahan (mm)", name: "pesanggrahan", widget: "number", value_type: "float", default: 0}
-      - {label: "Angke Hulu (mm)", name: "angke_hulu", widget: "number", value_type: "float", default: 0}
-      - {label: "Tanjungan (mm)", name: "tanjungan", widget: "number", value_type: "float", default: 0}
-      - {label: "Tomang Barat (mm)", name: "tomang_barat", widget: "number", value_type: "float", default: 0}
-      - {label: "Teluk Gong (mm)", name: "teluk_gong", widget: "number", value_type: "float", default: 0}
-      - {label: "Pulo Gadung (mm)", name: "pulo_gadung", widget: "number", value_type: "float", default: 0}
-      - {label: "Sunter Kodamar (mm)", name: "sunter_kodamar", widget: "number", value_type: "float", default: 0}
-      - {label: "Sunter III Rawa Badak (mm)", name: "sunter_iii_rawa_badak", widget: "number", value_type: "float", default: 0}
-      - {label: "Pompa Cideng (mm)", name: "pompa_cideng", widget: "number", value_type: "float", default: 0}
+      - { label: "Tahun", name: "year", widget: "string" }
+      - { label: "Pesanggrahan", name: "st_01", widget: "number", value_type: "float" }
+      - { label: "Angke", name: "st_02", widget: "number", value_type: "float" }
+      - { label: "Krukut", name: "st_03", widget: "number", value_type: "float" }
+      - { label: "Keterangan Tambahan", name: "body", widget: "text", required: false }
