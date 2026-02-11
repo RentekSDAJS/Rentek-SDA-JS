@@ -6,6 +6,65 @@
     <title>SDA Jaksel - Engineering Control Center</title>
     <style>
         :root { --primary: #0f172a; --accent: #f59e0b; --card-bg: rgba(255, 255, 255, 0.95); }
+         /* SISTEM LOGIN OVERLAY */
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            background: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: 0.5s;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            width: 320px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            border-top: 8px solid var(--accent);
+        }
+
+        .login-box h3 { margin-bottom: 10px; color: var(--primary); }
+        .login-box p { font-size: 0.85rem; color: #64748b; margin-bottom: 20px; }
+
+        .login-box input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 8px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .login-box input:focus { border-color: var(--accent); }
+
+        .btn-verify {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        /* EFEK BLUR UNTUK KONTEN UTAMA */
+        #content-wrapper {
+            filter: blur(15px);
+            pointer-events: none;
+            transition: 0.8s ease;
+        }
+        
         body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; background: #e2e8f0; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; color: var(--primary); min-height: 100vh; display: flex; flex-direction: column; }
         #main-header { background: var(--primary); color: white; padding: 60px 20px; text-align: center; border-bottom: 8px solid var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .header-title { font-size: 2.8rem; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 0px var(--accent); margin: 0; }
@@ -22,6 +81,18 @@
     </style>
 </head>
 <body>
+
+<div id="login-overlay">
+    <div class="login-box">
+        <h3>Dashboard Mobile 📲 SDA JS</h3>
+        <p>Jalan Jalan ke Bekasi (cakeupp!!) Silahkan Masukan Kode Verifikasi</p>
+        <input type="password" id="pass-field" maxlength="4" placeholder="••••">
+        <button class="btn-verify" onclick="verifikasi()">Masuk Dashboard</button>
+        <div id="error-txt" style="color: #ef4444; font-size: 0.8rem; margin-top: 10px; display: none; font-weight: bold;">EITSSS, KODENYA SALAH!!</div>
+    </div>
+</div>
+
+<div id="content-wrapper">
     <header id="main-header">
         <div class="header-title">SDA CALCULATOR ONLINE</div>
         <div class="header-subtitle">RENTEK SDA JS</div>
@@ -65,8 +136,37 @@
     </div>
 
     <script>
+    // KODE AKSES ANDA
+    const KODE_RAHASIA = "9999"; 
+
+    function verifikasi() {
+        const input = document.getElementById('pass-field').value;
+        const overlay = document.getElementById('login-overlay');
+        const content = document.getElementById('content-wrapper');
+        const error = document.getElementById('error-txt');
+
+        if(input === KODE_RAHASIA) {
+            overlay.style.opacity = "0";
+            setTimeout(() => {
+                overlay.style.display = "none";
+                content.style.filter = "none";
+                content.style.pointerEvents = "auto";
+                document.body.style.overflow = "auto";
+            }, 500);
+        } else {
+            error.style.display = "block";
+            document.getElementById('pass-field').value = "";
+        }
+    }
+
+    // Support tombol Enter
+    document.getElementById('pass-field').addEventListener("keyup", function(event) {
+        if (event.key === "Enter") { verifikasi(); }
+    });
+
         function bukaHalaman(u) { document.getElementById('app-portal').style.display='block'; document.getElementById('app-frame').src=u; }
         function kembali() { document.getElementById('app-portal').style.display='none'; document.getElementById('app-frame').src=''; }
     </script>
 </body>
 </html>
+
