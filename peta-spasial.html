@@ -2,36 +2,40 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Spatial Rainfall Analyst Final</title>
+    <title>SDA Jaksel - Realtime Rainfall Analyst</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --bg: #0f172a; --panel: #1e293b; --accent: #f59e0b; --text: #f8fafc; --teal: #2dd4bf; }
         body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
-        #sidebar { width: 550px; background: var(--panel); padding: 25px; overflow-y: auto; border-right: 4px solid var(--accent); }
+        #sidebar { width: 580px; background: var(--panel); padding: 25px; overflow-y: auto; border-right: 4px solid var(--accent); }
         .card { background: var(--bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
-        h2 { color: var(--accent); margin-top: 0; font-size: 1.3rem; text-transform: uppercase; }
-        .res-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
-        .res-table th, .res-table td { padding: 10px; border: 1px solid #334155; text-align: left; }
-        .res-table th { background: #334155; color: var(--accent); }
+        h2 { color: var(--accent); margin-top: 0; font-size: 1.2rem; text-transform: uppercase; border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+        h3 { color: var(--teal); font-size: 1rem; margin: 10px 0; }
+        .res-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; background: #111827; }
+        .res-table th, .res-table td { padding: 10px; border: 1px solid #334155; text-align: center; }
+        .res-table th { background: #334155; color: var(--accent); position: sticky; top: 0; }
         .highlight { font-weight: bold; color: var(--teal); }
-        .btn { background: var(--accent); color: #000; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+        .btn { background: var(--accent); color: #000; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s; }
+        .btn:hover { background: #fbbf24; }
         #map { flex: 1; }
+        .status-box { padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.8rem; display: none; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>DASHBOARD HIDROLOGI SDA JS</h2>
+    <h2>DASHBOARD ANALISIS HIDROLOGI</h2>
     
     <div class="card">
-        <label><strong>1. Upload Batas Catchment (KML/GeoJSON)</strong></label>
-        <input type="file" id="inputCatchment" accept=".json,.geojson,.kml" style="width:100%; margin-top:10px;">
-        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none;">MULAI ANALISIS SEKARANG</button>
+        <label><strong>1. Upload Batas Catchment (KML/JSON)</strong></label>
+        <input type="file" id="inputCatchment" accept=".json,.geojson,.kml" style="width:100%; margin-top:10px; color:white;">
+        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none;">PROSES ANALISIS DATA</button>
+        <div id="statusInfo" class="status-box"></div>
     </div>
 
     <div id="spatialResult" style="display:none;">
         <div class="card">
-            <h3>Matriks Pengaruh Stasiun (Thiessen)</h3>
+            <h3>Matriks Spasial (Koefisien Thiessen)</h3>
             <table class="res-table">
                 <thead>
                     <tr><th>Stasiun Pengaruh</th><th>Luas (km²)</th><th>Koefisien (Ci)</th></tr>
@@ -43,14 +47,14 @@
 
     <div id="rainResult" style="display:none;">
         <div class="card">
-            <h3>Rerata Hujan Wilayah Tahunan</h3>
+            <h3>Rekapitulasi Hujan Rerata Wilayah (2000-2024)</h3>
+            <p style="font-size: 0.75rem; color: #94a3b8;">*Anda dapat memblok tabel di bawah dan langsung Copy-Paste ke Excel.</p>
             <table class="res-table">
                 <thead>
-                    <tr><th>Tahun</th><th>Curah Hujan Wilayah (mm)</th></tr>
+                    <tr><th>Tahun</th><th>Hujan Wilayah (mm)</th></tr>
                 </thead>
                 <tbody id="body-rain"></tbody>
             </table>
-            <button class="btn" style="background: var(--teal);" onclick="downloadCSV()">DOWNLOAD HASIL (.CSV)</button>
         </div>
     </div>
 </div>
@@ -62,9 +66,8 @@
 <script src="https://unpkg.com/@mapbox/togeojson"></script>
 
 <script>
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
+    const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
 
-    // Daftar stasiun dengan nama "Sunter III Rawa Badak"
     const STATIONS = [
         { n: "Kemayoran", lat: -6.15559, lng: 106.84 },
         { n: "Halim", lat: -6.27036, lng: 106.88926 },
@@ -90,14 +93,14 @@
         { n: "Pompa Cideng", lat: -6.17355, lng: 106.806328 }
     ];
 
-    let thiessenFactors = [];
-    let catchmentData = null;
+    let thiessenResult = [];
+    let geoData = null;
     const map = L.map('map').setView([-6.28, 106.82], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.4 }).addTo(map);
-    const layerGrp = L.layerGroup().addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.3 }).addTo(map);
+    const overlay = L.layerGroup().addTo(map);
 
-    const pts = STATIONS.map(s => {
-        L.circleMarker([s.lat, s.lng], { radius: 4, color: 'orange' }).addTo(map).bindTooltip(s.n);
+    const markers = STATIONS.map(s => {
+        L.circleMarker([s.lat, s.lng], { radius: 5, color: '#f59e0b', fillOpacity: 0.7 }).addTo(map).bindTooltip(s.n);
         return turf.point([s.lng, s.lat], { name: s.n });
     });
 
@@ -105,78 +108,89 @@
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(ev) {
-            catchmentData = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
+            geoData = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
             document.getElementById('btnProses').style.display = 'block';
+            showStatus("File berhasil dimuat. Klik tombol proses.", "#10b981");
         };
         reader.readAsText(file);
     };
 
     async function runAnalysis() {
-        layerGrp.clearLayers();
-        const poly = catchmentData.features ? catchmentData.features[0] : catchmentData;
-        L.geoJSON(poly, { style: { color: 'red', weight: 2, fillOpacity: 0.1 } }).addTo(layerGrp);
-        map.fitBounds(L.geoJSON(poly).getBounds());
+        overlay.clearLayers();
+        const polygon = geoData.features ? geoData.features[0] : geoData;
+        L.geoJSON(polygon, { style: { color: 'red', weight: 2, fillOpacity: 0.05 } }).addTo(overlay);
+        map.fitBounds(L.geoJSON(polygon).getBounds());
 
-        const bbox = turf.bbox(poly);
-        const voronoi = turf.voronoi(turf.featureCollection(pts), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
+        const bbox = turf.bbox(polygon);
+        const voronoiCells = turf.voronoi(turf.featureCollection(markers), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
 
-        let totalA = 0;
-        thiessenFactors = [];
+        let totalArea = 0;
+        thiessenResult = [];
 
-        voronoi.features.forEach((cell, i) => {
-            const intersect = turf.intersect(cell, poly);
+        voronoiCells.features.forEach((cell, i) => {
+            const intersect = turf.intersect(cell, polygon);
             if (intersect) {
                 const a = turf.area(intersect) / 1000000;
-                thiessenFactors.push({ name: STATIONS[i].n, area: a });
-                totalA += a;
-                L.geoJSON(intersect, { style: { color: '#00f', weight: 1, fillOpacity: 0.2 } }).addTo(layerGrp);
+                thiessenResult.push({ name: STATIONS[i].n, area: a });
+                totalArea += a;
+                L.geoJSON(intersect, { style: { color: '#0ea5e9', weight: 1, fillOpacity: 0.3 } }).addTo(overlay);
             }
         });
 
-        let sHtml = "";
-        thiessenFactors.forEach(f => {
-            f.ci = f.area / totalA;
-            sHtml += `<tr><td>${f.name}</td><td>${f.area.toFixed(3)}</td><td class="highlight">${f.ci.toFixed(4)}</td></tr>`;
+        let sTable = "";
+        thiessenResult.forEach(f => {
+            f.ci = f.area / totalArea;
+            sTable += `<tr><td>${f.name}</td><td>${f.area.toFixed(3)}</td><td class="highlight">${f.ci.toFixed(4)}</td></tr>`;
         });
-        document.getElementById('body-spatial').innerHTML = sHtml;
+        document.getElementById('body-spatial').innerHTML = sTable;
         document.getElementById('spatialResult').style.display = 'block';
 
-        const res = await fetch(CSV_URL);
-        const text = await res.text();
-        const lines = text.split('\n').filter(l => l.trim() !== "");
-        const headers = lines[0].split(',').map(h => h.trim().replace(/[\r\n]/g, " ").replace(/"/g, ""));
-
-        let rHtml = "";
-        for (let j = 1; j < lines.length; j++) {
-            const cols = lines[j].split(',');
-            const thn = cols[0];
-            let p_wil = 0;
-
-            headers.forEach((h, idx) => {
-                const match = thiessenFactors.find(f => {
-                    // Logika pencocokan yang lebih fleksibel untuk nama stasiun
-                    let hClean = h.toLowerCase().replace(/\s+/g, '');
-                    let fClean = f.name.toLowerCase().replace(/\s+/g, '');
-                    return hClean.includes(fClean) || fClean.includes(hClean);
-                });
-                if (match) {
-                    p_wil += (parseFloat(cols[idx]) || 0) * match.ci;
-                }
-            });
-
-            if (p_wil > 0) rHtml += `<tr><td>${thn}</td><td class="highlight">${p_wil.toFixed(2)}</td></tr>`;
-        }
-        document.getElementById('body-rain').innerHTML = rHtml;
-        document.getElementById('rainResult').style.display = 'block';
+        processRainfall();
     }
 
-    function downloadCSV() {
-        let c = "Tahun,Hujan_Wilayah_mm\n";
-        document.querySelectorAll("#body-rain tr").forEach(r => c += r.cells[0].innerText + "," + r.cells[1].innerText + "\n");
-        const b = new Blob([c], { type: 'text/csv' });
-        const u = URL.createObjectURL(b);
-        const a = document.createElement('a');
-        a.href = u; a.download = 'Hujan_Wilayah.csv'; a.click();
+    async function processRainfall() {
+        try {
+            const response = await fetch(SHEET_CSV);
+            const dataText = await response.text();
+            const lines = dataText.split('\n').filter(line => line.trim() !== "");
+            
+            // Bersihkan Header
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[\r\n]/g, "").replace(/\s+/g, ''));
+
+            let rTable = "";
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',');
+                if (!cols[0] || isNaN(cols[0])) continue; // Lewati jika bukan tahun
+
+                let p_wilayah = 0;
+                thiessenResult.forEach(stMatch => {
+                    const stNameClean = stMatch.name.toLowerCase().replace(/\s+/g, '');
+                    // Cari index kolom yang mengandung nama stasiun
+                    const colIdx = headers.findIndex(h => h.includes(stNameClean) || stNameClean.includes(h));
+                    
+                    if (colIdx !== -1) {
+                        const val = parseFloat(cols[colIdx]) || 0;
+                        p_wilayah += val * stMatch.ci;
+                    }
+                });
+
+                if (p_wilayah > 0) {
+                    rTable += `<tr><td>${cols[0]}</td><td class="highlight">${p_wilayah.toFixed(2)}</td></tr>`;
+                }
+            }
+            document.getElementById('body-rain').innerHTML = rTable;
+            document.getElementById('rainResult').style.display = 'block';
+            showStatus("Analisis Selesai!", "#10b981");
+        } catch (err) {
+            showStatus("Gagal mengambil data hujan.", "#ef4444");
+        }
+    }
+
+    function showStatus(msg, color) {
+        const box = document.getElementById('statusInfo');
+        box.innerText = msg;
+        box.style.background = color;
+        box.style.display = "block";
     }
 </script>
 </body>
