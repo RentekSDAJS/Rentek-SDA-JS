@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Data Hujan - SDA Jaksel</title>
+    <style>
+        :root { --primary: #0f172a; --accent: #f59e0b; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f1f5f9; padding: 20px; color: #334155; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        h1 { color: var(--primary); border-left: 6px solid var(--accent); padding-left: 15px; margin-bottom: 25px; font-size: 1.5rem; }
+        .controls { margin-bottom: 25px; background: #f8fafc; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; border: 1px solid #e2e8f0; }
+        label { font-weight: bold; color: #64748b; }
+        select { padding: 10px 20px; border-radius: 8px; border: 2px solid #cbd5e1; font-size: 1rem; outline: none; transition: border 0.3s; cursor: pointer; }
+        select:focus { border-color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; overflow: hidden; border-radius: 8px; }
+        th { background: var(--primary); color: white; padding: 15px; text-align: left; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 1rem; }
+        tr:nth-child(even) { background: #f8fafc; }
+        tr:hover { background: #fffbeb; }
+        .val-box { font-weight: bold; color: #1e293b; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; display: inline-block; min-width: 50px; text-align: center; }
+        .btn-back { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s; }
+        .btn-back:hover { color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="btn-back">← Kembali ke Dashboard</a>
+    <h1>Database Curah Hujan Tahunan</h1>
+    
+    <div class="controls">
+        <label for="yearSelect">Pilih Tahun Pengamatan:</label>
+        <select id="yearSelect" onchange="displayData()">
+            </select>
+    </div>
+
+    <div id="tableContent">
+        <p style="text-align: center; color: #94a3b8;">Memuat database...</p>
+    </div>
+</div>
+
+<script>
+    let cachedData = [];
+    const stations = [
+        "Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", 
+        "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", 
+        "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", 
+        "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"
+    ];
+
+    async function init() {
+        try {
+            // Mengambil file "borongan" yang tadi kita buat
+            const resp = await fetch('data/hujan/all-data.json');
+            if (!resp.ok) throw new Error('File tidak ditemukan');
+            cachedData = await resp.json();
+            
+            const select = document.getElementById('yearSelect');
+            // Urutkan tahun terbaru di paling atas
+            cachedData.sort((a,b) => b.tahun - a.tahun).forEach(d => {
+                let opt = document.createElement('option');
+                opt.value = d.tahun;
+                opt.textContent = "Tahun " + d.tahun;
+                select.appendChild(opt);
+            });
+
+            displayData();
+        } catch (e) {
+            document.getElementById('tableContent').innerHTML = 
+                `<div style="text-align:center; padding: 20px; color: #ef4444; background: #fef2f2; border-radius: 8px;">
+                    ⚠️ <strong>Data Belum Siap:</strong><br>Pastikan file <b>data/hujan/all-data.json</b> sudah Anda buat di GitHub.
+                </div>`;
+        }
+    }
+
+    function displayData() {
+        const year = document.getElementById('yearSelect').value;
+        const data = cachedData.find(d => d.tahun == year);
+        if(!data) return;
+
+        let html = `<table><thead><tr><th>No</th><th>Lokasi Stasiun</th><th>Curah Hujan (mm)</th></tr></thead><tbody>`;
+        stations.forEach((name, i) => {
+            const key = `st_${(i+1).toString().padStart(2, '0')}`;
+            const value = data[key] !== undefined ? data[key] : "0";
+            html += `<tr>
+                <td>${i+1}</td>
+                <td>${name}</td>
+                <td><span class="val-box">${value}</span></td>
+            </tr>`;
+        });
+        html += `</tbody></table>`;
+        
+        if(data.body) {
+            html += `<div style="margin-top:20px; padding:15px; background:#fffbeb; border-radius:8px; font-size:0.9rem; color:#92400e;">
+                <strong>Catatan:</strong> ${data.body}
+            </div>`;
+        }
+        
+        document.getElementById('tableContent').innerHTML = html;
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
