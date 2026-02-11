@@ -3,57 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDA Data Hub - Management</title>
+    <title>SDA Data Hub - Full Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --navy: #0f172a; --gold: #d4af37; --green: #10b981; }
+        :root { --navy: #0f172a; --gold: #d4af37; --green: #10b981; --red: #ef4444; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; display: none; }
         .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* Box Statistik */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
+        .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.7rem; text-transform: uppercase; }
+        .stat-box span { font-size: 1.2rem; font-weight: bold; display: block; margin-top: 5px; }
+
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; }
-        input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+        input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
         .btn-save { background: var(--navy); color: var(--gold); padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: var(--navy); color: var(--gold); padding: 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        th { background: var(--navy); color: var(--gold); padding: 15px; text-align: left; font-size: 0.75rem; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        .btn-del { color: var(--red); font-weight: bold; cursor: pointer; border: 1px solid var(--red); padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
+        .btn-del:hover { background: var(--red); color: white; }
+
         #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
 <body>
 
-<div id="loading"><h3>Sedang Menyimpan ke GitHub... ⏳</h3></div>
+<div id="loading"><h3 id="loadText">Sedang Memproses... ⏳</h3></div>
 
 <div id="authOverlay">
     <div style="background:white; padding:40px; border-radius:24px; text-align:center; width:350px;">
         <h2 style="color:var(--navy);">SDA Admin Hub</h2>
-        <p style="font-size:0.8rem; color:#64748b;">Masukan Password & Token GitHub</p>
-        <input type="password" id="passCode" placeholder="Password: admin123" style="width:100%; margin-bottom:10px; text-align:center;">
-        <input type="password" id="gitToken" placeholder="GitHub Token: ghp_xxxx" style="width:100%; text-align:center;">
-        <button onclick="login()" style="background:var(--navy); color:var(--gold); padding:12px; width:100%; border-radius:8px; margin-top:15px; font-weight:bold; border:none; cursor:pointer;">MASUK</button>
+        <input type="password" id="passCode" placeholder="Password: admin123" style="margin-bottom:10px; text-align:center;">
+        <input type="password" id="gitToken" placeholder="GitHub Token: ghp_xxxx" style="text-align:center;">
+        <button onclick="login()" style="background:var(--navy); color:var(--gold); padding:12px; width:100%; border-radius:8px; margin-top:15px; font-weight:bold; cursor:pointer; border:none;">MASUK</button>
     </div>
 </div>
 
 <div class="container" id="mainApp">
-    <div class="card">
-        <h2>➕ Input Data Hujan</h2>
-        <div class="form-grid">
-            <div><label>Tahun</label><br><input type="number" id="inYear" style="width:100%"></div>
-            <div><label>Stasiun</label><br><select id="inStation" style="width:100%"></select></div>
-            <div><label>Nilai (mm)</label><br><input type="number" step="0.1" id="inValue" style="width:100%"></div>
-        </div>
-        <button class="btn-save" onclick="updateData()">SIMPAN KE DATABASE GITHUB</button>
+    <div class="stats-grid">
+        <div class="stat-box"><small>Rerata Stasiun</small><span id="avgStat">0</span></div>
+        <div class="stat-box"><small>Hujan Tertinggi</small><span id="maxStat">0</span></div>
+        <div class="stat-box"><small>Rentang Tahun</small><span id="yearRange">-</span></div>
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between;">
-            <h2>📊 Daftar Rekap</h2>
-            <select id="viewStation" onchange="renderTable()"></select>
+        <h2>➕ Input / Update Data</h2>
+        <div class="form-grid">
+            <div><label>Tahun</label><input type="number" id="inYear"></div>
+            <div><label>Stasiun</label><select id="inStation"></select></div>
+            <div><label>Nilai (mm)</label><input type="number" step="0.1" id="inValue"></div>
         </div>
-        <table id="rainTable">
-            <thead><tr><th>TAHUN</th><th>NILAI (mm)</th><th>STATUS</th></tr></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        <button class="btn-save" onclick="updateData('save')">SIMPAN KE DATABASE</button>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0">📊 Daftar Rekap</h2>
+            <select id="viewStation" onchange="renderTable()" style="width:200px"></select>
+        </div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead><tr><th>TAHUN</th><th>NILAI (mm)</th><th>AKSI</th></tr></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -63,19 +81,18 @@
     const stasiunList = ["Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
 
     function login() {
-        const pass = document.getElementById('passCode').value;
-        const token = document.getElementById('gitToken').value;
-        if(pass === "admin123" && token.startsWith('ghp_')) {
-            localStorage.setItem('gh_token', token);
+        if(document.getElementById('passCode').value === "admin123" && document.getElementById('gitToken').value.startsWith('ghp_')) {
+            localStorage.setItem('gh_token', document.getElementById('gitToken').value);
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             fetchGitHubData();
-        } else { alert("Cek Password atau Token ghp_ Anda!"); }
+        } else { alert("Data Login Salah!"); }
     }
 
     async function fetchGitHubData() {
-        const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`;
-        const r = await fetch(url, { headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}` }});
+        const r = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`, {
+            headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}` }
+        });
         const j = await r.json();
         sha = j.sha;
         allData = JSON.parse(atob(j.content));
@@ -93,10 +110,28 @@
         const key = document.getElementById('viewStation').value;
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-        allData.sort((a,b) => a.tahun - b.tahun); // URUTAN TERLAMA
-        allData.forEach(d => {
-            tbody.innerHTML += `<tr><td><strong>${d.tahun}</strong></td><td>${d[key] || 0} mm</td><td style="color:green">✅ Terverifikasi</td></tr>`;
+        allData.sort((a,b) => a.tahun - b.tahun);
+
+        let total = 0, max = 0;
+        allData.forEach((d, index) => {
+            let v = parseFloat(d[key]) || 0;
+            total += v; if(v > max) max = v;
+            tbody.innerHTML += `<tr>
+                <td><strong>${d.tahun}</strong></td>
+                <td>${v} mm</td>
+                <td><span class="btn-del" onclick="deleteYear(${d.tahun})">HAPUS</span></td>
+            </tr>`;
         });
+
+        document.getElementById('avgStat').textContent = (total / allData.length).toFixed(2) + " mm";
+        document.getElementById('maxStat').textContent = max + " mm";
+        document.getElementById('yearRange').textContent = `${allData[0].tahun} - ${allData[allData.length-1].tahun}`;
+    }
+
+    async function deleteYear(year) {
+        if(!confirm(`Hapus seluruh data tahun ${year}?`)) return;
+        allData = allData.filter(d => d.tahun !== year);
+        await syncToGitHub(`Hapus tahun ${year}`);
     }
 
     async function updateData() {
@@ -104,22 +139,21 @@
         const st = document.getElementById('inStation').value;
         const val = parseFloat(document.getElementById('inValue').value);
         if(!yr || isNaN(val)) return alert("Isi lengkap!");
-        
-        document.getElementById('loading').style.display = 'flex';
+
         let entry = allData.find(d => d.tahun === yr);
         if(entry) entry[st] = val; 
         else { let n = { tahun: yr }; n[st] = val; allData.push(n); }
+        await syncToGitHub(`Update data ${yr}`);
+    }
 
-        const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`;
-        const body = { message: `Update data ${yr}`, content: btoa(JSON.stringify(allData, null, 2)), sha: sha };
-        const res = await fetch(url, {
+    async function syncToGitHub(msg) {
+        document.getElementById('loading').style.display = 'flex';
+        const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`, {
             method: 'PUT',
             headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            body: JSON.stringify({ message: msg, content: btoa(JSON.stringify(allData, null, 2)), sha: sha })
         });
-
-        if(res.ok) { alert("✅ BERHASIL DISIMPAN!"); location.reload(); }
-        else { alert("Gagal Simpan!"); document.getElementById('loading').style.display = 'none'; }
+        if(res.ok) location.reload(); else alert("Gagal Sinkron!");
     }
 </script>
 </body>
