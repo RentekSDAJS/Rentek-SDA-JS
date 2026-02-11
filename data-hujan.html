@@ -3,211 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekap Data Hujan - SDA Jakarta Selatan</title>
+    <title>Management Data Hujan - SDA Jakarta Selatan</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --navy-deep: #0f172a;    /* Midnight Navy */
-            --gold-accent: #d4af37;  /* Luxury Gold */
-            --gold-soft: #fcf8e8;    /* Background Gold Muda */
-            --bg-color: #f1f5f9;
-            --text-color: #1e293b;
+            --navy: #0f172a;
+            --gold: #d4af37;
+            --bg: #f1f5f9;
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg-color); 
-            margin: 0; 
-            padding: 40px 20px;
-            color: var(--text-color);
+            background-color: var(--bg); 
+            margin: 0; padding: 20px; 
         }
 
+        /* Tampilan Login */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--navy); display: flex; align-items: center; justify-content: center;
+            z-index: 9999; color: white;
+        }
+
+        .login-box {
+            background: white; padding: 40px; border-radius: 20px;
+            color: var(--navy); text-align: center; width: 300px;
+            border-top: 5px solid var(--gold);
+        }
+
+        input[type="password"] {
+            width: 100%; padding: 12px; margin: 20px 0;
+            border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;
+        }
+
+        .btn-login {
+            background: var(--navy); color: var(--gold); border: none;
+            padding: 12px 30px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+
+        /* Tampilan Main */
         .container { 
-            max-width: 750px; 
-            margin: 0 auto; 
-            background: #ffffff; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
-            border-top: 8px solid var(--navy-deep); /* Aksen Navy di atas */
+            max-width: 900px; margin: 0 auto; background: white; 
+            padding: 30px; border-radius: 20px; display: none; /* Sembunyi sebelum login */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        .back-link { 
-            text-decoration: none; 
-            color: var(--navy-deep); 
-            font-size: 0.875rem; 
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 25px;
-            transition: color 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        
+        .btn-add {
+            background: #10b981; color: white; text-decoration: none;
+            padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 0.8rem;
         }
 
-        .back-link:hover { color: var(--gold-accent); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        th { background: var(--navy); color: var(--gold); }
+        tr:nth-child(even) { background: #fcf8e8; }
 
-        h2 { 
-            margin-top: 0; 
-            font-weight: 800; 
-            font-size: 1.8rem;
-            color: var(--navy-deep);
-            letter-spacing: -0.02em;
-            border-bottom: 2px solid var(--gold-accent);
-            display: inline-block;
-            padding-bottom: 5px;
-            margin-bottom: 30px;
-        }
-
-        .controls { 
-            margin-bottom: 30px; 
-            padding: 25px; 
-            background: var(--navy-deep); 
-            border-radius: 12px; 
-            color: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        label { 
-            font-size: 0.9rem; 
-            font-weight: 600; 
-            display: block;
-            margin-bottom: 10px;
-            color: var(--gold-accent);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        select { 
-            padding: 12px 15px; 
-            width: 100%; 
-            font-size: 1rem; 
-            border-radius: 8px; 
-            border: 2px solid var(--gold-accent);
-            background-color: white;
-            color: var(--navy-deep);
-            font-weight: 600;
-            outline: none;
-        }
-
-        .copy-hint { 
-            font-size: 0.8rem; 
-            color: #64748b; 
-            margin-bottom: 15px; 
-            display: block;
-            font-style: italic;
-        }
-
-        /* Tabel Rekap Luxury */
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 10px;
-            background: white;
-        }
-
-        th, td { 
-            border: 1px solid #e2e8f0; 
-            padding: 14px 20px; 
-            text-align: left; 
-        }
-
-        th { 
-            background-color: var(--navy-deep); 
-            color: var(--gold-accent);
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-        }
-
-        tr:nth-child(even) { background-color: var(--gold-soft); }
-
-        tr:hover { background-color: #f8fafc; border: 1px solid var(--gold-accent); }
-
-        td strong { color: var(--navy-deep); font-size: 1.1rem; }
-
-        .loading { padding: 40px; text-align: center; font-weight: 600; color: var(--navy-deep); }
+        .action-btns { display: flex; gap: 5px; }
+        .btn-edit { color: blue; text-decoration: none; font-size: 0.8rem; font-weight: bold; }
+        .btn-delete { color: red; text-decoration: none; font-size: 0.8rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <a href="index.html" class="back-link">← Dashboard</a>
-    <br>
-    <h2>Rekapitulasi Stasiun</h2>
-    
-    <div class="controls">
-        <label>Pilih Lokasi Stasiun</label>
-        <select id="stationSelect" onchange="loadRekap()">
-            </select>
-    </div>
-
-    <span class="copy-hint">
-        * Seleksi tabel di bawah dan gunakan Ctrl+C untuk menyalin data ke Excel.
-    </span>
-    
-    <div id="rekapArea">
-        <div class="loading">Menghubungkan ke database...</div>
+<div id="loginOverlay">
+    <div class="login-box">
+        <h3>Restricted Access</h3>
+        <p>Masukkan Password Admin:</p>
+        <input type="password" id="passInput" placeholder="Password">
+        <button class="btn-login" onclick="checkPass()">MASUK</button>
     </div>
 </div>
 
+<div class="container" id="mainContent">
+    <div class="header-flex">
+        <h2 style="color: var(--navy);">Database Management</h2>
+        <a href="/admin/#/collections/hujan/new" class="btn-add">+ TAMBAH TAHUN BARU</a>
+    </div>
+
+    <div style="background: #fefce8; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #fef08a;">
+        <label>Pilih Stasiun untuk Dikelola:</label>
+        <select id="stationSelect" onchange="loadData()" style="width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px;">
+            </select>
+    </div>
+
+    <div id="tableArea"></div>
+</div>
+
 <script>
-    let rawData = [];
-    const stationNames = [
-        "Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", 
-        "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", 
-        "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", 
-        "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"
-    ];
+    // Silakan ganti password-nya di sini
+    const SECRET_PASS = "admin123"; 
 
-    async function init() {
-        try {
-            const resp = await fetch('data/hujan/all-data.json');
-            rawData = await resp.json();
-            rawData.sort((a, b) => b.tahun - a.tahun);
-
-            const select = document.getElementById('stationSelect');
-            stationNames.forEach((name, i) => {
-                let opt = document.createElement('option');
-                opt.value = `st_${(i+1).toString().padStart(2, '0')}`;
-                opt.textContent = name;
-                select.appendChild(opt);
-            });
-
-            loadRekap();
-        } catch (e) {
-            document.getElementById('rekapArea').innerHTML = "<div class='loading' style='color:red'>Database tidak terdeteksi.</div>";
+    function checkPass() {
+        const input = document.getElementById('passInput').value;
+        if(input === SECRET_PASS) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            init();
+        } else {
+            alert("Password Salah!");
         }
     }
 
-    function loadRekap() {
+    let rawData = [];
+    const stationNames = ["Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
+
+    async function init() {
+        const resp = await fetch('data/hujan/all-data.json');
+        rawData = await resp.json();
+        rawData.sort((a, b) => a.tahun - b.tahun);
+
+        const select = document.getElementById('stationSelect');
+        stationNames.forEach((name, i) => {
+            let opt = document.createElement('option');
+            opt.value = `st_${(i+1).toString().padStart(2, '0')}`;
+            opt.textContent = name;
+            select.appendChild(opt);
+        });
+        loadData();
+    }
+
+    function loadData() {
         const key = document.getElementById('stationSelect').value;
         const name = document.getElementById('stationSelect').options[document.getElementById('stationSelect').selectedIndex].text;
         
-        let tableHtml = `
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tahun</th>
-                        <th>Data Curah Hujan: ${name} (mm)</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
+        let html = `<table><thead><tr><th>Tahun</th><th>Curah Hujan (mm)</th><th>Tindakan</th></tr></thead><tbody>`;
+        
         rawData.forEach(item => {
-            tableHtml += `
-                <tr>
-                    <td><strong>${item.tahun}</strong></td>
-                    <td><strong>${item[key] || 0}</strong></td>
-                </tr>
-            `;
+            html += `<tr>
+                <td><strong>${item.tahun}</strong></td>
+                <td>${item[key] || 0}</td>
+                <td class="action-btns">
+                    <a href="/admin/#/collections/hujan/entries/${item.tahun}" class="btn-edit">EDIT</a> | 
+                    <a href="/admin/#/collections/hujan/entries/${item.tahun}" class="btn-delete">HAPUS</a>
+                </td>
+            </tr>`;
         });
-
-        tableHtml += `</tbody></table>`;
-        document.getElementById('rekapArea').innerHTML = tableHtml;
+        html += `</tbody></table>`;
+        document.getElementById('tableArea').innerHTML = html;
     }
-
-    window.onload = init;
 </script>
 
 </body>
