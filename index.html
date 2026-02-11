@@ -14,6 +14,7 @@
             --glow: rgba(245, 158, 11, 0.4);
             --card-bg: rgba(255, 255, 255, 0.95);
             --admin-success: #10b981; /* Emerald Green untuk Database */
+            --recap-blue: #3b82f6;    /* Biru untuk Rekap */
         }
 
         body {
@@ -66,7 +67,7 @@
             margin: -40px auto 50px auto;
             padding: 0 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 25px;
             z-index: 10;
         }
@@ -90,9 +91,12 @@
             border-color: var(--accent);
         }
 
-        /* Styling khusus kartu Admin Database */
         .card-admin:hover {
             border-color: var(--admin-success);
+        }
+
+        .card-recap:hover {
+            border-color: var(--recap-blue);
         }
 
         .icon-circle {
@@ -109,6 +113,12 @@
             background: var(--admin-success);
             border-color: #fff;
             box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .card-recap .icon-circle {
+            background: var(--primary);
+            border-color: var(--accent);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
         }
 
         .btn-launch {
@@ -133,7 +143,11 @@
             color: white;
         }
 
-        /* --- PORTAL APLIKASI --- */
+        .card-recap:hover .btn-launch {
+            background: var(--primary);
+            color: var(--accent);
+        }
+
         #app-portal {
             display: none; 
             position: fixed;
@@ -210,10 +224,17 @@
             <div class="btn-launch">Buka WebGIS <span>→</span></div>
         </div>
 
+        <div class="calc-card card-recap" onclick="bukaHalaman('data-hujan.html')">
+            <div class="icon-circle">📅</div>
+            <h2>Rainfall Historical Recap</h2>
+            <p>Data Curah Hujan Tahunan 2000-2024. Siap salin (copy) ke Excel.</p>
+            <div class="btn-launch">Buka Rekapitulasi <span>→</span></div>
+        </div>
+
         <div class="calc-card card-admin" onclick="window.location.href='/admin/'">
             <div class="icon-circle">📊</div>
             <h2>Rainfall Database Admin</h2>
-            <p>Input dan Manajemen Data Hujan Harian 22 Stasiun (Periode 2000-2024).</p>
+            <p>Input dan Manajemen Data Hujan Harian (Otoritas Terbatas).</p>
             <div class="btn-launch">Buka Database <span>→</span></div>
         </div>
     </div>
@@ -244,7 +265,6 @@
         document.getElementById('app-frame').src = '';
     }
 
-    // LOGIKA NETLIFY IDENTITY
     if (window.netlifyIdentity) {
         window.netlifyIdentity.on("init", user => {
             if (!user) {
