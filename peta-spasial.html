@@ -2,53 +2,71 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Realtime Rainfall Analyst</title>
+    <title>SDA Jaksel - Spatial Rainfall Analyst Pro</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --accent: #f59e0b; --text: #f8fafc; --teal: #2dd4bf; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
-        #sidebar { width: 580px; background: var(--panel); padding: 25px; overflow-y: auto; border-right: 4px solid var(--accent); }
-        .card { background: var(--bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
-        h2 { color: var(--accent); margin-top: 0; font-size: 1.2rem; text-transform: uppercase; border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
-        h3 { color: var(--teal); font-size: 1rem; margin: 10px 0; }
-        .res-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; background: #111827; }
-        .res-table th, .res-table td { padding: 10px; border: 1px solid #334155; text-align: center; }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #f59e0b; --text: #f8fafc; --teal: #2dd4bf; --blue: #3b82f6; }
+        body { margin: 0; display: flex; height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); }
+        
+        #sidebar { width: 450px; background: var(--panel); padding: 25px; overflow-y: auto; border-right: 4px solid var(--accent); z-index: 1000; box-shadow: 10px 0 20px rgba(0,0,0,0.3); }
+        #map { flex: 1; z-index: 1; }
+
+        .card { background: var(--bg); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
+        h2 { color: var(--accent); margin-top: 0; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        h3 { color: var(--teal); font-size: 0.9rem; margin: 10px 0; display: flex; align-items: center; gap: 8px; }
+        
+        .res-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 10px; background: #111827; }
+        .res-table th, .res-table td { padding: 8px; border: 1px solid #334155; text-align: center; }
         .res-table th { background: #334155; color: var(--accent); position: sticky; top: 0; }
         .highlight { font-weight: bold; color: var(--teal); }
-        .btn { background: var(--accent); color: #000; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        .btn:hover { background: #fbbf24; }
-        #map { flex: 1; }
-        .status-box { padding: 10px; border-radius: 5px; margin-top: 10px; font-size: 0.8rem; display: none; }
+        
+        .btn { background: var(--accent); color: #000; padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.3s; text-transform: uppercase; }
+        .btn:hover { background: #fbbf24; transform: translateY(-2px); }
+
+        .status-box { padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; font-weight: 600; display: none; text-align: center; }
+
+        /* Custom Label Marker */
+        .station-label {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>DASHBOARD ANALISIS HIDROLOGI</h2>
+    <h2>Spatial Analyst Hub</h2>
     
     <div class="card">
         <label><strong>1. Upload Batas Catchment (KML/JSON)</strong></label>
-        <input type="file" id="inputCatchment" accept=".json,.geojson,.kml" style="width:100%; margin-top:10px; color:white;">
-        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none;">PROSES ANALISIS DATA</button>
+        <input type="file" id="inputCatchment" accept=".json,.geojson,.kml" style="width:100%; margin-top:15px; color:#94a3b8; font-size: 0.8rem;">
+        <button class="btn" id="btnProses" onclick="runAnalysis()" style="display:none;">Mulai Analisis Spasial</button>
         <div id="statusInfo" class="status-box"></div>
     </div>
 
     <div id="spatialResult" style="display:none;">
         <div class="card">
-            <h3>Matriks Spasial (Koefisien Thiessen)</h3>
-            <table class="res-table">
-                <thead>
-                    <tr><th>Stasiun Pengaruh</th><th>Luas (km²)</th><th>Koefisien (Ci)</th></tr>
-                </thead>
-                <tbody id="body-spatial"></tbody>
-            </table>
+            <h3>📐 Koefisien Thiessen (Ci)</h3>
+            <div style="max-height: 200px; overflow-y: auto;">
+                <table class="res-table">
+                    <thead>
+                        <tr><th>Stasiun</th><th>Luas (km²)</th><th>Ci</th></tr>
+                    </thead>
+                    <tbody id="body-spatial"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div id="rainResult" style="display:none;">
         <div class="card">
-            <h3>Rekapitulasi Hujan Rerata Wilayah (2000-2024)</h3>
-            <p style="font-size: 0.75rem; color: #94a3b8;">*Anda dapat memblok tabel di bawah dan langsung Copy-Paste ke Excel.</p>
+            <h3>🌧️ Rerata Wilayah Tahunan</h3>
             <table class="res-table">
                 <thead>
                     <tr><th>Tahun</th><th>Hujan Wilayah (mm)</th></tr>
@@ -66,42 +84,62 @@
 <script src="https://unpkg.com/@mapbox/togeojson"></script>
 
 <script>
-    const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRMWvfZncodk-zHrNy7h586o6VKEbMTxe8NCTeV61xL-LbBKSySSqqbxay_eD7LzBhp1PQVgknLoGzx/pub?output=csv";
+    const CONFIG = { owner: 'RentekSDAJS', repo: 'Calculator-Online---Rentek-SDA-JS', path: 'data/hujan/all-data.json' };
 
     const STATIONS = [
-        { n: "Kemayoran", lat: -6.15559, lng: 106.84 },
-        { n: "Halim", lat: -6.27036, lng: 106.88926 },
-        { n: "Bogor", lat: -6.5, lng: 106.75 },
-        { n: "Banten", lat: -6.26151, lng: 106.75084 },
-        { n: "Katulampa", lat: -6.63317, lng: 106.837077 },
-        { n: "Depok", lat: -6.40065, lng: 106.831897 },
-        { n: "Manggarai", lat: -6.20742, lng: 106.848569 },
-        { n: "Karet", lat: -6.1981, lng: 106.810097 },
-        { n: "Setiabudi Timur", lat: -6.20462, lng: 106.829385 },
-        { n: "Melati", lat: -6.20084, lng: 106.817982 },
-        { n: "Istana", lat: -6.17165, lng: 106.8270424 },
-        { n: "Krukut Hulu", lat: -6.34434, lng: 106.799081 },
-        { n: "Sunter Hulu", lat: -6.31785, lng: 106.9211 },
-        { n: "Pesanggrahan", lat: -6.39708, lng: 106.77181 },
-        { n: "Angke Hulu", lat: -6.21835, lng: 106.694467 },
-        { n: "Tanjungan", lat: -6.10669, lng: 106.725882 },
-        { n: "Tomang Barat", lat: -6.1671, lng: 106.78001 },
-        { n: "Teluk Gong", lat: -6.1335, lng: 106.777649 },
-        { n: "Pulo Gadung", lat: -6.19097, lng: 106.904213 },
-        { n: "Sunter Kodamar", lat: -6.15508, lng: 106.886893 },
-        { n: "Sunter III Rawa Badak", lat: -6.12107, lng: 106.896744 },
-        { n: "Pompa Cideng", lat: -6.17355, lng: 106.806328 }
+        { n: "Kemayoran", id: "st_01", lat: -6.15559, lng: 106.84 },
+        { n: "Halim", id: "st_02", lat: -6.27036, lng: 106.88926 },
+        { n: "Bogor", id: "st_03", lat: -6.5, lng: 106.75 },
+        { n: "Banten", id: "st_04", lat: -6.26151, lng: 106.75084 },
+        { n: "Katulampa", id: "st_05", lat: -6.63317, lng: 106.837077 },
+        { n: "Depok", id: "st_06", lat: -6.40065, lng: 106.831897 },
+        { n: "Manggarai", id: "st_07", lat: -6.20742, lng: 106.848569 },
+        { n: "Karet", id: "st_08", lat: -6.1981, lng: 106.810097 },
+        { n: "Setiabudi Timur", id: "st_09", lat: -6.20462, lng: 106.829385 },
+        { n: "Melati", id: "st_10", lat: -6.20084, lng: 106.817982 },
+        { n: "Istana", id: "st_11", lat: -6.17165, lng: 106.8270424 },
+        { n: "Krukut Hulu", id: "st_12", lat: -6.34434, lng: 106.799081 },
+        { n: "Sunter Hulu", id: "st_13", lat: -6.31785, lng: 106.9211 },
+        { n: "Pesanggrahan", id: "st_14", lat: -6.39708, lng: 106.77181 },
+        { n: "Angke Hulu", id: "st_15", lat: -6.21835, lng: 106.694467 },
+        { n: "Tanjungan", id: "st_16", lat: -6.10669, lng: 106.725882 },
+        { n: "Tomang Barat", id: "st_17", lat: -6.1671, lng: 106.78001 },
+        { n: "Teluk Gong", id: "st_18", lat: -6.1335, lng: 106.777649 },
+        { n: "Pulo Gadung", id: "st_19", lat: -6.19097, lng: 106.904213 },
+        { n: "Sunter Kodamar", id: "st_20", lat: -6.15508, lng: 106.886893 },
+        { n: "Sunter III Rawa Badak", id: "st_21", lat: -6.12107, lng: 106.896744 },
+        { n: "Pompa Cideng", id: "st_22", lat: -6.17355, lng: 106.806328 }
     ];
 
     let thiessenResult = [];
     let geoData = null;
+    
     const map = L.map('map').setView([-6.28, 106.82], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { opacity: 0.3 }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
     const overlay = L.layerGroup().addTo(map);
 
+    // Fungsi Warna Acak Berdasarkan Nama (Agar konsisten)
+    function getColor(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        return `hsl(${Math.abs(hash % 360)}, 70%, 50%)`;
+    }
+
+    // Inisialisasi Marker Stasiun dengan Label Jelas
     const markers = STATIONS.map(s => {
-        L.circleMarker([s.lat, s.lng], { radius: 5, color: '#f59e0b', fillOpacity: 0.7 }).addTo(map).bindTooltip(s.n);
-        return turf.point([s.lng, s.lat], { name: s.n });
+        // Dot marker
+        L.circleMarker([s.lat, s.lng], { radius: 6, color: '#fff', weight: 2, fillColor: '#f59e0b', fillOpacity: 1 }).addTo(map);
+        
+        // Label Marker permanen
+        L.marker([s.lat, s.lng], {
+            icon: L.divIcon({
+                className: 'station-label',
+                html: s.n,
+                iconAnchor: [-10, 10]
+            })
+        }).addTo(map);
+
+        return turf.point([s.lng, s.lat], { name: s.n, id: s.id });
     });
 
     document.getElementById('inputCatchment').onchange = function(e) {
@@ -110,7 +148,7 @@
         reader.onload = function(ev) {
             geoData = file.name.endsWith('.kml') ? toGeoJSON.kml(new DOMParser().parseFromString(ev.target.result, "text/xml")) : JSON.parse(ev.target.result);
             document.getElementById('btnProses').style.display = 'block';
-            showStatus("File berhasil dimuat. Klik tombol proses.", "#10b981");
+            showStatus("Catchment Ready. Silakan klik tombol.", "#3b82f6");
         };
         reader.readAsText(file);
     };
@@ -118,7 +156,9 @@
     async function runAnalysis() {
         overlay.clearLayers();
         const polygon = geoData.features ? geoData.features[0] : geoData;
-        L.geoJSON(polygon, { style: { color: 'red', weight: 2, fillOpacity: 0.05 } }).addTo(overlay);
+        
+        // Gambar Batas Luar
+        L.geoJSON(polygon, { style: { color: '#f8fafc', weight: 3, dashArray: '5, 10', fillOpacity: 0 } }).addTo(overlay);
         map.fitBounds(L.geoJSON(polygon).getBounds());
 
         const bbox = turf.bbox(polygon);
@@ -131,16 +171,28 @@
             const intersect = turf.intersect(cell, polygon);
             if (intersect) {
                 const a = turf.area(intersect) / 1000000;
-                thiessenResult.push({ name: STATIONS[i].n, area: a });
+                const stName = STATIONS[i].n;
+                const stId = STATIONS[i].id;
+                
+                thiessenResult.push({ name: stName, id: stId, area: a });
                 totalArea += a;
-                L.geoJSON(intersect, { style: { color: '#0ea5e9', weight: 1, fillOpacity: 0.3 } }).addTo(overlay);
+
+                // Gambar Poligon dengan Warna Berbeda
+                L.geoJSON(intersect, { 
+                    style: { 
+                        color: '#fff', 
+                        weight: 1, 
+                        fillColor: getColor(stName), 
+                        fillOpacity: 0.5 
+                    } 
+                }).addTo(overlay).bindTooltip(`${stName}: ${a.toFixed(2)} km²`);
             }
         });
 
         let sTable = "";
         thiessenResult.forEach(f => {
             f.ci = f.area / totalArea;
-            sTable += `<tr><td>${f.name}</td><td>${f.area.toFixed(3)}</td><td class="highlight">${f.ci.toFixed(4)}</td></tr>`;
+            sTable += `<tr><td>${f.name}</td><td>${f.area.toFixed(2)}</td><td class="highlight">${f.ci.toFixed(3)}</td></tr>`;
         });
         document.getElementById('body-spatial').innerHTML = sTable;
         document.getElementById('spatialResult').style.display = 'block';
@@ -150,47 +202,34 @@
 
     async function processRainfall() {
         try {
-            const response = await fetch(SHEET_CSV);
-            const dataText = await response.text();
-            const lines = dataText.split('\n').filter(line => line.trim() !== "");
-            
-            // Bersihkan Header
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[\r\n]/g, "").replace(/\s+/g, ''));
+            showStatus("Fetching data dari GitHub...", "#f59e0b");
+            const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`);
+            const json = await res.json();
+            const allData = JSON.parse(atob(json.content));
 
             let rTable = "";
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(',');
-                if (!cols[0] || isNaN(cols[0])) continue; // Lewati jika bukan tahun
+            allData.sort((a,b) => b.tahun - a.tahun);
 
+            allData.forEach(row => {
                 let p_wilayah = 0;
                 thiessenResult.forEach(stMatch => {
-                    const stNameClean = stMatch.name.toLowerCase().replace(/\s+/g, '');
-                    // Cari index kolom yang mengandung nama stasiun
-                    const colIdx = headers.findIndex(h => h.includes(stNameClean) || stNameClean.includes(h));
-                    
-                    if (colIdx !== -1) {
-                        const val = parseFloat(cols[colIdx]) || 0;
-                        p_wilayah += val * stMatch.ci;
-                    }
+                    const val = parseFloat(row[stMatch.id]) || 0;
+                    p_wilayah += (val * stMatch.ci);
                 });
+                rTable += `<tr><td><strong>${row.tahun}</strong></td><td class="highlight">${p_wilayah.toFixed(2)} mm</td></tr>`;
+            });
 
-                if (p_wilayah > 0) {
-                    rTable += `<tr><td>${cols[0]}</td><td class="highlight">${p_wilayah.toFixed(2)}</td></tr>`;
-                }
-            }
             document.getElementById('body-rain').innerHTML = rTable;
             document.getElementById('rainResult').style.display = 'block';
             showStatus("Analisis Selesai!", "#10b981");
         } catch (err) {
-            showStatus("Gagal mengambil data hujan.", "#ef4444");
+            showStatus("Gagal sinkron GitHub.", "#ef4444");
         }
     }
 
     function showStatus(msg, color) {
         const box = document.getElementById('statusInfo');
-        box.innerText = msg;
-        box.style.background = color;
-        box.style.display = "block";
+        box.innerText = msg; box.style.background = color; box.style.display = "block";
     }
 </script>
 </body>
