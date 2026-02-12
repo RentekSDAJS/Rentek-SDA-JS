@@ -1,112 +1,90 @@
 {
   "Kemayoran": {
     "koordinat": { "lat": -6.15559, "lng": 106.84000 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Halim": {
     "koordinat": { "lat": -6.27036, "lng": 106.88926 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Bogor": {
     "koordinat": { "lat": -6.50000, "lng": 106.75000 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Banten": {
     "koordinat": { "lat": -6.26151, "lng": 106.75084 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Katulampa": {
     "koordinat": { "lat": -6.63317, "lng": 106.837077 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Depok": {
     "koordinat": { "lat": -6.40065, "lng": 106.831897 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Manggarai": {
     "koordinat": { "lat": -6.20742, "lng": 106.848569 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Karet": {
     "koordinat": { "lat": -6.19810, "lng": 106.810097 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Setiabudi Timur": {
     "koordinat": { "lat": -6.20462, "lng": 106.829385 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Melati": {
     "koordinat": { "lat": -6.20084, "lng": 106.817982 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Istana": {
     "koordinat": { "lat": -6.17165, "lng": 106.8270424 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Krukut Hulu": {
     "koordinat": { "lat": -6.34434, "lng": 106.799081 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Sunter Hulu": {
     "koordinat": { "lat": -6.31785, "lng": 106.92110 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Pesanggrahan": {
     "koordinat": { "lat": -6.39708, "lng": 106.77181 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Angke Hulu": {
     "koordinat": { "lat": -6.21835, "lng": 106.694467 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Tanjungan": {
     "koordinat": { "lat": -6.10669, "lng": 106.725882 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Tomang Barat": {
     "koordinat": { "lat": -6.16710, "lng": 106.78001 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Teluk Gong": {
     "koordinat": { "lat": -6.13350, "lng": 106.777649 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Pulo Gadung": {
     "koordinat": { "lat": -6.19097, "lng": 106.904213 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Sunter Kodamar": {
     "koordinat": { "lat": -6.15508, "lng": 106.886893 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Sunter III Rawa Badak": {
     "koordinat": { "lat": -6.12107, "lng": 106.896744 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   },
   "Pompa Cideng": {
     "koordinat": { "lat": -6.17355, "lng": 106.806328 },
-    "rekap": { "hujan_maks": 0, "hujan_rerata": 0, "rentang": "" },
     "data_tahunan": []
   }
 }
