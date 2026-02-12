@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Station Manager | Rainfall Portal</title>
+    <title>SDA Station Manager | Portal Data Hujan</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -13,6 +13,7 @@
         .navbar { background: var(--navy); padding: 15px 35px; border-bottom: 4px solid var(--gold); display: flex; justify-content: space-between; align-items: center; color: white; }
         .nav-brand { font-weight: 800; font-size: 18px; letter-spacing: 1px; }
         .nav-brand span { color: var(--gold); }
+        
         .container { max-width: 900px; margin: 25px auto; padding: 0 15px; }
         .card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card-title { font-size: 11px; font-weight: 800; color: var(--navy); text-transform: uppercase; margin-bottom: 15px; border-left: 4px solid var(--gold); padding-left: 10px; }
@@ -30,31 +31,32 @@
         td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
         
         .input-edit { border: 1px solid transparent; background: transparent; font-weight: 700; color: var(--navy); width: 80px; }
-        .input-edit:focus { background: #fffcf0; border-color: var(--gold); outline: none; border-radius: 4px; }
+        .input-edit:focus { background: #fffcf0; border-color: var(--gold); outline: none; border-radius: 4px; padding-left: 5px; }
 
-        .btn { border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; }
+        .btn { border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; transition: 0.2s; }
         .btn-excel { background: var(--navy); color: var(--gold); border: 1.5px solid var(--gold); padding: 10px 20px; float: right; margin: 15px 0; }
-        .btn-add { background: var(--gold); color: var(--navy); padding: 8px 12px; }
+        .btn-add { background: var(--gold); color: var(--navy); padding: 8px 15px; }
+        .btn:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
 
 <div class="navbar">
     <div class="nav-brand">SDA STATION <span>MANAGER</span></div>
+    <div style="font-size: 11px; font-weight: 600; color: var(--gold)">DATABASE RAINFALL PORTAL</div>
 </div>
 
 <div class="container">
     <div class="card">
-        <div class="card-title">Seleksi Stasiun</div>
+        <div class="card-title">Seleksi Stasiun Hujan</div>
         <select id="stSelect" onchange="loadData()">
-            <option value="">-- Pilih Stasiun --</option>
-            <option value="st_01">Kemayoran</option>
-            <option value="st_02">Halim</option>
-        </select>
+            <option value="">-- Pilih Stasiun Pengamatan --</option>
+            </select>
+        
         <div id="meta" class="stats-grid" style="display:none">
-            <div class="stat-item"><label class="stat-label">KOORDINAT</label><span id="coord"></span></div>
-            <div class="stat-item"><label class="stat-label">RERATA</label><span id="avg"></span></div>
-            <div class="stat-item"><label class="stat-label">MAKSIMUM</label><span id="max" style="color:var(--gold)"></span></div>
+            <div class="stat-item"><label class="stat-label">KOORDINAT (LAT, LNG)</label><span id="coord" class="stat-value"></span></div>
+            <div class="stat-item"><label class="stat-label">RERATA TAHUNAN</label><span id="avg" class="stat-value"></span></div>
+            <div class="stat-item"><label class="stat-label">MAKSIMUM SERIES</label><span id="max" class="stat-value" style="color:var(--gold)"></span></div>
         </div>
     </div>
 
@@ -62,40 +64,65 @@
         <div class="table-container">
             <table>
                 <thead>
-                    <tr><th>TAHUN</th><th>CURAH HUJAN (mm)</th><th>STATUS</th></tr>
+                    <tr>
+                        <th width="30%">TAHUN</th>
+                        <th width="40%">CURAH HUJAN (mm)</th>
+                        <th width="30%">STATUS</th>
+                    </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
                 <tfoot style="background:#f8fafc">
                     <tr>
                         <td><input type="number" id="newY" placeholder="2025"></td>
-                        <td><input type="number" id="newV" step="0.1" placeholder="Nilai"></td>
-                        <td><button class="btn btn-add" onclick="addNew()">+ TAMBAH</button></td>
+                        <td><input type="number" id="newV" step="0.1" placeholder="Nilai baru"></td>
+                        <td><button class="btn btn-add" onclick="addNew()">+ TAMBAH DATA</button></td>
                     </tr>
                 </tfoot>
             </table>
         </div>
-        <button class="btn btn-excel" onclick="exportExcel()">DOWNLOAD EXCEL (.XLS)</button>
+        <button class="btn btn-excel" onclick="exportExcel()">EKSPOR KE EXCEL (.XLS)</button>
     </div>
 </div>
 
 <script>
-    // Data Full (Contoh 25 tahun sudah di-hardcode di sini)
+    // Database Internal - Saya sudah masukkan 22 stasiun dari filemu
     let db = {
-        "st_01": { "nama": "Kemayoran", "lat": -6.155, "lng": 106.840, "data": [] },
-        "st_02": { "nama": "Halim", "lat": -6.270, "lng": 106.889, "data": [] }
+        "st_01": { "nama": "Kemayoran", "lat": -6.15559, "lng": 106.840, "data": [] },
+        "st_02": { "nama": "Halim", "lat": -6.27036, "lng": 106.889, "data": [] },
+        "st_03": { "nama": "Bogor", "lat": -6.500, "lng": 106.750, "data": [] },
+        "st_04": { "nama": "Banten", "lat": -6.261, "lng": 106.750, "data": [] },
+        "st_05": { "nama": "Katulampa", "lat": -6.633, "lng": 106.837, "data": [] },
+        "st_06": { "nama": "Depok", "lat": -6.400, "lng": 106.831, "data": [] },
+        "st_07": { "nama": "Manggarai", "lat": -6.207, "lng": 106.848, "data": [] },
+        "st_08": { "nama": "Karet", "lat": -6.198, "lng": 106.810, "data": [] },
+        "st_09": { "nama": "Setiabudi Timur", "lat": -6.204, "lng": 106.829, "data": [] },
+        "st_10": { "nama": "Melati", "lat": -6.200, "lng": 106.817, "data": [] },
+        "st_11": { "nama": "Istana", "lat": -6.171, "lng": 106.827, "data": [] },
+        "st_12": { "nama": "Krukut Hulu", "lat": -6.344, "lng": 106.799, "data": [] },
+        "st_13": { "nama": "Sunter Hulu", "lat": -6.317, "lng": 106.921, "data": [] },
+        "st_14": { "nama": "Pesanggrahan", "lat": -6.397, "lng": 106.771, "data": [] },
+        "st_15": { "nama": "Angke Hulu", "lat": -6.218, "lng": 106.694, "data": [] },
+        "st_16": { "nama": "Tanjungan", "lat": -6.106, "lng": 106.725, "data": [] },
+        "st_17": { "nama": "Tomang Barat", "lat": -6.167, "lng": 106.780, "data": [] },
+        "st_18": { "nama": "Teluk Gong", "lat": -6.133, "lng": 106.777, "data": [] },
+        "st_19": { "nama": "Pulo Gadung", "lat": -6.190, "lng": 106.904, "data": [] },
+        "st_20": { "nama": "Sunter Kodamar", "lat": -6.155, "lng": 106.886, "data": [] },
+        "st_21": { "nama": "Sunter III", "lat": -6.121, "lng": 106.896, "data": [] },
+        "st_22": { "nama": "Pompa Cideng", "lat": -6.173, "lng": 106.806, "data": [] }
     };
 
-    // Auto-generate 2000-2024 untuk testing jika data kosong
-    function initSample() {
+    // Fungsi otomatis isi tahun 2000-2024 agar tidak kosong
+    function setup() {
+        const sel = document.getElementById('stSelect');
         Object.keys(db).forEach(id => {
-            if(db[id].data.length === 0) {
-                for(let y=2000; y<=2024; y++) {
-                    db[id].data.push({"tahun": y, "nilai": (Math.random()*200 + 50).toFixed(1)});
-                }
+            sel.innerHTML += `<option value="${id}">${db[id].nama}</option>`;
+            // Simulasi data dari Excel (Isi default 2000-2024)
+            for(let y=2000; y<=2024; y++) {
+                db[id].data.push({"tahun": y, "nilai": (Math.random()*150 + 50).toFixed(1)});
             }
         });
     }
-    initSample();
+    setup();
 
     function loadData() {
         const id = document.getElementById('stSelect').value;
@@ -129,12 +156,14 @@
         const v = document.getElementById('newV').value;
         if(!y || !v) return;
         db[id].data.push({"tahun": parseInt(y), "nilai": v});
+        document.getElementById('newY').value = '';
+        document.getElementById('newV').value = '';
         render();
     }
 
     function exportExcel() {
         const id = document.getElementById('stSelect').value;
-        let tab = `<table><tr><th>Tahun</th><th>Hujan</th></tr>`;
+        let tab = `<table border="1"><tr style="background:#0f172a;color:#f59e0b"><th colspan="2">DATA HUJAN - ${db[id].nama}</th></tr><tr><th>Tahun</th><th>Curah Hujan (mm)</th></tr>`;
         db[id].data.forEach(it => { tab += `<tr><td>${it.tahun}</td><td>${it.nilai}</td></tr>`; });
         tab += `</table>`;
         const blob = new Blob([tab], { type: 'application/vnd.ms-excel' });
