@@ -114,7 +114,7 @@
     let activeData = JSON.parse(localStorage.getItem('sda_internal_v3')) || rawDB;
 
     function auth() {
-        if(document.getElementById('tokenIn').value === "SDA2024") {
+        if(document.getElementById('tokenIn').value === "RENTEKSDAJS") {
             sessionStorage.setItem('auth', 'true');
             document.getElementById('loginGate').style.display = 'none';
             document.getElementById('app').style.display = 'block';
