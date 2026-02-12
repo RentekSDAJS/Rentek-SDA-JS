@@ -3,138 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDA Data Hub - Management</title>
+    <title>SDA Data Hub - Management & Auto Spatial Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-    :root { --navy: #0f172a; --gold: #d4af37; --green: #10b981; --red: #ef4444; }
-    
-    /* Reset & Base */
-    body { 
-        font-family: 'Plus Jakarta Sans', sans-serif; 
-        background: #f1f5f9; 
-        margin: 0; 
-        padding: 0; 
-        color: #1e293b;
-    }
+        :root { --navy: #0f172a; --gold: #d4af37; --teal: #0d9488; --red: #ef4444; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
 
-    /* HEADER - KITA KEMBALIKAN KE FIXED DENGAN Z-INDEX TINGGI */
-    #top-header {
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        right: 0; 
-        height: 85px; /* Tinggi tetap */
-        background: var(--navy); 
-        color: white; 
-        display: flex; 
-        align-items: center;
-        justify-content: space-between; 
-        padding: 0 25px; 
-        border-bottom: 5px solid var(--gold); 
-        z-index: 2000; /* Lebih tinggi dari elemen manapun */
-        box-sizing: border-box;
-    }
-    
-    .header-left { display: flex; flex-direction: column; gap: 2px; }
-    .main-title { font-weight: 900; font-size: 1.3rem; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
-    .sub-title { font-size: 0.75rem; color: var(--gold); font-weight: 600; opacity: 0.9; }
-    .credit-tag { font-size: 0.75rem; font-weight: 800; opacity: 0.8; background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 4px; }
+        #top-header {
+            position: fixed; top: 0; left: 0; right: 0; height: 85px; 
+            background: var(--navy); color: white; display: flex; 
+            align-items: center; justify-content: space-between; 
+            padding: 0 25px; border-bottom: 5px solid var(--gold); z-index: 2000;
+        }
+        
+        .header-left { display: flex; flex-direction: column; }
+        .main-title { font-weight: 900; font-size: 1.3rem; text-transform: uppercase; }
+        .sub-title { font-size: 0.75rem; color: var(--gold); font-weight: 600; }
 
-    /* CONTAINER - INI KUNCI AGAR TIDAK KETIBAN */
-    .container { 
-        max-width: 1100px; 
-        margin: 0 auto; 
-        padding: 110px 20px 40px 20px; /* Padding atas 110px (85px header + 25px jarak) */
-        display: none; 
-        box-sizing: border-box;
-    }
+        .container { max-width: 1100px; margin: 0 auto; padding: 110px 20px 40px 20px; display: none; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
+        .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.65rem; text-transform: uppercase; display: block; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #f8fafc; padding: 20px; border-radius: 15px; }
+        label { font-size: 0.75rem; font-weight: 800; color: var(--navy); text-transform: uppercase; display: block; margin-bottom: 5px; }
+        input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
+        
+        .btn-save { background: var(--navy); color: var(--gold); padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; }
+        .btn-spatial { background: var(--teal); color: white; padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
 
-    /* Card Styles */
-    .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    
-    /* Stats Box */
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-    .stat-box { background: var(--navy); color: white; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid var(--gold); }
-    .stat-box small { color: var(--gold); font-weight: bold; font-size: 0.65rem; text-transform: uppercase; display: block; margin-bottom: 5px; }
-    .stat-box span { font-size: 1.1rem; font-weight: bold; }
-
-    /* Form Styles */
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; }
-    input, select { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box; }
-    
-    .btn-save { background: var(--navy); color: var(--gold); padding: 15px; border-radius: 10px; width: 100%; margin-top: 15px; font-weight: 800; cursor: pointer; border: none; }
-    .btn-logout { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
-    
-    /* Table Styles */
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th { background: #f8fafc; color: var(--navy); padding: 15px; text-align: left; font-size: 0.75rem; border-bottom: 2px solid #e2e8f0; }
-    td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
-    .btn-del { color: var(--red); font-weight: bold; cursor: pointer; border: 1px solid var(--red); padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; }
-
-    /* Overlays */
-    #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-    #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
-
-    /* Responsive Mobile */
-    @media (max-width: 600px) {
-        #top-header { height: auto; padding: 10px 15px; flex-direction: column; text-align: center; gap: 5px; }
-        .container { padding-top: 140px; } /* Ruang lebih untuk header yang memanjang ke bawah di mobile */
-        .stats-grid { grid-template-columns: 1fr; }
-        .main-title { font-size: 1rem; }
-        .sub-title { font-size: 0.65rem; }
-        .credit-tag { display: none; }
-    }
-</style>
+        #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
+    </style>
 </head>
 <body>
 
 <div id="top-header">
     <div class="header-left">
         <div class="main-title">Rainfall Data Hub</div>
-        <div class="sub-title">Seksi Perencanaan Sudin Sumber Daya Air Jakarta Selatan</div>
+        <div class="sub-title">Automated Spatial Management</div>
     </div>
-    <div class="credit-tag">Rentek_SDA_JS</div>
+    <button onclick="logout()" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:6px; font-weight:bold; cursor:pointer;">LOGOUT</button>
 </div>
-    
-<div id="loading"><h3>Sedang Memproses... ⏳</h3></div>
+
+<div id="loading"><h3>Sinkronisasi Data ke GitHub... ⏳</h3></div>
 
 <div id="authOverlay">
-    <div style="background:white; padding:40px; border-radius:24px; text-align:center; width:320px; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
-        <h2 style="color:var(--navy); margin-top:0;">SDA Admin Hub</h2>
+    <div style="background:white; padding:40px; border-radius:24px; text-align:center; width:320px;">
+        <h2 style="color:var(--navy); margin-top:0;">SDA Admin Login</h2>
         <input type="password" id="passCode" placeholder="Password Sistem" style="margin-bottom:10px; text-align:center;">
-        <input type="password" id="gitToken" placeholder="GitHub Token (ghp_...)" style="text-align:center;">
-        <div style="margin: 15px 0; font-size: 0.8rem; color: #64748b;">
-            <input type="checkbox" id="rememberMe" checked> <label for="rememberMe" style="display:inline; cursor:pointer;">Ingat saya di perangkat ini</label>
-        </div>
-        <button onclick="login()" style="background:var(--navy); color:var(--gold); padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; border:none; font-size:1rem;">MASUK</button>
+        <input type="password" id="gitToken" placeholder="GitHub Token" style="text-align:center;">
+        <button onclick="login()" style="background:var(--navy); color:var(--gold); padding:12px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; border:none; margin-top:15px;">MASUK</button>
     </div>
 </div>
 
 <div class="container" id="mainApp">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-        <h3 style="margin:0; color:var(--navy); border-left: 4px solid var(--gold); padding-left: 10px;">Engineering Control Center</h3>
-        <button class="btn-logout" onclick="logout()">LOGOUT / GANTI TOKEN</button>
-    </div>
-
     <div class="stats-grid">
-        <div class="stat-box"><small>Rerata Stasiun</small><span id="avgStat">0</span></div>
-        <div class="stat-box"><small>Hujan Tertinggi</small><span id="maxStat">0</span></div>
-        <div class="stat-box"><small>Rentang Tahun</small><span id="yearRange">-</span></div>
+        <div class="stat-box"><small>Database</small><span>Connected</span></div>
+        <div class="stat-box"><small>Total Stasiun</small><span>22 Pos Hujan</span></div>
+        <div class="stat-box"><small>Auto-Sync</small><span>Active</span></div>
     </div>
 
-    <div class="card">
-        <h2 style="margin-top:0; font-size: 1.2rem;">➕ Input / Update Data</h2>
+    <div class="card" style="border-top: 5px solid var(--teal);">
+        <h2 style="margin-top:0; font-size: 1.1rem; color: var(--teal);">📍 Informasi & Koreksi Koordinat Spasial</h2>
         <div class="form-grid">
-            <div><label>Tahun</label><input type="number" id="inYear" placeholder="Contoh: 2024"></div>
-            <div><label>Stasiun</label><select id="inStation"></select></div>
-            <div><label>Nilai (mm)</label><input type="number" step="0.1" id="inValue" placeholder="0.0"></div>
+            <div><label>Pilih Stasiun</label><select id="coordStation" onchange="loadCurrentCoord()"></select></div>
+            <div><label>Latitude (Y)</label><input type="number" step="0.000001" id="inLat"></div>
+            <div><label>Longitude (X)</label><input type="number" step="0.000001" id="inLng"></div>
         </div>
-        <button class="btn-save" onclick="updateData()">SIMPAN KE DATABASE</button>
+        <button class="btn-spatial" onclick="updateCoordinate()">SIMPAN PERUBAHAN KOORDINAT</button>
     </div>
 
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap: wrap; gap: 10px;">
-            <h2 style="margin:0; font-size: 1.2rem;">📊 Daftar Rekap</h2>
+        <h2 style="margin-top:0; font-size: 1.1rem;">➕ Input Nilai Hujan Tahunan</h2>
+        <div class="form-grid">
+            <div><label>Tahun</label><input type="number" id="inYear" placeholder="2024"></div>
+            <div><label>Stasiun</label><select id="inStation"></select></div>
+            <div><label>Hujan (mm)</label><input type="number" step="0.1" id="inValue" placeholder="0.0"></div>
+        </div>
+        <button class="btn-save" onclick="updateData()">Simpan Data Hujan</button>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h2 style="margin:0; font-size: 1.1rem;">📊 Rekapitulasi Data</h2>
             <select id="viewStation" onchange="renderTable()" style="width:200px"></select>
         </div>
         <div style="overflow-x: auto;">
@@ -147,15 +105,38 @@
 </div>
 
 <script>
-    /* JAVASCRIPT TETAP SAMA SEPERTI ASLINYA */
     const CONFIG = { owner: 'RentekSDAJS', repo: 'Calculator-Online---Rentek-SDA-JS', path: 'data/hujan/all-data.json' };
     let allData = [], sha = '';
-    const stasiunList = ["Kemayoran", "Halim", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
+
+    // DATA KOORDINAT HARDCODED SEBAGAI DEFAULT
+    const DEFAULT_COORDS = {
+        "st_01": { n: "Kemayoran", lat: -6.15559, lng: 106.84000 },
+        "st_02": { n: "Halim PK", lat: -6.27036, lng: 106.88926 },
+        "st_03": { n: "Bogor", lat: -6.50000, lng: 106.75000 },
+        "st_04": { n: "Banten", lat: -6.26151, lng: 106.75084 },
+        "st_05": { n: "Katulampa", lat: -6.63317, lng: 106.83707 },
+        "st_06": { n: "Depok", lat: -6.40065, lng: 106.83189 },
+        "st_07": { n: "Manggarai", lat: -6.20742, lng: 106.84856 },
+        "st_08": { n: "Karet", lat: -6.19810, lng: 106.81009 },
+        "st_09": { n: "Setiabudi Timur", lat: -6.20462, lng: 106.82938 },
+        "st_10": { n: "Melati", lat: -6.20084, lng: 106.81798 },
+        "st_11": { n: "Istana", lat: -6.17165, lng: 106.82704 },
+        "st_12": { n: "Krukut Hulu", lat: -6.34434, lng: 106.79908 },
+        "st_13": { n: "Sunter Hulu", lat: -6.31785, lng: 106.92110 },
+        "st_14": { n: "Pesanggrahan", lat: -6.39708, lng: 106.77181 },
+        "st_15": { n: "Angke Hulu", lat: -6.21835, lng: 106.69446 },
+        "st_16": { n: "Tanjungan", lat: -6.10669, lng: 106.72588 },
+        "st_17": { n: "Tomang Barat", lat: -6.16710, lng: 106.78001 },
+        "st_18": { n: "Teluk Gong", lat: -6.13350, lng: 106.77764 },
+        "st_19": { n: "Pulo Gadung", lat: -6.19097, lng: 106.90421 },
+        "st_20": { n: "Sunter Kodamar", lat: -6.15508, lng: 106.88689 },
+        "st_21": { n: "Sunter III Rawa Badak", lat: -6.12107, lng: 106.89674 },
+        "st_22": { n: "Pompa Cideng", lat: -6.17355, lng: 106.80632 }
+    };
 
     window.onload = function() {
-        const savedToken = localStorage.getItem('gh_token');
-        const savedPass = localStorage.getItem('sda_pass');
-        if (savedToken && savedPass === "admin123") {
+        const token = localStorage.getItem('gh_token');
+        if (token) {
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             fetchGitHubData();
@@ -165,78 +146,89 @@
     function login() {
         const pass = document.getElementById('passCode').value;
         const token = document.getElementById('gitToken').value;
-        const remember = document.getElementById('rememberMe').checked;
         if(pass === "admin123" && token.startsWith('ghp_')) {
-            if(remember) {
-                localStorage.setItem('gh_token', token);
-                localStorage.setItem('sda_pass', pass);
-            }
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
-            fetchGitHubData();
+            localStorage.setItem('gh_token', token);
+            location.reload();
         } else { alert("Data Login Salah!"); }
     }
 
-    function logout() {
-        localStorage.clear();
-        location.reload();
-    }
+    function logout() { localStorage.clear(); location.reload(); }
 
     async function fetchGitHubData() {
-        const r = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`, {
-            headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}` }
-        });
-        const j = await r.json();
-        sha = j.sha;
-        allData = JSON.parse(atob(j.content));
+        try {
+            const r = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`, {
+                headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}` }
+            });
+            const j = await r.json();
+            sha = j.sha;
+            allData = JSON.parse(atob(j.content));
+            
+            // Inisialisasi metadata jika belum ada di file GitHub
+            if (!allData.find(d => d.type === "metadata")) {
+                allData.push({ type: "metadata", coords: DEFAULT_COORDS });
+            }
+
+            setupDropdowns();
+            renderTable();
+            loadCurrentCoord();
+        } catch (e) { alert("Database JSON tidak ditemukan atau Token salah!"); }
+    }
+
+    function setupDropdowns() {
+        const inS = document.getElementById('inStation'), 
+              viewS = document.getElementById('viewStation'),
+              coordS = document.getElementById('coordStation');
         
-        const inS = document.getElementById('inStation'), viewS = document.getElementById('viewStation');
-        inS.innerHTML = ''; viewS.innerHTML = '';
-        stasiunList.forEach((s, i) => {
-            let val = `st_${(i+1).toString().padStart(2,'0')}`;
-            inS.innerHTML += `<option value="${val}">${s}</option>`;
-            viewS.innerHTML += `<option value="${val}">${s}</option>`;
+        inS.innerHTML = ''; viewS.innerHTML = ''; coordS.innerHTML = '';
+        
+        Object.keys(DEFAULT_COORDS).forEach(id => {
+            let name = DEFAULT_COORDS[id].n;
+            let opt = `<option value="${id}">${name} (${id})</option>`;
+            inS.innerHTML += opt; viewS.innerHTML += opt; coordS.innerHTML += opt;
         });
-        renderTable();
     }
 
-    function renderTable() {
-        const key = document.getElementById('viewStation').value;
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        allData.sort((a,b) => a.tahun - b.tahun);
-        let total = 0, max = 0;
-        allData.forEach(d => {
-            let v = parseFloat(d[key]) || 0;
-            total += v; if(v > max) max = v;
-            tbody.innerHTML += `<tr>
-                <td><strong>${d.tahun}</strong></td>
-                <td>${v} mm</td>
-                <td><span class="btn-del" onclick="deleteYear(${d.tahun})">HAPUS</span></td>
-            </tr>`;
-        });
-        document.getElementById('avgStat').textContent = (total / (allData.length || 1)).toFixed(2) + " mm";
-        document.getElementById('maxStat').textContent = max + " mm";
-        if(allData.length > 0) {
-            document.getElementById('yearRange').textContent = `${allData[0].tahun} - ${allData[allData.length-1].tahun}`;
-        }
+    function loadCurrentCoord() {
+        const stId = document.getElementById('coordStation').value;
+        const meta = allData.find(d => d.type === "metadata");
+        // Ambil dari file GitHub, jika tidak ada ambil dari Default Hardcoded
+        const pos = meta.coords[stId] || DEFAULT_COORDS[stId];
+        document.getElementById('inLat').value = pos.lat;
+        document.getElementById('inLng').value = pos.lng;
     }
 
-    async function deleteYear(year) {
-        if(!confirm(`Hapus seluruh data tahun ${year}?`)) return;
-        allData = allData.filter(d => d.tahun !== year);
-        await syncToGitHub(`Hapus tahun ${year}`);
+    async function updateCoordinate() {
+        const stId = document.getElementById('coordStation').value;
+        const lat = parseFloat(document.getElementById('inLat').value);
+        const lng = parseFloat(document.getElementById('inLng').value);
+        
+        let meta = allData.find(d => d.type === "metadata");
+        meta.coords[stId] = { n: DEFAULT_COORDS[stId].n, lat: lat, lng: lng };
+        
+        await syncToGitHub(`Update Koordinat ${DEFAULT_COORDS[stId].n}`);
     }
 
     async function updateData() {
         const yr = parseInt(document.getElementById('inYear').value);
         const st = document.getElementById('inStation').value;
         const val = parseFloat(document.getElementById('inValue').value);
-        if(!yr || isNaN(val)) return alert("Isi lengkap!");
+        if(!yr || isNaN(val)) return alert("Data tidak lengkap!");
+
         let entry = allData.find(d => d.tahun === yr);
-        if(entry) entry[st] = val; 
+        if(entry) entry[st] = val;
         else { let n = { tahun: yr }; n[st] = val; allData.push(n); }
-        await syncToGitHub(`Update data ${yr}`);
+        
+        await syncToGitHub(`Update Hujan ${yr}`);
+    }
+
+    function renderTable() {
+        const key = document.getElementById('viewStation').value;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        allData.filter(d => d.tahun).sort((a,b) => b.tahun - a.tahun).forEach(d => {
+            let v = d[key] || 0;
+            tbody.innerHTML += `<tr><td><strong>${d.tahun}</strong></td><td>${v} mm</td><td><button onclick="deleteYear(${d.tahun})" style="color:red; cursor:pointer; background:none; border:none; font-weight:bold;">HAPUS</button></td></tr>`;
+        });
     }
 
     async function syncToGitHub(msg) {
@@ -246,7 +238,7 @@
             headers: { 'Authorization': `token ${localStorage.getItem('gh_token')}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: msg, content: btoa(JSON.stringify(allData, null, 2)), sha: sha })
         });
-        if(res.ok) location.reload(); else { alert("Gagal Sinkron!"); document.getElementById('loading').style.display = 'none'; }
+        if(res.ok) location.reload(); else alert("Gagal Simpan ke GitHub!");
     }
 </script>
 </body>
