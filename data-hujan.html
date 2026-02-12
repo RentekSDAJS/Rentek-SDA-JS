@@ -2,196 +2,218 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Update Data Hujan</title>
+    <title>SDA Station Manager - Rainfall Data</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
-        .section { margin-bottom: 25px; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
-        .rekap-box { background: #e8f0fe; border-left: 5px solid #1a73e8; }
-        .coord-box { background: #fff4e5; border-left: 5px solid #ff9800; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background: #f8f9fa; }
-        input[type="number"] { padding: 8px; width: 80%; border: 1px solid #ccc; border-radius: 4px; }
-        .btn { padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        .btn-add { background: #28a745; color: white; }
-        .btn-del { background: #dc3545; color: white; padding: 5px 10px; }
-        select { padding: 12px; width: 100%; font-size: 16px; margin-bottom: 20px; border-radius: 8px; }
-        #jsonOutput { background: #272c34; color: #abb2bf; padding: 15px; width: 100%; height: 200px; font-family: monospace; border-radius: 5px; margin-top: 10px; }
+        :root {
+            --primary: #0f172a;
+            --accent: #00897b; /* Teal SDA */
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text-dark); margin: 0; }
+
+        /* Navbar */
+        .navbar { background: var(--primary); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .navbar .title { font-weight: 700; letter-spacing: 1px; }
+        .btn-logout { background: #ef4444; border: none; color: white; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        /* Selector Card */
+        .card-select { background: var(--card); padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-light); display: block; margin-bottom: 10px; }
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 16px; font-family: inherit; outline: none; transition: 0.3s; }
+        select:focus { border-color: var(--accent); }
+
+        .main-grid { display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
+
+        /* Side Cards */
+        .sub-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; }
+        .sub-card h3 { font-size: 14px; text-transform: uppercase; border-left: 4px solid #fbbf24; padding-left: 10px; margin-top: 0; color: var(--text-light); }
+
+        .stat-box { margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; }
+        .stat-label { font-size: 11px; color: var(--text-light); font-weight: 600; }
+        .stat-value { font-size: 20px; font-weight: 700; color: var(--text-dark); display: block; }
+        .stat-value.highlight { color: #ef4444; }
+
+        /* Input Area */
+        textarea { width: 100%; height: 120px; border: 1px solid var(--border); border-radius: 8px; padding: 15px; font-family: monospace; resize: none; margin-top: 10px; }
+        .btn-action { background: var(--accent); color: white; border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-action:hover { background: #00695c; }
+        .btn-save { background: var(--primary); margin-top: 20px; }
+
+        /* Table Area */
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; text-align: left; padding: 15px; font-size: 12px; color: var(--text-light); border-bottom: 1px solid var(--border); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        tr:last-child td { border: none; }
+
+        .tag { background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
     </style>
 </head>
 <body>
 
+<div class="navbar">
+    <div class="title">SDA STATION MANAGER</div>
+    <button class="btn-logout">LOGOUT</button>
+</div>
+
 <div class="container">
-    <h2>Portal Database Stasiun Hujan</h2>
-    
-    <label><b>Pilih Stasiun untuk Dikelola:</b></label>
-    <select id="selectStasiun" onchange="loadDataStasiun()">
-        <option value="">-- Pilih Lokasi Stasiun --</option>
-    </select>
-
-    <div id="panelEditor" style="display:none;">
-        <div class="section rekap-box">
-            <h4>1) Rekapitulasi Data</h4>
-            <div style="display: flex; justify-content: space-between;">
-                <p>Hujan Maksimum: <b id="statMaks">0</b> mm</p>
-                <p>Hujan Rerata: <b id="statRerata">0</b> mm</p>
-                <p>Rentang Tahun: <b id="statRentang">-</b></p>
-            </div>
-        </div>
-
-        <div class="section coord-box">
-            <h4>2) Informasi Koordinat</h4>
-            <p>Latitude: <span id="dispLat"></span> | Longitude: <span id="dispLng"></span></p>
-        </div>
-
-        <div class="section">
-            <h4>3) Tabel Input Data Hujan (Terlama ke Terbaru)</h4>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tahun</th>
-                        <th>Curah Hujan (mm)</th>
-                        <th>Hapus</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-            
-            <div style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 5px;">
-                <b>Tambah Data Baru:</b> 
-                <input type="number" id="inTahun" placeholder="Tahun" style="width: 100px;">
-                <input type="number" id="inHujan" placeholder="Nilai (mm)" style="width: 150px;">
-                <button class="btn btn-add" onclick="tambahData()">Tambah ke Tabel</button>
-            </div>
-        </div>
+    <div class="card-select">
+        <label>Pilih Stasiun:</label>
+        <select id="stSelect" onchange="initView()">
+            <option value="">-- Silahkan Pilih Stasiun --</option>
+        </select>
     </div>
 
-    <div style="margin-top: 30px;">
-        <h4>JSON Hasil Akhir (Copy & Simpan ke hujan.json)</h4>
-        <textarea id="jsonOutput" readonly></textarea>
-        <p style="font-size: 12px; color: #666;">*Pastikan untuk selalu menyalin data ini ke file hujan.json Anda setelah selesai update.</p>
+    <div id="dashboardView" style="display: none;" class="main-grid">
+        <div class="sidebar">
+            <div class="sub-card">
+                <h3>Informasi & Koordinat</h3>
+                <div class="stat-box">
+                    <span class="stat-label">LATITUDE (Y)</span>
+                    <span id="latDisplay" class="stat-value"></span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">LONGITUDE (X)</span>
+                    <span id="lngDisplay" class="stat-value"></span>
+                </div>
+            </div>
+
+            <div class="sub-card">
+                <h3>Rekapitulasi Data</h3>
+                <div class="stat-box">
+                    <span class="stat-label">RERATA HUJAN (SERIES)</span>
+                    <span id="avgDisplay" class="stat-value">0 mm</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">HUJAN MAKSIMUM</span>
+                    <span id="maxDisplay" class="stat-value highlight">0 mm</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">KETERSEDIAAN DATA</span>
+                    <span id="countDisplay" class="stat-value">0 Tahun</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sub-card">
+                <h3>Bulk Input Data (Tahun 2000-2024)</h3>
+                <p style="font-size: 12px; color: var(--text-light);">Paste satu kolom data hujan dari Excel (berurutan dari atas ke bawah):</p>
+                <textarea id="bulkPaste" placeholder="94.8&#10;82.2&#10;168.5..."></textarea>
+                <button class="btn-action" onclick="processBulk()">PROSES DATA</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TAHUN</th>
+                            <th>CURAH HUJAN (mm)</th>
+                            <th>AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            
+            <button class="btn-action btn-save" onclick="downloadJson()">DOWNLOAD UPDATE HUJAN.JSON</button>
+        </div>
     </div>
 </div>
 
 <script>
-// Data Master Awal (22 Stasiun)
-let dbHujan = {
-  "Kemayoran": { "koordinat": { "lat": -6.15559, "lng": 106.84000 }, "data_tahunan": [] },
-  "Halim": { "koordinat": { "lat": -6.27036, "lng": 106.88926 }, "data_tahunan": [] },
-  "Bogor": { "koordinat": { "lat": -6.50000, "lng": 106.75000 }, "data_tahunan": [] },
-  "Banten": { "koordinat": { "lat": -6.26151, "lng": 106.75084 }, "data_tahunan": [] },
-  "Katulampa": { "koordinat": { "lat": -6.63317, "lng": 106.837077 }, "data_tahunan": [] },
-  "Depok": { "koordinat": { "lat": -6.40065, "lng": 106.831897 }, "data_tahunan": [] },
-  "Manggarai": { "koordinat": { "lat": -6.20742, "lng": 106.848569 }, "data_tahunan": [] },
-  "Karet": { "koordinat": { "lat": -6.19810, "lng": 106.810097 }, "data_tahunan": [] },
-  "Setiabudi Timur": { "koordinat": { "lat": -6.20462, "lng": 106.829385 }, "data_tahunan": [] },
-  "Melati": { "koordinat": { "lat": -6.20084, "lng": 106.817982 }, "data_tahunan": [] },
-  "Istana": { "koordinat": { "lat": -6.17165, "lng": 106.8270424 }, "data_tahunan": [] },
-  "Krukut Hulu": { "koordinat": { "lat": -6.34434, "lng": 106.799081 }, "data_tahunan": [] },
-  "Sunter Hulu": { "koordinat": { "lat": -6.31785, "lng": 106.92110 }, "data_tahunan": [] },
-  "Pesanggrahan": { "koordinat": { "lat": -6.39708, "lng": 106.77181 }, "data_tahunan": [] },
-  "Angke Hulu": { "koordinat": { "lat": -6.21835, "lng": 106.694467 }, "data_tahunan": [] },
-  "Tanjungan": { "koordinat": { "lat": -6.10669, "lng": 106.725882 }, "data_tahunan": [] },
-  "Tomang Barat": { "koordinat": { "lat": -6.16710, "lng": 106.78001 }, "data_tahunan": [] },
-  "Teluk Gong": { "koordinat": { "lat": -6.13350, "lng": 106.777649 }, "data_tahunan": [] },
-  "Pulo Gadung": { "koordinat": { "lat": -6.19097, "lng": 106.904213 }, "data_tahunan": [] },
-  "Sunter Kodamar": { "koordinat": { "lat": -6.15508, "lng": 106.886893 }, "data_tahunan": [] },
-  "Sunter III Rawa Badak": { "koordinat": { "lat": -6.12107, "lng": 106.896744 }, "data_tahunan": [] },
-  "Pompa Cideng": { "koordinat": { "lat": -6.17355, "lng": 106.806328 }, "data_tahunan": [] }
-};
+    // Metadata Koordinat & Nama
+    const metadata = {
+        "st_01": { "nama": "Kemayoran", "lat": -6.15559, "lng": 106.84000 },
+        "st_02": { "nama": "Halim", "lat": -6.27036, "lng": 106.88926 },
+        "st_03": { "nama": "Bogor", "lat": -6.50000, "lng": 106.75000 },
+        "st_04": { "nama": "Banten", "lat": -6.26151, "lng": 106.75084 },
+        "st_05": { "nama": "Katulampa", "lat": -6.63317, "lng": 106.837077 },
+        "st_06": { "nama": "Depok", "lat": -6.40065, "lng": 106.831897 },
+        "st_07": { "nama": "Manggarai", "lat": -6.20742, "lng": 106.848569 },
+        "st_08": { "nama": "Karet", "lat": -6.19810, "lng": 106.810097 },
+        "st_09": { "nama": "Setiabudi Timur", "lat": -6.20462, "lng": 106.829385 },
+        "st_10": { "nama": "Melati", "lat": -6.20084, "lng": 106.817982 },
+        "st_11": { "nama": "Istana", "lat": -6.17165, "lng": 106.827042 },
+        "st_12": { "nama": "Krukut Hulu", "lat": -6.34434, "lng": 106.799081 },
+        "st_13": { "nama": "Sunter Hulu", "lat": -6.31785, "lng": 106.921100 },
+        "st_14": { "nama": "Pesanggrahan", "lat": -6.39708, "lng": 106.771810 },
+        "st_15": { "nama": "Angke Hulu", "lat": -6.21835, "lng": 106.694467 },
+        "st_16": { "nama": "Tanjungan", "lat": -6.10669, "lng": 106.725882 },
+        "st_17": { "nama": "Tomang Barat", "lat": -6.16710, "lng": 106.780010 },
+        "st_18": { "nama": "Teluk Gong", "lat": -6.13350, "lng": 106.777649 },
+        "st_19": { "nama": "Pulo Gadung", "lat": -6.19097, "lng": 106.904213 },
+        "st_20": { "nama": "Sunter Kodamar", "lat": -6.15508, "lng": 106.886893 },
+        "st_21": { "nama": "Sunter III Rawa Badak", "lat": -6.12107, "lng": 106.896744 },
+        "st_22": { "nama": "Pompa Cideng", "lat": -6.17355, "lng": 106.806328 }
+    };
 
-const selStasiun = document.getElementById('selectStasiun');
+    let records = [];
+    for(let i=0; i<25; i++) {
+        let yearData = { tahun: 2000 + i };
+        Object.keys(metadata).forEach(id => yearData[id] = 0);
+        records.push(yearData);
+    }
 
-// Load Dropdown
-Object.keys(dbHujan).forEach(nama => {
-    let el = document.createElement('option');
-    el.value = nama;
-    el.innerText = nama;
-    selStasiun.appendChild(el);
-});
-
-function loadDataStasiun() {
-    const st = selStasiun.value;
-    if(!st) return;
-    document.getElementById('panelEditor').style.display = 'block';
-    document.getElementById('dispLat').innerText = dbHujan[st].koordinat.lat;
-    document.getElementById('dispLng').innerText = dbHujan[st].koordinat.lng;
-    renderTable();
-}
-
-function renderTable() {
-    const st = selStasiun.value;
-    const dataArr = dbHujan[st].data_tahunan.sort((a,b) => a.tahun - b.tahun);
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '';
-
-    dataArr.forEach((item, index) => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${item.tahun}</td>
-                <td><input type="number" value="${item.hujan}" onchange="editHujan(${index}, this.value)"></td>
-                <td><button class="btn btn-del" onclick="hapusBaris(${index})">Hapus</button></td>
-            </tr>
-        `;
+    const select = document.getElementById('stSelect');
+    Object.keys(metadata).forEach(id => {
+        let opt = document.createElement('option');
+        opt.value = id; opt.innerText = metadata[id].nama;
+        select.appendChild(opt);
     });
-    hitungRekap();
-    updateOutput();
-}
 
-function tambahData() {
-    const st = selStasiun.value;
-    const thn = parseInt(document.getElementById('inTahun').value);
-    const hjn = parseFloat(document.getElementById('inHujan').value);
+    function initView() {
+        const id = select.value;
+        if(!id) return;
+        document.getElementById('dashboardView').style.display = 'grid';
+        document.getElementById('latDisplay').innerText = metadata[id].lat;
+        document.getElementById('lngDisplay').innerText = metadata[id].lng;
+        updateUI();
+    }
 
-    if(!thn || isNaN(hjn)) return alert("Masukkan Tahun dan Nilai Hujan!");
-    
-    dbHujan[st].data_tahunan.push({ tahun: thn, hujan: hjn });
-    document.getElementById('inTahun').value = '';
-    document.getElementById('inHujan').value = '';
-    renderTable();
-}
+    function processBulk() {
+        const id = select.value;
+        const raw = document.getElementById('bulkPaste').value;
+        const lines = raw.split(/\r?\n/).filter(l => l.trim() !== "");
+        lines.forEach((val, i) => {
+            if(records[i]) records[i][id] = parseFloat(val.replace(',', '.')) || 0;
+        });
+        document.getElementById('bulkPaste').value = "";
+        updateUI();
+    }
 
-function editHujan(index, val) {
-    const st = selStasiun.value;
-    dbHujan[st].data_tahunan[index].hujan = parseFloat(val);
-    renderTable();
-}
+    function updateUI() {
+        const id = select.value;
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = "";
+        let vals = [];
+        
+        records.forEach(r => {
+            vals.push(r[id]);
+            tbody.innerHTML += `<tr><td>${r.tahun}</td><td><b>${r[id]}</b></td><td><span class="tag">AKTIF</span></td></tr>`;
+        });
 
-function hapusBaris(index) {
-    const st = selStasiun.value;
-    dbHujan[st].data_tahunan.splice(index, 1);
-    renderTable();
-}
+        document.getElementById('maxDisplay').innerText = Math.max(...vals) + " mm";
+        document.getElementById('avgDisplay').innerText = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) + " mm";
+        document.getElementById('countDisplay').innerText = vals.length + " Tahun";
+    }
 
-function hitungRekap() {
-    const st = selStasiun.value;
-    const list = dbHujan[st].data_tahunan;
-    if(list.length === 0) return resetRekap();
-
-    const vals = list.map(d => d.hujan);
-    const thns = list.map(d => d.tahun);
-    
-    const maks = Math.max(...vals);
-    const rata = (vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(2);
-    const rentang = Math.min(...thns) + " - " + Math.max(...thns);
-
-    document.getElementById('statMaks').innerText = maks;
-    document.getElementById('statRerata').innerText = rata;
-    document.getElementById('statRentang').innerText = rentang;
-}
-
-function resetRekap() {
-    document.getElementById('statMaks').innerText = 0;
-    document.getElementById('statRerata').innerText = 0;
-    document.getElementById('statRentang').innerText = "-";
-}
-
-function updateOutput() {
-    document.getElementById('jsonOutput').value = JSON.stringify(dbHujan, null, 2);
-}
+    function downloadJson() {
+        const data = { metadata: metadata, records: records };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = "hujan.json";
+        a.click();
+    }
 </script>
 
 </body>
