@@ -9,7 +9,6 @@
         :root { --navy: #0f172a; --gold: #d4af37; --teal: #0d9488; --red: #ef4444; --slate: #64748b; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; margin: 0; padding: 0; color: #1e293b; }
 
-        /* Header Style */
         #top-header {
             position: fixed; top: 0; left: 0; right: 0; height: 80px; 
             background: var(--navy); color: white; display: flex; 
@@ -19,39 +18,31 @@
         .main-title { font-weight: 900; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
         .btn-logout { background: transparent; border: 1px solid var(--red); color: var(--red); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
 
-        /* Layout */
         .container { max-width: 1200px; margin: 0 auto; padding: 110px 20px 40px 20px; display: none; }
         
-        /* Master Selector */
         .station-selector { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; gap: 15px; }
-        .station-selector select { flex: 1; padding: 15px; border: 2px solid var(--navy); border-radius: 10px; font-weight: 700; font-size: 1.1rem; color: var(--navy); }
+        .station-selector select { flex: 1; padding: 15px; border: 2px solid var(--navy); border-radius: 10px; font-weight: 700; font-size: 1.1rem; color: var(--navy); cursor: pointer; }
 
-        /* Info Grid */
         .info-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-        
         .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
         .card-title { font-size: 0.8rem; font-weight: 900; color: var(--slate); text-transform: uppercase; margin-bottom: 15px; border-left: 4px solid var(--gold); padding-left: 10px; }
 
-        /* Statistics Boxes */
         .stat-box { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--navy); }
         .stat-label { font-size: 0.65rem; font-weight: 800; color: var(--slate); text-transform: uppercase; }
         .stat-value { font-size: 1.2rem; font-weight: 900; color: var(--navy); display: block; }
 
-        /* Form Controls */
         label { font-size: 0.7rem; font-weight: 800; color: var(--navy); text-transform: uppercase; margin-bottom: 5px; display: block; }
         input { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-family: inherit; font-weight: 600; }
         
         .btn-update { background: var(--navy); color: var(--gold); padding: 12px; width: 100%; border-radius: 8px; font-weight: 800; border: none; cursor: pointer; margin-top: 5px; }
         .btn-add { background: var(--teal); color: white; padding: 12px; width: 100%; border-radius: 8px; font-weight: 800; border: none; cursor: pointer; }
 
-        /* Table */
         .table-container { max-height: 400px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8fafc; padding: 12px; text-align: left; font-size: 0.7rem; color: var(--slate); border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; font-weight: 600; }
         .del-text { color: var(--red); cursor: pointer; font-size: 0.75rem; font-weight: 800; }
 
-        /* Auth */
         #authOverlay { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         #loading { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 10000; align-items: center; justify-content: center; flex-direction: column; }
     </style>
@@ -111,18 +102,14 @@
         <div class="right-col">
             <div class="card" style="height: 100%;">
                 <div class="card-title">Data Series Hujan Tahunan</div>
-                
                 <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:10px; margin-bottom:20px; background:#f8fafc; padding:15px; border-radius:12px;">
                     <div><label>Tahun</label><input type="number" id="newYear" placeholder="2024"></div>
                     <div><label>Nilai (mm)</label><input type="number" step="0.1" id="newVal" placeholder="0.0"></div>
                     <div style="display:flex; align-items:flex-end;"><button class="btn-add" onclick="addNewData()">TAMBAH</button></div>
                 </div>
-
                 <div class="table-container">
                     <table>
-                        <thead>
-                            <tr><th>TAHUN</th><th>CURAH HUJAN (mm)</th><th style="text-align:right;">AKSI</th></tr>
-                        </thead>
+                        <thead><tr><th>TAHUN</th><th>CURAH HUJAN (mm)</th><th style="text-align:right;">AKSI</th></tr></thead>
                         <tbody id="seriesTable"></tbody>
                     </table>
                 </div>
@@ -135,8 +122,31 @@
     const CONFIG = { owner: 'RentekSDAJS', repo: 'Calculator-Online---Rentek-SDA-JS', path: 'data/hujan/all-data.json' };
     let allData = [], sha = '';
     
-    // Daftar Nama Stasiun (Tanpa Kode)
-    const STATIONS_NAMES = ["Kemayoran", "Halim PK", "Bogor", "Banten", "Katulampa", "Depok", "Manggarai", "Karet", "Setiabudi Timur", "Melati", "Istana", "Krukut Hulu", "Sunter Hulu", "Pesanggrahan", "Angke Hulu", "Tanjungan", "Tomang Barat", "Teluk Gong", "Pulo Gadung", "Sunter Kodamar", "Sunter III Rawa Badak", "Pompa Cideng"];
+    // KOORDINAT DEFAULT YANG BOS MASUKKAN SEBELUMNYA
+    const DEFAULT_COORDS = {
+        "Kemayoran": { lat: -6.15559, lng: 106.84000 },
+        "Halim PK": { lat: -6.27036, lng: 106.88926 },
+        "Bogor": { lat: -6.50000, lng: 106.75000 },
+        "Banten": { lat: -6.26151, lng: 106.75084 },
+        "Katulampa": { lat: -6.63317, lng: 106.83707 },
+        "Depok": { lat: -6.40065, lng: 106.83189 },
+        "Manggarai": { lat: -6.20742, lng: 106.84856 },
+        "Karet": { lat: -6.19810, lng: 106.81009 },
+        "Setiabudi Timur": { lat: -6.20462, lng: 106.82938 },
+        "Melati": { lat: -6.20084, lng: 106.81798 },
+        "Istana": { lat: -6.17165, lng: 106.82704 },
+        "Krukut Hulu": { lat: -6.34434, lng: 106.79908 },
+        "Sunter Hulu": { lat: -6.31785, lng: 106.92110 },
+        "Pesanggrahan": { lat: -6.39708, lng: 106.77181 },
+        "Angke Hulu": { lat: -6.21835, lng: 106.69446 },
+        "Tanjungan": { lat: -6.10669, lng: 106.72588 },
+        "Tomang Barat": { lat: -6.16710, lng: 106.78001 },
+        "Teluk Gong": { lat: -6.13350, lng: 106.77764 },
+        "Pulo Gadung": { lat: -6.19097, lng: 106.90421 },
+        "Sunter Kodamar": { lat: -6.15508, lng: 106.88689 },
+        "Sunter III Rawa Badak": { lat: -6.12107, lng: 106.89674 },
+        "Pompa Cideng": { lat: -6.17355, lng: 106.80632 }
+    };
 
     window.onload = function() {
         if (localStorage.getItem('gh_token')) {
@@ -152,7 +162,7 @@
         if(pass === "admin123") {
             localStorage.setItem('gh_token', token);
             location.reload();
-        } else { alert("Akses Ditolak!"); }
+        } else { alert("Password Salah!"); }
     }
 
     function logout() { localStorage.clear(); location.reload(); }
@@ -166,16 +176,21 @@
             sha = j.sha;
             allData = JSON.parse(atob(j.content));
             
-            // Inisialisasi metadata jika kosong
-            if (!allData.find(d => d.type === "metadata")) {
-                allData.push({ type: "metadata", coords: {} });
+            let meta = allData.find(d => d.type === "metadata");
+            if (!meta) {
+                allData.push({ type: "metadata", coords: DEFAULT_COORDS });
+            } else {
+                // Merge data GitHub dengan Default jika ada stasiun baru yang belum masuk meta
+                Object.keys(DEFAULT_COORDS).forEach(name => {
+                    if(!meta.coords[name]) meta.coords[name] = DEFAULT_COORDS[name];
+                });
             }
 
             const sel = document.getElementById('masterStation');
-            sel.innerHTML = STATIONS_NAMES.map(name => `<option value="${name}">${name}</option>`).join('');
+            sel.innerHTML = Object.keys(DEFAULT_COORDS).map(name => `<option value="${name}">${name}</option>`).join('');
             
             loadStationData();
-        } catch (e) { alert("Gagal tarik data! Cek Token atau File."); }
+        } catch (e) { alert("File JSON belum ada atau Token salah. Pastikan data/hujan/all-data.json berisi []"); }
     }
 
     function loadStationData() {
@@ -183,35 +198,21 @@
         const meta = allData.find(d => d.type === "metadata");
         const seriesTable = document.getElementById('seriesTable');
         
-        // 1. Load Koordinat
-        if(meta.coords[name]) {
-            document.getElementById('stLat').value = meta.coords[name].lat;
-            document.getElementById('stLng').value = meta.coords[name].lng;
-        } else {
-            document.getElementById('stLat').value = '';
-            document.getElementById('stLng').value = '';
-        }
+        const pos = meta.coords[name] || DEFAULT_COORDS[name];
+        document.getElementById('stLat').value = pos.lat;
+        document.getElementById('stLng').value = pos.lng;
 
-        // 2. Load Series Data & Hitung Statistik
         seriesTable.innerHTML = '';
         let values = [];
-        
-        // Filter data tahunan yang punya nilai untuk stasiun ini
         let stationData = allData.filter(d => d.tahun && d[name] !== undefined);
         stationData.sort((a,b) => b.tahun - a.tahun);
 
         stationData.forEach(d => {
             let v = parseFloat(d[name]);
             values.push(v);
-            seriesTable.innerHTML += `
-                <tr>
-                    <td>${d.tahun}</td>
-                    <td>${v} mm</td>
-                    <td style="text-align:right;"><span class="del-text" onclick="deleteData(${d.tahun}, '${name}')">HAPUS</span></td>
-                </tr>`;
+            seriesTable.innerHTML += `<tr><td>${d.tahun}</td><td>${v} mm</td><td style="text-align:right;"><span class="del-text" onclick="deleteData(${d.tahun}, '${name}')">HAPUS</span></td></tr>`;
         });
 
-        // 3. Update Box Statistik
         if(values.length > 0) {
             const avg = values.reduce((a,b) => a+b, 0) / values.length;
             const max = Math.max(...values);
@@ -229,40 +230,26 @@
         const name = document.getElementById('masterStation').value;
         const lat = parseFloat(document.getElementById('stLat').value);
         const lng = parseFloat(document.getElementById('stLng').value);
-        
         let meta = allData.find(d => d.type === "metadata");
         meta.coords[name] = { lat, lng };
-        await syncToGitHub(`Update Koordinat Stasiun ${name}`);
+        await syncToGitHub(`Update Koordinat ${name}`);
     }
 
     async function addNewData() {
         const name = document.getElementById('masterStation').value;
         const yr = parseInt(document.getElementById('newYear').value);
         const val = parseFloat(document.getElementById('newVal').value);
-
         if(!yr || isNaN(val)) return alert("Input tahun dan nilai!");
-
         let entry = allData.find(d => d.tahun === yr);
-        if(entry) {
-            entry[name] = val;
-        } else {
-            let n = { tahun: yr };
-            n[name] = val;
-            allData.push(n);
-        }
-        await syncToGitHub(`Tambah Data Hujan ${name} ${yr}`);
+        if(entry) entry[name] = val;
+        else { let n = { tahun: yr }; n[name] = val; allData.push(n); }
+        await syncToGitHub(`Tambah Data ${name} ${yr}`);
     }
 
     async function deleteData(yr, name) {
-        if(!confirm(`Hapus data ${name} tahun ${yr}?`)) return;
+        if(!confirm(`Hapus data ${name} ${yr}?`)) return;
         let entry = allData.find(d => d.tahun === yr);
-        if(entry) {
-            delete entry[name];
-            // Hapus objek tahun jika sudah tidak ada data stasiun manapun di tahun itu
-            if(Object.keys(entry).length === 1) {
-                allData = allData.filter(d => d.tahun !== yr);
-            }
-        }
+        if(entry) delete entry[name];
         await syncToGitHub(`Hapus Data ${name} ${yr}`);
     }
 
