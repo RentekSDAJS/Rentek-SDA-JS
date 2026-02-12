@@ -2,236 +2,227 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA Jaksel - Hydro-Spatial Analyst (Tiered Significance)</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Portal Data Hujan Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --navy: #0f172a; --accent: #f59e0b; --teal: #0d9488; --slate: #64748b; }
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; overflow: hidden; }
-        #sidebar { width: 580px; background: white; padding: 20px; overflow-y: auto; border-right: 4px solid var(--navy); z-index: 1000; box-shadow: 5px 0 15px rgba(0,0,0,0.05); }
-        #map { flex: 1; z-index: 1; }
-        .card { background: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e2e8f0; }
-        h2 { font-size: 1.1rem; text-transform: uppercase; border-left: 5px solid var(--accent); padding-left: 10px; margin-bottom: 20px; color: var(--navy); font-weight: 900; }
-        h3 { font-size: 0.75rem; color: var(--teal); text-transform: uppercase; margin: 0 0 10px 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 5px; font-weight: 800; }
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            margin: 0; padding: 20px;
+        }
+
+        .dashboard { max-width: 1100px; margin: auto; }
         
-        .res-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-        .res-table th { background: var(--navy); color: white; padding: 10px; border: 1px solid #334155; font-size: 0.65rem; }
-        .res-table td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; }
-        
-        .best-row { background: #f0fdf4 !important; outline: 2px solid #22c55e; }
-        .tag { padding: 4px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 900; text-transform: uppercase; }
-        .tag-5 { background: #22c55e; color: white; } /* Lolos 95% */
-        .tag-1 { background: #f59e0b; color: white; } /* Lolos 99% */
-        .tag-fail { background: #ef4444; color: white; }
-        
-        .btn { background: var(--navy); color: white; padding: 16px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
-        .btn:hover { background: #1e293b; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        
-        .status-box { padding: 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; text-align: center; margin-bottom: 15px; text-transform: uppercase; }
-        .st-wait { background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; }
-        .st-ok { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px;
+        }
+
+        .card { 
+            background: var(--card-bg); border-radius: 12px; padding: 20px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); margin-bottom: 20px;
+        }
+
+        .grid-rekap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .stat-item { text-align: center; border-right: 1px solid #334155; }
+        .stat-item:last-child { border: none; }
+        .stat-val { display: block; font-size: 24px; font-weight: 600; color: var(--accent); }
+        .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; }
+
+        select, input, textarea {
+            background: #0f172a; border: 1px solid #334155; color: white;
+            padding: 10px; border-radius: 6px; font-family: inherit;
+        }
+
+        select { width: 100%; cursor: pointer; }
+
+        .bulk-area { margin-top: 15px; }
+        textarea { width: 100%; height: 80px; resize: none; border-color: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th { text-align: left; color: var(--text-dim); padding: 10px; border-bottom: 2px solid #334155; }
+        td { padding: 10px; border-bottom: 1px solid #334155; }
+
+        .btn { 
+            padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-primary { background: var(--accent); color: var(--bg-dark); }
+        .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid #334155; }
+        .btn-primary:hover { opacity: 0.8; }
+
+        #exportArea { display: none; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h2>Hydro-Spatial Analyst</h2>
-    
-    <div id="statusTag" class="status-box st-wait">Menunggu File Catchment (KML/JSON)...</div>
+<div class="dashboard">
+    <header>
+        <div style="font-size: 20px; font-weight: 600;">PORTAL <span style="color: var(--accent);">DATA HUJAN</span></div>
+        <div style="width: 300px;">
+            <select id="stasiunSelect" onchange="initStasiun()">
+                <option value="">Pilih Stasiun...</option>
+            </select>
+        </div>
+    </header>
 
-    <div class="card">
-        <h3>Input Configuration</h3>
-        <input type="file" id="inputCatchment" accept=".kml,.json" style="width:100%; margin-bottom:15px; font-size: 0.8rem;">
-        <select id="selectT" onchange="updateView()" style="width:100%; padding:12px; border-radius:6px; margin-bottom:15px; border: 1px solid #cbd5e1; font-weight: bold;">
-            <option value="2">Kala Ulang 2 Tahun</option>
-            <option value="5">5 Tahun</option>
-            <option value="10">10 Tahun</option>
-            <option value="25">25 Tahun</option>
-            <option value="50">50 Tahun</option>
-            <option value="100">100 Tahun</option>
-        </select>
-        <button class="btn" onclick="handleCalculate()">Jalankan Analisis Bertingkat</button>
+    <div id="mainContent" style="display: none;">
+        <div class="grid-rekap card">
+            <div class="stat-item">
+                <span class="stat-label">Hujan Maksimum</span>
+                <span id="statMaks" class="stat-val">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Hujan Rerata</span>
+                <span id="statRerata" class="stat-val">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Rentang Tahun</span>
+                <span id="statRentang" class="stat-val">-</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="color: var(--text-dim); font-size: 13px; margin-bottom: 10px;">
+                KOORDINAT: <span id="valLat" style="color: var(--accent);"></span>, <span id="valLng" style="color: var(--accent);"></span>
+            </div>
+            <div class="bulk-area">
+                <label style="font-size: 14px; font-weight: 600; margin-bottom: 5px; display: block;">Bulk Paste Data (Tahun 2000-2024):</label>
+                <textarea id="bulkInput" placeholder="Copy satu kolom di Excel lalu paste di sini..."></textarea>
+                <button class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="processBulk()">Proses Data</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <table id="hujanTable">
+                <thead>
+                    <tr>
+                        <th>TAHUN</th>
+                        <th>CURAH HUJAN (mm)</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div id="resultsArea" style="display:none;">
-        <div class="card" style="text-align:center; background: var(--navy); border: 2px solid var(--accent);">
-            <h3 style="margin:0; border:none; color: var(--accent);">METODE TERPILIH (T=<span class="valT"></span> TH)</h3>
-            <div id="bestName" style="font-size: 1.6rem; font-weight: 900; color: white; margin: 5px 0;">-</div>
-            <div id="bestVal" style="font-size: 2rem; font-weight: 900; color: var(--accent);">0.00 mm</div>
-            <p id="critInfo" style="font-size:0.65rem; margin-top:5px; color:#94a3b8; font-weight: bold;"></p>
-        </div>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-ghost" onclick="toggleExport()">Tampilkan JSON Export</button>
+        <button class="btn btn-primary" onclick="downloadJSON()">Simpan File</button>
+    </div>
 
-        <div class="card">
-            <h3>📊 Uji Signifikansi (1% - 5%)</h3>
-            <table class="res-table">
-                <thead>
-                    <tr><th>Metode</th><th>Δ Max</th><th>Chi-Sq</th><th>Uji SK</th><th>Uji Chi</th></tr>
-                </thead>
-                <tbody id="body-compare"></tbody>
-            </table>
-        </div>
-
-        <div class="card">
-            <h3>📐 Parameter Statistik Lengkap</h3>
-            <table class="res-table">
-                <thead><tr><th>Param</th><th>Aritmatik</th><th>Log 10</th></tr></thead>
-                <tbody id="body-stats"></tbody>
-            </table>
-        </div>
-        
-        <div class="card">
-            <h3>📍 Matriks Thiessen</h3>
-            <table class="res-table">
-                <thead><tr><th>Stasiun</th><th>Luas (km²)</th><th>Bobot (Ci)</th></tr></thead>
-                <tbody id="body-thiessen"></tbody>
-            </table>
-        </div>
+    <div id="exportArea" class="card">
+        <textarea id="jsonOutput" style="height: 200px; font-size: 12px;"></textarea>
     </div>
 </div>
 
-<div id="map"></div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-<script src="https://unpkg.com/@mapbox/togeojson@0.16.0/togeojson.js"></script>
-
 <script>
-    const CONFIG = { owner: 'RentekSDAJS', repo: 'Calculator-Online---Rentek-SDA-JS', path: 'data/hujan/all-data.json' };
+// Database di-init kosong sesuai daftar 22 stasiun
+let dbHujan = {
+    "Kemayoran": { "koordinat": { "lat": -6.15559, "lng": 106.84000 }, "data_tahunan": [] },
+    "Halim": { "koordinat": { "lat": -6.27036, "lng": 106.88926 }, "data_tahunan": [] },
+    "Bogor": { "koordinat": { "lat": -6.50000, "lng": 106.75000 }, "data_tahunan": [] },
+    "Banten": { "koordinat": { "lat": -6.26151, "lng": 106.75084 }, "data_tahunan": [] },
+    "Katulampa": { "koordinat": { "lat": -6.63317, "lng": 106.837077 }, "data_tahunan": [] },
+    "Depok": { "koordinat": { "lat": -6.40065, "lng": 106.831897 }, "data_tahunan": [] },
+    "Manggarai": { "koordinat": { "lat": -6.20742, "lng": 106.848569 }, "data_tahunan": [] },
+    "Karet": { "koordinat": { "lat": -6.19810, "lng": 106.810097 }, "data_tahunan": [] },
+    "Setiabudi Timur": { "koordinat": { "lat": -6.20462, "lng": 106.829385 }, "data_tahunan": [] },
+    "Melati": { "koordinat": { "lat": -6.20084, "lng": 106.817982 }, "data_tahunan": [] },
+    "Istana": { "koordinat": { "lat": -6.17165, "lng": 106.8270424 }, "data_tahunan": [] },
+    "Krukut Hulu": { "koordinat": { "lat": -6.34434, "lng": 106.799081 }, "data_tahunan": [] },
+    "Sunter Hulu": { "koordinat": { "lat": -6.31785, "lng": 106.92110 }, "data_tahunan": [] },
+    "Pesanggrahan": { "koordinat": { "lat": -6.39708, "lng": 106.77181 }, "data_tahunan": [] },
+    "Angke Hulu": { "koordinat": { "lat": -6.21835, "lng": 106.694467 }, "data_tahunan": [] },
+    "Tanjungan": { "koordinat": { "lat": -6.10669, "lng": 106.725882 }, "data_tahunan": [] },
+    "Tomang Barat": { "koordinat": { "lat": -6.16710, "lng": 106.78001 }, "data_tahunan": [] },
+    "Teluk Gong": { "koordinat": { "lat": -6.13350, "lng": 106.777649 }, "data_tahunan": [] },
+    "Pulo Gadung": { "koordinat": { "lat": -6.19097, "lng": 106.904213 }, "data_tahunan": [] },
+    "Sunter Kodamar": { "koordinat": { "lat": -6.15508, "lng": 106.886893 }, "data_tahunan": [] },
+    "Sunter III Rawa Badak": { "koordinat": { "lat": -6.12107, "lng": 106.896744 }, "data_tahunan": [] },
+    "Pompa Cideng": { "koordinat": { "lat": -6.17355, "lng": 106.806328 }, "data_tahunan": [] }
+};
+
+const select = document.getElementById('stasiunSelect');
+Object.keys(dbHujan).forEach(s => {
+    let opt = document.createElement('option');
+    opt.value = s; opt.innerText = s;
+    select.appendChild(opt);
+});
+
+function initStasiun() {
+    const s = select.value;
+    if(!s) return;
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('valLat').innerText = dbHujan[s].koordinat.lat;
+    document.getElementById('valLng').innerText = dbHujan[s].koordinat.lng;
+    renderTable();
+}
+
+function processBulk() {
+    const s = select.value;
+    const input = document.getElementById('bulkInput').value;
+    const baris = input.split(/\r?\n/).filter(x => x.trim() !== "");
     
-    let geoData, thiessenResult = [], globalMethods = [], statsData = {};
-    const map = L.map('map').setView([-6.28, 106.82], 11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/light_all/{z}/{x}/{y}.png').addTo(map);
-    const overlay = L.layerGroup().addTo(map);
+    // Asumsi data berurutan 2000 ke 2024
+    dbHujan[s].data_tahunan = baris.map((val, i) => ({
+        tahun: 2000 + i,
+        hujan: parseFloat(val.replace(',', '.')) || 0
+    }));
 
-    // Marker stasiun profesional
-    const STATIONS = [{n:"Kemayoran",id:"st_01",lat:-6.15559,lng:106.84},{n:"Halim",id:"st_02",lat:-6.27036,lng:106.88926},{n:"Bogor",id:"st_03",lat:-6.5,lng:106.75},{n:"Banten",id:"st_04",lat:-6.26151,lng:106.75084},{n:"Katulampa",id:"st_05",lat:-6.63317,lng:106.837077},{n:"Depok",id:"st_06",lat:-6.40065,lng:106.831897},{n:"Manggarai",id:"st_07",lat:-6.20742,lng:106.848569},{n:"Karet",id:"st_08",lat:-6.1981,lng:106.810097},{n:"Setiabudi Timur",id:"st_09",lat:-6.20462,lng:106.829385},{n:"Melati",id:"st_10",lat:-6.20084,lng:106.817982},{n:"Istana",id:"st_11",lat:-6.17165,lng:106.8270424},{n:"Krukut Hulu",id:"st_12",lat:-6.34434,lng:106.799081},{n:"Sunter Hulu",id:"st_13",lat:-6.31785,lng:106.9211},{n:"Pesanggrahan",id:"st_14",lat:-6.39708,lng:106.77181},{n:"Angke Hulu",id:"st_15",lat:-6.21835,lng:106.694467},{n:"Tanjungan",id:"st_16",lat:-6.10669,lng:106.725882},{n:"Tomang Barat",id:"st_17",lat:-6.1671,lng:106.78001},{n:"Teluk Gong",id:"st_18",lat:-6.1335,lng:106.777649},{n:"Pulo Gadung",id:"st_19",lat:-6.19097,lng:106.904213},{n:"Sunter Kodamar",id:"st_20",lat:-6.15508,lng:106.886893},{n:"Sunter III Rawa Badak",id:"st_21",lat:-6.12107,lng:106.896744},{n:"Pompa Cideng",id:"st_22",lat:-6.17355,lng:106.806328}];
+    document.getElementById('bulkInput').value = "";
+    renderTable();
+}
 
-    STATIONS.forEach(s => {
-        L.circleMarker([s.lat, s.lng], { radius: 4, fillColor: '#0f172a', color: '#fff', weight: 1, fillOpacity: 1 }).addTo(map)
-        .bindTooltip(s.n, { permanent: false });
-    });
+function renderTable() {
+    const s = select.value;
+    const list = dbHujan[s].data_tahunan;
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = "";
 
-    document.getElementById('inputCatchment').onchange = (e) => {
-        const file = e.target.files[0];
-        const r = new FileReader();
-        r.onload = (ev) => {
-            if (file.name.endsWith('.kml')) {
-                const dom = new DOMParser().parseFromString(ev.target.result, "text/xml");
-                const converted = toGeoJSON.kml(dom);
-                geoData = converted.features[0].geometry;
-            } else {
-                const raw = JSON.parse(ev.target.result);
-                geoData = raw.type === "GeometryCollection" ? raw.geometries[0] : (raw.features ? raw.features[0].geometry : raw);
-            }
-            document.getElementById('statusTag').innerText = "CATCHMENT VERIFIED ✅";
-            document.getElementById('statusTag').className = "status-box st-ok";
-        };
-        r.readAsText(file);
-    };
-
-    async function handleCalculate() {
-        if (!geoData) return alert("Pilih file watershed dulu!");
-        
-        // --- SPASIAL ENGINE ---
-        overlay.clearLayers();
-        const poly = turf.feature(geoData);
-        L.geoJSON(poly, { style: { color: '#f59e0b', weight: 3, fillOpacity: 0.1 } }).addTo(overlay);
-        map.fitBounds(L.geoJSON(poly).getBounds());
-
-        const bbox = turf.bbox(poly);
-        const voronoi = turf.voronoi(turf.featureCollection(STATIONS.map(s => turf.point([s.lng, s.lat], {id: s.id, n: s.n}))), { bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2] });
-
-        let totalA = 0; thiessenResult = [];
-        voronoi.features.forEach((cell, i) => {
-            const intersect = turf.intersect(cell, poly);
-            if (intersect) {
-                const area = turf.area(intersect)/1000000;
-                thiessenResult.push({ n: STATIONS[i].n, area, id: STATIONS[i].id });
-                totalA += area;
-                L.geoJSON(intersect, { style: { color: '#0d9488', weight: 1, fillOpacity: 0.3 } }).addTo(overlay);
-            }
-        });
-        thiessenResult.forEach(f => f.ci = f.area/totalA);
-
-        // --- DATA HUB FETCH ---
-        const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${CONFIG.path}`);
-        const gitData = await res.json();
-        const rawData = JSON.parse(atob(gitData.content));
-
-        const values = rawData.map(row => {
-            let p = 0; thiessenResult.forEach(st => p += (parseFloat(row[st.id]) || 0) * st.ci);
-            return p;
-        }).sort((a,b) => b-a);
-
-        // --- STATISTIC ENGINE ---
-        const n = values.length;
-        const calcStats = (data) => {
-            const m = data.reduce((a,b)=>a+b)/n;
-            const s = Math.sqrt(data.map(x=>Math.pow(x-m,2)).reduce((a,b)=>a+b)/(n-1));
-            const cv = s/m;
-            const sk = (n/((n-1)*(n-2))) * data.map(x=>Math.pow((x-m)/s,3)).reduce((a,b)=>a+b);
-            return {m, s, cv, sk};
-        };
-        statsData = { lin: calcStats(values), log: calcStats(values.map(v => Math.log10(v))) };
-
-        // --- TIERNED SIGNIFICANCE ENGINE ---
-        const Z = { 2: 0, 5: 0.842, 10: 1.282, 25: 1.751, 50: 2.054, 100: 2.326 };
-        
-        globalMethods = [
-            { name: 'Normal', rec: (t) => statsData.lin.m + (Z[t]*statsData.lin.s), sk: 0.082, chi: 1.5 },
-            { name: 'Log-Normal', rec: (t) => Math.pow(10, statsData.log.m + (Z[t]*statsData.log.s)), sk: 0.075, chi: 2.1 },
-            { name: 'Gumbel', rec: (t) => statsData.lin.m + (((Z[t]*1.282)-0.45)*(0.78*statsData.lin.s)), sk: 0.041, chi: 0.88 },
-            { name: 'Log-Pearson III', rec: (t) => {
-                let K = Z[t] + ((Math.pow(Z[t],2)-1)*statsData.log.sk/6);
-                return Math.pow(10, statsData.log.m + (K*statsData.log.s));
-            }, sk: 0.032, chi: 0.62 }
-        ];
-
-        // Hitung Status Lolos (Estimasi N=20)
-        // SK 5%: 0.294 | SK 1%: 0.352
-        globalMethods.forEach(m => {
-            if (m.sk < 0.294 && m.chi < 5.99) m.status = 5; 
-            else if (m.sk < 0.352 && m.chi < 9.21) m.status = 1;
-            else m.status = 0;
+    if(list.length > 0) {
+        list.forEach(item => {
+            tbody.innerHTML += `<tr><td>${item.tahun}</td><td>${item.hujan}</td><td style="color:var(--success)">Valid</td></tr>`;
         });
 
-        globalMethods.sort((a,b) => b.status - a.status || a.sk - b.sk);
-        
-        renderResults();
-        document.getElementById('resultsArea').style.display = 'block';
+        const vals = list.map(d => d.hujan);
+        document.getElementById('statMaks').innerText = Math.max(...vals);
+        document.getElementById('statRerata').innerText = (vals.reduce((a,b) => a+b, 0) / vals.length).toFixed(1);
+        document.getElementById('statRentang').innerText = "2000 - 2024";
     }
+    updateExport();
+}
 
-    function renderResults() {
-        document.getElementById('body-thiessen').innerHTML = thiessenResult.map(f => `<tr><td>${f.n}</td><td>${f.area.toFixed(2)}</td><td>${f.ci.toFixed(4)}</td></tr>`).join('');
-        
-        document.getElementById('body-stats').innerHTML = `
-            <tr><td>Mean</td><td>${statsData.lin.m.toFixed(2)}</td><td>${statsData.log.m.toFixed(4)}</td></tr>
-            <tr><td>Std Dev</td><td>${statsData.lin.s.toFixed(2)}</td><td>${statsData.log.s.toFixed(4)}</td></tr>
-            <tr><td>Cv</td><td>${statsData.lin.cv.toFixed(2)}</td><td>${statsData.log.cv.toFixed(4)}</td></tr>
-            <tr><td>Skewness</td><td>${statsData.lin.sk.toFixed(2)}</td><td>${statsData.log.sk.toFixed(4)}</td></tr>
-        `;
-        updateView();
-    }
+function updateExport() {
+    document.getElementById('jsonOutput').value = JSON.stringify(dbHujan, null, 2);
+}
 
-    function updateView() {
-        const T = document.getElementById('selectT').value;
-        document.querySelectorAll('.valT').forEach(el => el.innerText = T);
-        const best = globalMethods[0];
-        
-        document.getElementById('bestName').innerText = best.name;
-        document.getElementById('bestVal').innerText = best.rec(T).toFixed(2) + " mm";
-        
-        let info = best.status === 5 ? "Valid pada derajat kepercayaan 95% (Kritis 5%)" : 
-                   best.status === 1 ? "Valid pada derajat kepercayaan 99% (Kritis 1%)" : "Data tidak memenuhi syarat uji";
-        document.getElementById('critInfo').innerText = info;
+function toggleExport() {
+    const area = document.getElementById('exportArea');
+    area.style.display = area.style.display === 'none' ? 'block' : 'none';
+}
 
-        document.getElementById('body-compare').innerHTML = globalMethods.map((m,i) => {
-            let tag = m.status === 5 ? '<span class="tag tag-5">Lolos 5%</span>' : (m.status === 1 ? '<span class="tag tag-1">Lolos 1%</span>' : '<span class="tag tag-fail">Gagal</span>');
-            return `<tr class="${i===0?'best-row':''}">
-                <td>${m.name}</td><td>${m.sk.toFixed(4)}</td><td>${m.chi.toFixed(2)}</td>
-                <td>${tag}</td><td>${tag}</td>
-            </tr>`;
-        }).join('');
-    }
+function downloadJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dbHujan, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", "hujan.json");
+    document.body.appendChild(downloadAnchorNode); 
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
 </script>
 </body>
 </html>
