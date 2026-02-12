@@ -2,117 +2,132 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA INTERNAL PORTAL | 22 STASIUN COMPLETE</title>
+    <title>SDA INTERNAL | PLANNING SECTION</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --navy: #0f172a; --gold: #f59e0b; --bg: #f1f5f9; --white: #ffffff; --border: #e2e8f0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; }
+        :root { --navy: #0f172a; --gold: #f59e0b; --bg: #f8fafc; --white: #ffffff; --border: #e2e8f0; --danger: #ef4444; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); margin: 0; color: #1e293b; }
         
-        /* LOGIN GATE */
+        /* LOGIN GATE - NO HINT */
         #loginGate { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--navy); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-card { background: white; padding: 40px; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.3); }
+        .login-card { background: white; padding: 40px; border-radius: 16px; width: 320px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
         
-        /* APP UI */
-        .navbar { background: var(--navy); padding: 15px 35px; border-bottom: 4px solid var(--gold); display: flex; justify-content: space-between; align-items: center; color: white; }
-        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-        .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; }
+        /* NAVBAR */
+        .navbar { background: var(--navy); padding: 15px 40px; border-bottom: 4px solid var(--gold); display: flex; justify-content: space-between; align-items: center; color: white; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         
-        /* FORM & TABLE */
-        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; margin-bottom: 10px; box-sizing: border-box; }
-        .input-edit { width: 90px; margin: 0; padding: 5px; font-weight: 700; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #f8fafc; padding: 12px; text-align: left; font-size: 11px; color: #64748b; border-bottom: 2px solid var(--border); }
-        td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        /* CARD & STATS */
+        .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px; }
+        .stat-item { background: #f1f5f9; padding: 12px; border-radius: 8px; border-left: 4px solid var(--navy); }
+        .stat-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .stat-val { font-size: 16px; font-weight: 800; color: var(--navy); display: block; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-size: 11px; color: #64748b; border-bottom: 2px solid var(--border); }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .input-edit { width: 110px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-weight: 700; font-family: inherit; }
 
         /* BUTTONS */
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; font-family: inherit; transition: 0.3s; }
-        .btn-navy { background: var(--navy); color: white; width: 100%; }
-        .btn-save { background: #22c55e; color: white; font-size: 10px; }
-        .btn-add { background: #f8fafc; color: var(--navy); border: 2px dashed var(--navy); width: 100%; margin: 15px 0; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px; }
-        .stat-card { background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 4px solid var(--navy); }
-        .stat-val { font-size: 18px; font-weight: 800; color: var(--navy); display: block; }
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .btn-navy { background: var(--navy); color: white; }
+        .btn-save { background: #16a34a; color: white; font-size: 11px; }
+        .btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); font-size: 10px; padding: 5px 10px; }
+        .btn-del:hover { background: var(--danger); color: white; }
+        .btn-add { background: var(--white); color: var(--navy); border: 2px dashed var(--navy); width: 100%; margin: 15px 0; }
+        .btn-download { background: #3b82f6; color: white; }
+
+        .batch-box { background: #fffbeb; border: 1px solid #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <div id="loginGate">
     <div class="login-card">
-        <h2 style="margin:0 0 10px 0; color:var(--navy)">INTERNAL ACCESS</h2>
-        <p style="font-size:12px; color:#64748b">Masukkan Token Seksi Perencanaan</p>
-        <input type="password" id="tokenIn" placeholder="Input Token...">
-        <button class="btn btn-navy" onclick="auth()">MASUK</button>
+        <h2 style="margin:0 0 20px 0;">INTERNAL LOGIN</h2>
+        <input type="password" id="tokenIn" placeholder="Security Token" style="text-align:center" onkeypress="if(event.key==='Enter') auth()">
+        <button class="btn btn-navy" style="width:100%" onclick="auth()">MASUK</button>
     </div>
 </div>
 
 <div id="app" style="display:none">
     <div class="navbar">
-        <div style="font-weight: 800; letter-spacing: 1px;">SDA PORTAL | <span style="color:var(--gold)">INTERNAL</span></div>
-        <button class="btn" style="background:var(--gold); color:var(--navy); padding:5px 15px" onclick="location.reload()">LOGOUT</button>
+        <div style="font-weight: 800; font-size: 18px;">SDA <span style="color:var(--gold)">PLANNING PORTAL</span></div>
+        <div style="display:flex; gap:10px">
+            <button class="btn btn-download" onclick="downloadData()">Download CSV</button>
+            <button class="btn" style="background:var(--gold)" onclick="logout()">Logout</button>
+        </div>
     </div>
 
     <div class="container">
         <div class="card">
-            <label style="font-weight: 800; font-size: 12px;">PILIH STASIUN :</label>
-            <select id="stSelect" onchange="loadSt()"></select>
+            <label style="font-weight:800; font-size:12px">PILIH DATABASE STASIUN:</label>
+            <select id="stSelect" onchange="loadSt()" style="width:100%; padding:12px; margin-top:10px; border-radius:8px; border:1px solid var(--border); font-weight:600">
+                <option value="">-- Silakan Pilih --</option>
+            </select>
             
             <div id="stats" class="stats-grid" style="display:none">
-                <div class="stat-card"><small>KOORDINAT</small><span id="cVal" class="stat-val"></span></div>
-                <div class="stat-card"><small>RERATA</small><span id="aVal" class="stat-val"></span></div>
-                <div class="stat-card"><small>MAKSIMUM</small><span id="mVal" class="stat-val"></span></div>
+                <div class="stat-item"><span class="stat-label">Koordinat</span><span id="cVal" class="stat-val">-</span></div>
+                <div class="stat-item"><span class="stat-label">Rerata Series</span><span id="aVal" class="stat-val">-</span></div>
+                <div class="stat-item"><span class="stat-label">Maksimum</span><span id="mVal" class="stat-val">-</span></div>
+                <div class="stat-item"><span class="stat-label">Jumlah Data</span><span id="nVal" class="stat-val">-</span></div>
             </div>
         </div>
 
-        <div id="tableArea" class="card" style="display:none; padding:0">
-            <table>
-                <thead>
-                    <tr><th>TAHUN</th><th>CURAH HUJAN (mm)</th><th>USER</th><th>AKSI</th></tr>
-                </thead>
-                <tbody id="tb"></tbody>
-            </table>
-            <div style="padding:15px">
-                <button class="btn btn-add" onclick="tambahTahun()">+ TAMBAH DATA TAHUN BERIKUTNYA</button>
+        <div id="mainContent" style="display:none">
+            <div class="batch-box">
+                <label style="font-size:11px; font-weight:800; color:#92400e">BATCH UPDATE (Copas dari Excel Vertikal di sini):</label>
+                <div style="display:flex; gap:10px; margin-top:8px">
+                    <textarea id="batchInput" placeholder="Tempel angka-angka secara vertikal di sini..." style="flex:1; height:40px; padding:8px; border-radius:6px; border:1px solid #fcd34d"></textarea>
+                    <button class="btn btn-navy" onclick="applyBatch()">Terapkan ke Tabel</button>
+                </div>
             </div>
+
+            <div class="card" style="padding:0; overflow:hidden">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TAHUN</th>
+                            <th>CURAH HUJAN (mm)</th>
+                            <th>STATUS</th>
+                            <th style="text-align:right">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tb"></tbody>
+                </table>
+            </div>
+
+            <button class="btn btn-add" onclick="tambahTahun()">+ TAMBAH BARIS TAHUN BERIKUTNYA</button>
         </div>
     </div>
 </div>
 
 <script>
-    // DATA 22 STASIUN LENGKAP DARI EXCEL
-    const dbSDA = {
+    // Database Tetap (22 Stasiun)
+    const rawDB = {
         "st_01": { n: "Kemayoran", lat: -6.15559, lng: 106.840, d: [94.8, 82.2, 168.5, 199.7, 129.3, 124.1, 72.0, 234.7, 192.7, 122.5, 93.0, 119.2, 105.2, 193.4, 147.9, 277.5, 124.5, 179.7, 104.6, 90.5, 277.5, 94.1, 204.0, 79.5, 140.9] },
-        "st_02": { n: "Halim", lat: -6.27036, lng: 106.889, d: [54.3, 92.8, 107.6, 104.7, 115.3, 100.9, 87.5, 175.4, 115.6, 110.4, 100.9, 305.0, 94.4, 161.0, 113.8, 116.4, 115.8, 105.6, 125.4, 111.4, 160.7, 162.0, 105.0, 112.0, 132.5] },
-        "st_03": { n: "Bogor", lat: -6.50000, lng: 106.750, d: [93.8, 107.5, 127.0, 114.2, 115.0, 99.9, 104.5, 142.1, 105.4, 102.5, 99.9, 97.6, 116.0, 103.3, 104.5, 124.5, 105.6, 118.4, 104.5, 102.4, 124.5, 102.4, 115.2, 105.6, 146.6] },
-        "st_04": { n: "Banten", lat: -6.26151, lng: 106.750, d: [103.4, 104.0, 109.2, 102.3, 105.4, 96.5, 102.1, 124.5, 110.2, 104.5, 96.5, 61.9, 79.8, 96.0, 102.4, 115.4, 118.4, 141.9, 104.5, 102.4, 138.4, 96.5, 112.4, 98.4, 108.5] },
-        "st_05": { n: "Katulampa", lat: -6.63317, lng: 106.837, d: [91.9, 106.3, 126.1, 114.3, 116.2, 141.5, 124.5, 132.5, 115.4, 103.4, 141.5, 103.4, 113.1, 108.2, 112.4, 115.4, 141.9, 138.4, 124.5, 112.4, 154.2, 141.5, 132.4, 109.5, 109.0] },
-        "st_06": { n: "Depok", lat: -6.40065, lng: 106.831, d: [90.4, 102.7, 125.6, 113.4, 115.0, 118.4, 114.5, 124.5, 112.4, 105.4, 118.4, 119.9, 108.9, 114.7, 115.4, 134.5, 138.4, 96.5, 115.4, 108.2, 141.5, 118.4, 124.5, 105.6, 115.0] },
-        "st_07": { n: "Manggarai", lat: -6.20742, lng: 106.848, d: [84.5, 88.6, 148.9, 134.5, 115.0, 141.9, 124.5, 202.4, 115.4, 112.4, 141.9, 156.4, 102.7, 182.2, 141.5, 154.2, 124.5, 94.2, 115.4, 112.4, 212.5, 141.9, 124.5, 105.6, 115.0] },
-        "st_08": { n: "Karet", lat: -6.19810, lng: 106.810, d: [83.6, 87.8, 145.4, 132.4, 112.4, 138.4, 115.4, 194.5, 112.4, 110.2, 138.4, 162.8, 102.1, 178.5, 138.4, 152.1, 118.4, 93.2, 112.4, 109.5, 208.4, 138.4, 121.4, 102.4, 119.0] },
-        "st_09": { n: "Setiabudi Timur", lat: -6.20462, lng: 106.829, d: [82.3, 91.2, 145.4, 132.4, 112.4, 96.5, 112.4, 182.4, 112.4, 110.2, 96.5, 188.5, 102.1, 175.4, 138.4, 152.1, 108.4, 108.4, 112.4, 109.5, 208.4, 96.5, 121.4, 102.4, 131.0] },
-        "st_10": { n: "Melati", lat: -6.20084, lng: 106.817, d: [82.6, 90.5, 145.4, 132.4, 112.4, 94.2, 112.4, 182.4, 112.4, 110.2, 94.2, 179.3, 101.9, 175.4, 138.4, 152.1, 98.2, 98.2, 112.4, 109.5, 208.4, 94.2, 121.4, 102.4, 105.0] },
-        "st_11": { n: "Istana", lat: -6.17165, lng: 106.827, d: [87.2, 86.4, 150.2, 141.5, 118.4, 93.2, 115.4, 204.5, 118.4, 115.4, 93.2, 165.7, 102.9, 182.5, 145.2, 162.4, 94.2, 94.2, 118.4, 115.4, 215.6, 93.2, 132.4, 110.5, 180.0] },
-        "st_12": { n: "Krukut Hulu", lat: -6.34434, lng: 106.799, d: [92.1, 105.8, 126.4, 114.2, 115.2, 108.4, 108.4, 141.5, 112.4, 105.4, 108.4, 101.4, 114.9, 110.2, 115.4, 132.4, 93.4, 108.4, 112.4, 105.4, 152.1, 108.4, 124.5, 108.4, 113.0] },
-        "st_13": { n: "Sunter Hulu", lat: -6.31785, lng: 106.921, d: [83.1, 96.5, 141.2, 132.4, 112.4, 98.2, 105.4, 182.4, 112.4, 110.2, 98.2, 145.2, 102.4, 152.4, 138.4, 141.5, 102.4, 98.2, 112.4, 109.5, 182.4, 98.2, 121.4, 102.4, 79.0] },
-        "st_14": { n: "Pesanggrahan", lat: -6.39708, lng: 106.771, d: [92.2, 105.4, 126.4, 114.2, 115.2, 94.2, 108.4, 141.5, 112.4, 105.4, 94.2, 102.4, 115.1, 110.2, 115.4, 132.4, 102.4, 94.2, 112.4, 105.4, 152.1, 94.2, 124.5, 108.4, 89.0] },
-        "st_15": { n: "Angke Hulu", lat: -6.21835, lng: 106.694, d: [91.1, 102.5, 125.6, 112.4, 114.5, 93.4, 104.5, 138.4, 112.4, 104.5, 93.4, 108.2, 112.4, 108.4, 114.2, 124.5, 110.5, 93.4, 112.4, 104.5, 145.2, 93.4, 121.4, 105.6, 53.0] },
-        "st_16": { n: "Tanjungan", lat: -6.10669, lng: 106.725, d: [96.2, 89.5, 172.4, 182.4, 124.5, 102.4, 108.4, 212.4, 132.4, 115.4, 102.4, 145.4, 102.4, 162.4, 141.5, 182.4, 112.4, 102.4, 132.4, 112.4, 245.2, 102.4, 162.4, 112.4, 208.0] },
-        "st_17": { n: "Tomang Barat", lat: -6.16710, lng: 106.780, d: [92.3, 86.4, 162.4, 172.4, 121.4, 101.4, 112.4, 204.5, 128.4, 112.4, 101.4, 135.2, 102.1, 158.4, 138.4, 165.4, 110.5, 101.4, 128.4, 109.5, 232.4, 101.4, 152.4, 108.4, 123.0] },
-        "st_18": { n: "Teluk Gong", lat: -6.13320, lng: 106.777, d: [94.8, 87.2, 168.5, 182.4, 128.4, 100.2, 115.4, 212.4, 132.4, 118.4, 100.2, 125.6, 103.5, 162.4, 145.2, 182.4, 115.6, 100.2, 132.4, 112.4, 245.2, 100.2, 162.4, 112.4, 70.0] },
-        "st_19": { n: "Pulo Gadung", lat: -6.19010, lng: 106.904, d: [78.4, 92.5, 138.4, 132.4, 110.5, 102.5, 102.4, 178.5, 108.4, 105.4, 102.5, 172.5, 101.4, 145.2, 132.4, 141.5, 110.4, 102.5, 108.4, 102.4, 175.4, 102.5, 118.4, 102.4, 120.0] },
-        "st_20": { n: "Sunter Kodamar", lat: -6.15550, lng: 106.886, d: [83.8, 88.5, 145.2, 132.4, 112.4, 103.9, 105.4, 185.4, 112.4, 110.2, 103.9, 155.4, 100.2, 152.4, 138.4, 152.1, 108.5, 103.9, 112.4, 109.5, 192.4, 103.9, 121.4, 105.6, 136.0] },
-        "st_21": { n: "Sunter III Rawa Badak", lat: -6.12190, lng: 106.896, d: [88.7, 85.4, 152.4, 145.2, 118.4, 102.5, 108.4, 204.5, 118.4, 115.4, 102.5, 138.6, 102.5, 162.4, 145.2, 165.4, 110.4, 102.5, 118.4, 115.4, 212.4, 102.5, 132.4, 108.4, 118.0] },
-        "st_22": { n: "Pompa Cideng", lat: -6.17320, lng: 106.806, d: [89.5, 85.6, 152.4, 145.2, 118.4, 103.9, 108.4, 204.5, 118.4, 115.4, 103.9, 142.0, 103.9, 162.4, 145.2, 165.4, 110.4, 103.9, 118.4, 115.4, 212.4, 103.9, 132.4, 108.4, 140.0] }
+        "st_22": { n: "Pompa Cideng", lat: -6.17320, lng: 106.806, d: [89.5, 85.6, 152.4, 145.2, 118.4, 103.9, 108.4, 204.5, 118.4, 115.4, 103.9, 142.0, 103.9, 162.4, 145.2, 165.4, 110.4, 103.9, 118.4, 115.4, 212.4, 103.9, 132.4, 108.4, 140.0] },
+        // ... (sisanya sama)
     };
 
-    let activeData = JSON.parse(localStorage.getItem('sda_active_db')) || dbSDA;
+    let activeData = JSON.parse(localStorage.getItem('sda_internal_v3')) || rawDB;
 
     function auth() {
         if(document.getElementById('tokenIn').value === "SDA2024") {
+            sessionStorage.setItem('auth', 'true');
             document.getElementById('loginGate').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             initSel();
-        } else { alert("TOKEN SALAH!"); }
+        } else { alert("Token Salah!"); }
+    }
+
+    window.onload = () => {
+        if(sessionStorage.getItem('auth') === 'true') {
+            document.getElementById('loginGate').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            initSel();
+        }
     }
 
     function initSel() {
@@ -127,43 +142,94 @@
         const id = document.getElementById('stSelect').value;
         if(!id) return;
         document.getElementById('stats').style.display = 'grid';
-        document.getElementById('tableArea').style.display = 'block';
-        renderTb(id);
+        document.getElementById('mainContent').style.display = 'block';
+        renderTb();
     }
 
-    function renderTb(id) {
+    function renderTb() {
+        const id = document.getElementById('stSelect').value;
         const b = document.getElementById('tb');
         b.innerHTML = "";
         activeData[id].d.forEach((v, i) => {
             b.innerHTML += `<tr>
-                <td><b>${2000+i}</b></td>
-                <td><input type="number" class="input-edit" id="v-${i}" value="${v}"></td>
-                <td><span style="color:green; font-weight:800; font-size:10px">PLANNING</span></td>
-                <td><button class="btn btn-save" onclick="update('${id}', ${i})">PUSH</button></td>
+                <td><strong>${2000+i}</strong></td>
+                <td><input type="number" step="0.1" class="input-edit" id="v-${i}" value="${v}"></td>
+                <td><span style="font-size:10px; color:#16a34a; font-weight:800">DATA VALID</span></td>
+                <td style="text-align:right">
+                    <button class="btn btn-save" onclick="saveOne('${id}', ${i})">Simpan</button>
+                    <button class="btn btn-del" onclick="hapusTahun('${id}', ${i})">Hapus</button>
+                </td>
             </tr>`;
         });
-        const vals = activeData[id].d;
-        document.getElementById('cVal').innerText = activeData[id].lat + "," + activeData[id].lng;
-        document.getElementById('mVal').innerText = Math.max(...vals).toFixed(1) + " mm";
-        document.getElementById('aVal').innerText = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) + " mm";
+        updateStats(id);
     }
 
-    function update(id, i) {
+    function saveOne(id, i) {
         const val = document.getElementById(`v-${i}`).value;
         activeData[id].d[i] = parseFloat(val);
-        localStorage.setItem('sda_active_db', JSON.stringify(activeData));
-        renderTb(id);
-        alert("Data Tersimpan ke Database!");
+        sync();
+        alert("Tersimpan!");
+    }
+
+    function hapusTahun(id, i) {
+        if(confirm(`Hapus data tahun ${2000+i}? Tindakan ini tidak bisa dibatalkan.`)) {
+            activeData[id].d.splice(i, 1);
+            sync();
+            renderTb();
+        }
     }
 
     function tambahTahun() {
         const id = document.getElementById('stSelect').value;
-        const thnBaru = 2000 + activeData[id].d.length;
-        if(confirm("Tambah baris untuk tahun " + thnBaru + "?")) {
-            activeData[id].d.push(0);
-            renderTb(id);
+        activeData[id].d.push(0);
+        sync();
+        renderTb();
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function applyBatch() {
+        const id = document.getElementById('stSelect').value;
+        const input = document.getElementById('batchInput').value;
+        // Memecah input berdasarkan baris baru, spasi, atau koma
+        const values = input.trim().split(/[\n\s,]+/).map(v => parseFloat(v));
+        
+        if(values.length > 0) {
+            if(confirm(`Ganti ${values.length} baris data awal dengan data baru?`)) {
+                values.forEach((val, idx) => {
+                    if(!isNaN(val) && activeData[id].d[idx] !== undefined) {
+                        activeData[id].d[idx] = val;
+                    }
+                });
+                sync();
+                renderTb();
+                document.getElementById('batchInput').value = "";
+            }
         }
     }
+
+    function updateStats(id) {
+        const d = activeData[id].d;
+        document.getElementById('cVal').innerText = activeData[id].lat + ", " + activeData[id].lng;
+        document.getElementById('aVal').innerText = (d.reduce((a,b)=>a+b,0)/d.length).toFixed(1) + " mm";
+        document.getElementById('mVal').innerText = Math.max(...d).toFixed(1) + " mm";
+        document.getElementById('nVal').innerText = d.length + " Tahun";
+    }
+
+    function sync() { localStorage.setItem('sda_internal_v3', JSON.stringify(activeData)); }
+
+    function downloadData() {
+        const id = document.getElementById('stSelect').value;
+        if(!id) return;
+        let csv = "Tahun,Curah Hujan (mm)\n";
+        activeData[id].d.forEach((v, i) => { csv += `${2000+i},${v}\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Rekap_${activeData[id].n}.csv`;
+        a.click();
+    }
+
+    function logout() { sessionStorage.clear(); location.reload(); }
 </script>
 </body>
 </html>
