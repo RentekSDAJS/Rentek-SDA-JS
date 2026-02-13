@@ -2,164 +2,172 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA WEBGIS | PERHITUNGAN THIESSEN</title>
+    <title>SDA WEBGIS | ANALISIS HIDROLOGI FINAL</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
     <style>
         :root { --main: #1e293b; --accent: #f59e0b; }
-        body { margin: 0; display: flex; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; }
-        #map { flex: 2; background: #cbd5e1; }
-        #panel { flex: 1; padding: 20px; background: white; overflow-y: auto; border-left: 5px solid var(--main); box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .upload-zone { border: 3px dashed var(--accent); padding: 20px; text-align: center; border-radius: 10px; background: #fffbeb; cursor: pointer; transition: 0.3s; }
-        .upload-zone:hover { background: #fef3c7; }
-        .alert-error { background: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 5px; margin-bottom: 10px; font-size: 13px; border: 1px solid #ef4444; }
-        h3 { color: var(--main); border-bottom: 2px solid var(--accent); padding-bottom: 5px; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-        th { background: var(--main); color: white; padding: 8px; }
-        td { border: 1px solid #e2e8f0; padding: 6px; text-align: center; }
-        .highlight { font-weight: bold; color: #059669; }
+        body { margin: 0; display: flex; font-family: 'Inter', sans-serif; height: 100vh; background: #f1f5f9; }
+        #map { flex: 2; z-index: 1; }
+        #panel { flex: 1; padding: 25px; background: white; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2; }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+        .upload-btn { background: var(--main); color: white; padding: 12px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; text-align: center; display: block; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-bottom: 10px; }
+        .bg-ok { background: #dcfce7; color: #166534; }
+        .bg-err { background: #fee2e2; color: #991b1b; }
+        h3 { font-size: 14px; text-transform: uppercase; color: #64748b; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: #f1f5f9; color: #475569; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 8px; border-bottom: 1px solid #f1f5f9; }
+        .val-bold { font-weight: 800; color: var(--main); }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 <div id="panel">
-    <h2 style="margin-top:0">WEBGIS ANALYSIS</h2>
+    <div id="dbStatus"></div>
     
-    <div id="dbWarning" class="alert-error" style="display:none;">
-        <strong>DATABASE KOSONG!</strong><br>
-        Buka file <i>data-hujan.html</i>, pilih stasiun, lalu klik "SINKRONKAN" lebih dulu.
+    <div class="card">
+        <h3>INPUT AREA TANGKAPAN (DAS)</h3>
+        <button class="upload-btn" onclick="document.getElementById('fIn').click()">UPLOAD DATA JSON</button>
+        <input type="file" id="fIn" style="display:none" accept=".json">
+        <p style="font-size: 10px; color: #94a3b8; margin-top: 10px;">Mendukung format: <i>Kali Sunter.json, Tebet.json, watershed.json</i></p>
     </div>
 
-    <div class="upload-zone" onclick="document.getElementById('fileIn').click()">
-        <strong>UPLOAD FILE JSON</strong><br>
-        <small>Klik untuk pilih Kali Sunter.json / watershed.json</small>
-        <input type="file" id="fileIn" style="display:none" accept=".json">
-    </div>
-
-    <div id="resultsArea" style="display:none">
-        <h3>1. Koefisien Thiessen</h3>
+    <div id="resThiessen" class="card" style="display:none">
+        <h3>LUAS PENGARUH & BOBOT</h3>
         <table>
-            <thead><tr><th>Stasiun</th><th>Luas (km²)</th><th>W (Bobot)</th></tr></thead>
-            <tbody id="thiessenBody"></tbody>
+            <thead><tr><th>STASIUN</th><th>LUAS (km²)</th><th>BOBOT (W)</th></tr></thead>
+            <tbody id="tBody"></tbody>
         </table>
+    </div>
 
-        <h3>2. Hujan Rerata Wilayah (mm)</h3>
+    <div id="resRain" class="card" style="display:none">
+        <h3>HUJAN RERATA WILAYAH</h3>
         <table>
-            <thead><tr><th>Tahun</th><th>Hujan DAS</th></tr></thead>
-            <tbody id="avgRainBody"></tbody>
+            <thead><tr><th>TAHUN</th><th>HUJAN DAS (mm)</th></tr></thead>
+            <tbody id="rBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // Definisi UTM Zone 48S (Sesuai data Kali Sunter kamu)
+    // 1. Setup Proyeksi UTM 48S
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
 
+    // 2. Setup Peta
     const map = L.map('map').setView([-6.20, 106.84], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-    // Ambil data dari portal
-    let activeData = JSON.parse(localStorage.getItem('sda_db_final_clean'));
+    // 3. Ambil Data Portal (Check LocalStorage)
+    const rawData = localStorage.getItem('sda_db_final_clean');
+    const db = JSON.parse(rawData);
+    const statusEl = document.getElementById('dbStatus');
 
-    if (!activeData) {
-        document.getElementById('dbWarning').style.display = 'block';
-    }
-
-    function drawStations() {
-        if (!activeData) return;
-        Object.keys(activeData).forEach(id => {
-            const st = activeData[id];
-            L.circleMarker([st.lat, st.lng], { radius: 6, color: 'blue', weight: 2, fillOpacity: 0.8, fillColor: 'white' })
-             .addTo(map)
-             .bindTooltip(st.n, { permanent: true, direction: 'top', className: 'label-stasiun' });
+    if (db) {
+        statusEl.innerHTML = `<span class="status-badge bg-ok">DATABASE AKTIF: ${Object.keys(db).length} STASIUN</span>`;
+        Object.keys(db).forEach(id => {
+            L.circleMarker([db[id].lat, db[id].lng], {radius: 5, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2})
+             .addTo(map).bindTooltip(db[id].n, {permanent: true, direction: 'top', offset: [0, -5]});
         });
+    } else {
+        statusEl.innerHTML = `<span class="status-badge bg-err">DATABASE KOSONG - SINKRONKAN DULU</span>`;
     }
-    drawStations();
 
-    document.getElementById('fileIn').onchange = function(e) {
+    // 4. Handle File Upload
+    document.getElementById('fIn').onchange = function(e) {
         const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = function(event) {
             const json = JSON.parse(event.target.result);
-            calculateThiessen(json);
+            processData(json);
         };
         reader.readAsText(file);
     };
 
-    function calculateThiessen(geojson) {
-        // Gabungkan semua poligon dalam file JSON menjadi satu (untuk Kali Sunter yang pecah-pecah)
-        let mergedCatchment;
-        try {
-            // Konversi koordinat dari UTM ke WGS84 jika angkanya ribuan
-            geojson.features.forEach(f => {
-                if (f.geometry.type === 'Polygon') {
-                    f.geometry.coordinates[0] = f.geometry.coordinates[0].map(c => {
-                        return (c[0] > 1000) ? proj4("EPSG:32748", "WGS84", c) : c;
-                    });
-                }
-            });
-            
-            // Satukan semua poligon jadi satu area DAS
-            mergedCatchment = geojson.features.reduce((acc, feat) => {
-                return acc ? turf.union(acc, feat) : feat;
-            }, null);
-        } catch(err) {
-            alert("Error memproses koordinat: " + err);
-            return;
+    function processData(json) {
+        // A. Normalisasi Segala Jenis JSON (FeatureCollection / GeometryCollection)
+        let features = [];
+        if (json.type === "FeatureCollection") {
+            features = json.features;
+        } else if (json.type === "GeometryCollection") {
+            features = json.geometries.map(g => ({type: "Feature", geometry: g, properties: {}}));
+        } else {
+            features = [json];
         }
 
-        const catchmentLayer = L.geoJSON(mergedCatchment, { style: { color: 'red', fillOpacity: 0.1 } }).addTo(map);
-        map.fitBounds(catchmentLayer.getBounds());
+        // B. Konversi Koordinat & Gabung Poligon
+        let mergedPoly;
+        features.forEach(f => {
+            // Konversi UTM ke LatLng jika perlu
+            if (f.geometry.type === "Polygon") {
+                f.geometry.coordinates[0] = f.geometry.coordinates[0].map(c => {
+                    return (c[0] > 1000) ? proj4("EPSG:32748", "WGS84", c) : c;
+                });
+            } else if (f.geometry.type === "MultiPolygon") {
+                f.geometry.coordinates[0][0] = f.geometry.coordinates[0][0].map(c => {
+                    return (c[0] > 1000) ? proj4("EPSG:32748", "WGS84", c) : c;
+                });
+            }
 
-        // Siapkan titik dari Portal
-        const points = turf.featureCollection(Object.keys(activeData).map(id => {
-            return turf.point([activeData[id].lng, activeData[id].lat], { name: activeData[id].n, id: id });
+            // Gabungkan (Dissolve) semua poligon menjadi 1 area DAS
+            if (!mergedPoly) { mergedPoly = f; } 
+            else { mergedPoly = turf.union(mergedPoly, f); }
+        });
+
+        // C. Tampilkan DAS di Peta
+        const dasLayer = L.geoJSON(mergedPoly, {style: {color: '#ef4444', weight: 3, fillOpacity: 0.1}}).addTo(map);
+        map.fitBounds(dasLayer.getBounds());
+
+        // D. Analisis Thiessen
+        const pts = turf.featureCollection(Object.keys(db).map(id => {
+            return turf.point([db[id].lng, db[id].lat], {name: db[id].n, id: id});
         }));
 
-        const bbox = turf.bbox(mergedCatchment);
-        const voronoi = turf.voronoi(points, { bbox: bbox });
+        const voronoi = turf.voronoi(pts, {bbox: turf.bbox(mergedPoly)});
+        let finalResults = [];
+        let totalKm2 = 0;
 
-        let results = [];
-        let totalArea = 0;
-
-        voronoi.features.forEach((poly, i) => {
-            const clipped = turf.intersect(poly, mergedCatchment);
-            if (clipped) {
-                const area = turf.area(clipped) / 1000000;
-                totalArea += area;
-                results.push({
-                    name: points.features[i].properties.name,
-                    id: points.features[i].properties.id,
+        voronoi.features.forEach((v, i) => {
+            const clip = turf.intersect(v, mergedPoly);
+            if (clip) {
+                const area = turf.area(clip) / 1000000;
+                totalKm2 += area;
+                finalResults.push({
+                    id: pts.features[i].properties.id,
+                    name: pts.features[i].properties.name,
                     area: area,
-                    geo: clipped
+                    geo: clip
                 });
-                L.geoJSON(clipped, { style: { color: '#3b82f6', weight: 1, fillOpacity: 0.2 } }).addTo(map);
+                L.geoJSON(clip, {style: {color: '#3b82f6', weight: 1, fillOpacity: 0.2}}).addTo(map);
             }
         });
 
-        // Tampilkan Tabel
-        const tBody = document.getElementById('thiessenBody');
-        const rBody = document.getElementById('avgRainBody');
+        // E. Render Tabel
+        const tBody = document.getElementById('tBody');
+        const rBody = document.getElementById('rBody');
         tBody.innerHTML = ""; rBody.innerHTML = "";
 
-        results.forEach(res => {
-            const w = res.area / totalArea;
-            res.w = w;
-            tBody.innerHTML += `<tr><td>${res.name}</td><td>${res.area.toFixed(2)}</td><td>${w.toFixed(4)}</td></tr>`;
+        finalResults.forEach(res => {
+            const weight = res.area / totalKm2;
+            res.w = weight;
+            tBody.innerHTML += `<tr><td>${res.name}</td><td>${res.area.toFixed(2)}</td><td class="val-bold">${weight.toFixed(4)}</td></tr>`;
         });
 
-        const tahunLen = activeData[Object.keys(activeData)[0]].d.length;
-        for (let t = 0; t < tahunLen; t++) {
-            let rainSum = 0;
-            results.forEach(res => {
-                rainSum += (activeData[res.id].d[t] * res.w);
+        const thnCount = db[Object.keys(db)[0]].d.length;
+        for (let t = 0; t < thnCount; t++) {
+            let rainDAS = 0;
+            finalResults.forEach(res => {
+                rainDAS += (db[res.id].d[t] * res.w);
             });
-            rBody.innerHTML += `<tr><td>${2000+t}</td><td class="highlight">${rainSum.toFixed(2)}</td></tr>`;
+            rBody.innerHTML += `<tr><td>Tahun ${2000+t}</td><td class="val-bold" style="color:#059669">${rainDAS.toFixed(2)}</td></tr>`;
         }
-        document.getElementById('resultsArea').style.display = 'block';
+
+        document.getElementById('resThiessen').style.display = 'block';
+        document.getElementById('resRain').style.display = 'block';
     }
 </script>
 </body>
