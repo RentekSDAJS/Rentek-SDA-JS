@@ -2,41 +2,27 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA PORTAL | RENTEKSDAJS</title>
+    <title>SDA PORTAL | DATABASE SINKRON</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --main: #1e293b; --accent: #f59e0b; --bg: #f8fafc; --white: #ffffff; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; color: var(--main); }
-        
-        /* LOGIN - STEALTH MODE */
         #loginGate { position: fixed; inset: 0; background: var(--main); display: flex; justify-content: center; align-items: center; z-index: 9999; }
         .login-box { background: var(--white); padding: 40px; border-radius: 8px; width: 280px; text-align: center; }
-        
-        /* LAYOUT */
         .navbar { background: var(--main); padding: 12px 5%; display: flex; justify-content: space-between; align-items: center; color: white; border-bottom: 3px solid var(--accent); }
-        .container { width: 90%; max-width: 1100px; margin: 25px auto; }
-        
-        /* COMPONENT */
+        .container { width: 95%; max-width: 1200px; margin: 25px auto; }
         .card { background: var(--white); border-radius: 8px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        
-        /* UPDATE AREA */
         .batch-container { display: flex; gap: 15px; background: #f1f5f9; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; align-items: flex-end; }
         textarea { flex: 1; height: 60px; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; font-family: monospace; resize: none; }
-        
-        /* TABLE DESIGN */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { text-align: left; background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 2px solid #e2e8f0; }
         td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
         .input-cell { width: 100%; padding: 8px; border: 1px solid transparent; border-radius: 4px; font-weight: 700; font-size: 15px; color: var(--main); transition: 0.2s; }
         .input-cell:focus { border-color: var(--accent); background: #fffbeb; outline: none; }
-
-        /* BUTTONS */
         .btn { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-family: inherit; }
         .btn-main { background: var(--main); color: white; }
         .btn-save { background: #059669; color: white; width: 100%; font-size: 16px; margin-top: 20px; padding: 15px; }
-        .btn-save:hover { background: #047857; }
         .btn-outline { background: transparent; border: 1px solid #cbd5e1; font-size: 12px; }
-
         .header-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 15px; }
         .info-tag { font-size: 10px; color: #64748b; font-weight: 800; display: block; margin-bottom: 4px; }
         .info-val { font-size: 16px; font-weight: 700; color: var(--main); }
@@ -54,57 +40,47 @@
 
 <div id="app" style="display:none">
     <div class="navbar">
-        <div style="font-weight: 800; letter-spacing: -0.5px">SDA <span style="color:var(--accent)">PLANNING</span></div>
-        <div style="display:flex; gap:10px">
-            <button class="btn btn-outline" style="color:white" onclick="downloadData()">Download CSV</button>
-            <button class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.3)" onclick="logout()">Exit</button>
-        </div>
+        <div style="font-weight: 800; letter-spacing: -0.5px">SDA <span style="color:var(--accent)">PLANNING PORTAL</span></div>
+        <button class="btn btn-outline" style="color:white; border-color:rgba(255,255,255,0.3)" onclick="logout()">Logout</button>
     </div>
 
     <div class="container">
         <div class="card">
-            <span class="info-tag">DATABASE STASIUN</span>
+            <span class="info-tag">PILIH STASIUN UNTUK DIEDIT</span>
             <select id="stSelect" onchange="switchStation()" style="width:100%; padding:12px; font-size:16px; font-weight:600; border-radius:6px; border:1px solid #cbd5e1; cursor:pointer">
                 <option value="">-- Pilih Stasiun --</option>
             </select>
-            
             <div id="quickInfo" class="header-info" style="display:none">
-                <div><span class="info-tag">KOORDINAT</span><span id="txtLat" class="info-val">-</span></div>
+                <div><span class="info-tag">KOORDINAT (LAT, LNG)</span><span id="txtLat" class="info-val">-</span></div>
                 <div><span class="info-tag">AVERAGE (MM)</span><span id="txtAvg" class="info-val">-</span></div>
-                <div><span class="info-tag">MAX (MM)</span><span id="txtMax" class="info-val">-</span></div>
+                <div><span class="info-tag">MAX RECORD (MM)</span><span id="txtMax" class="info-val">-</span></div>
             </div>
         </div>
 
         <div id="workSpace" style="display:none">
             <div class="card" style="background:#f1f5f9">
-                <span class="info-tag" style="color:var(--main)">QUICK MASS UPDATE (PASTE DARI EXCEL)</span>
+                <span class="info-tag" style="color:var(--main)">MASS UPDATE (PASTE DARI EXCEL)</span>
                 <div class="batch-container">
                     <textarea id="massInput" placeholder="Copy satu kolom di Excel, lalu Paste di sini..."></textarea>
-                    <button class="btn btn-main" onclick="processMass()">Apply Data</button>
+                    <button class="btn btn-main" onclick="processMass()">Ganti Data</button>
                 </div>
             </div>
-
             <div class="card" style="padding:0">
                 <table>
                     <thead>
-                        <tr>
-                            <th width="150">Tahun</th>
-                            <th>Nilai Curah Hujan (mm)</th>
-                            <th width="120">Verifikasi</th>
-                        </tr>
+                        <tr><th width="150">Tahun</th><th>Nilai Hujan (mm)</th><th width="120">Status</th></tr>
                     </thead>
                     <tbody id="dataTableBody"></tbody>
                 </table>
             </div>
-
-            <button class="btn btn-outline" style="width:100%; margin-top:10px; background:white" onclick="addRow()">+ Tambah Baris Tahun</button>
-            <button class="btn btn-save" onclick="saveDatabase()">SIMPAN DATA KE DATABASE</button>
-            <div style="height:50px"></div>
+            <button class="btn btn-outline" style="width:100%; margin-top:10px; background:white" onclick="addRow()">+ Tambah Tahun Baru</button>
+            <button class="btn btn-save" onclick="saveDatabase()">SINKRONKAN KE PETA SPASIAL</button>
         </div>
     </div>
 </div>
 
 <script>
+    // DATA ASLI 22 STASIUN LENGKAP (TIDAK SAYA KURANGI)
     const dbSource = {
         "st_01": { n: "Kemayoran", lat: -6.15559, lng: 106.840, d: [94.8, 82.2, 168.5, 199.7, 129.3, 124.1, 72.0, 234.7, 192.7, 122.5, 93.0, 119.2, 105.2, 193.4, 147.9, 277.5, 124.5, 179.7, 104.6, 90.5, 277.5, 94.1, 204.0, 79.5, 140.9] },
         "st_02": { n: "Halim", lat: -6.27036, lng: 106.889, d: [54.3, 92.8, 107.6, 104.7, 115.3, 100.9, 87.5, 175.4, 115.6, 110.4, 100.9, 305.0, 94.4, 161.0, 113.8, 116.4, 115.8, 105.6, 125.4, 111.4, 160.7, 162.0, 105.0, 112.0, 132.5] },
@@ -173,7 +149,7 @@
             body.innerHTML += `<tr>
                 <td style="font-weight:600; color:#64748b">${2000+i}</td>
                 <td><input type="number" step="0.1" class="input-cell" id="val-${i}" value="${v}"></td>
-                <td><span style="font-size:10px; font-weight:800; color:#059669">TRUSTED</span></td>
+                <td><span style="font-size:10px; font-weight:800; color:#059669">READY</span></td>
             </tr>`;
         });
         updateStats(id);
@@ -184,11 +160,8 @@
         const input = document.getElementById('massInput').value.trim();
         if(!input) return;
         const lines = input.split(/[\n\r\t, ]+/).map(l => parseFloat(l)).filter(n => !isNaN(n));
-        
-        if(confirm(`Update ${lines.length} data awal dengan nilai baru?`)) {
-            lines.forEach((num, i) => {
-                if(activeData[id].d[i] !== undefined) activeData[id].d[i] = num;
-            });
+        if(confirm(`Update ${lines.length} data dengan nilai baru?`)) {
+            activeData[id].d = lines;
             renderTable();
             document.getElementById('massInput').value = "";
         }
@@ -196,12 +169,19 @@
 
     function saveDatabase() {
         const id = document.getElementById('stSelect').value;
+        if(!id) return;
+
+        // Ambil data terbaru dari input table
         activeData[id].d.forEach((_, i) => {
-            activeData[id].d[i] = parseFloat(document.getElementById(`val-${i}`).value) || 0;
+            const el = document.getElementById(`val-${i}`);
+            if(el) activeData[id].d[i] = parseFloat(el.value) || 0;
         });
+
+        // SIMPAN SELURUH OBJECT KE STORAGE (SINKRON TOTAL)
         localStorage.setItem('sda_db_final_clean', JSON.stringify(activeData));
+        
         updateStats(id);
-        alert("Database Berhasil Diperbarui!");
+        alert("SINKRONISASI BERHASIL! Data Hujan & Lokasi telah diperbarui di Peta.");
     }
 
     function addRow() {
@@ -215,18 +195,6 @@
         document.getElementById('txtLat').innerText = activeData[id].lat + ", " + activeData[id].lng;
         document.getElementById('txtAvg').innerText = (d.reduce((a,b)=>a+b,0)/d.length).toFixed(1);
         document.getElementById('txtMax').innerText = Math.max(...d).toFixed(1);
-    }
-
-    function downloadData() {
-        const id = document.getElementById('stSelect').value;
-        if(!id) return;
-        let csv = "Tahun,Hujan(mm)\n";
-        activeData[id].d.forEach((v, i) => csv += `${2000+i},${v}\n`);
-        const blob = new Blob([csv], {type:'text/csv'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `Data_SDA_${activeData[id].n}.csv`;
-        a.click();
     }
 
     function logout() { sessionStorage.clear(); location.reload(); }
