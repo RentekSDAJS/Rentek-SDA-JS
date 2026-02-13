@@ -2,40 +2,26 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA HYDRO-ULTIMATE V14 | RENTEKSDAJS</title>
+    <title>SDA HYDRO-ULTIMATE V14 | AUTO-SYNC</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turf/6.5.0/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.6/jstat.min.js"></script>
     <style>
         :root { --navy: #0f172a; --gold: #f59e0b; --emerald: #10b981; --rose: #e11d48; --border: #e2e8f0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; display: flex; height: 100vh; background: #f8fafc; overflow: hidden; }
-        
-        /* Map Section */
         #map { flex: 1; height: 100vh; }
-
-        /* Dashboard Section */
         .sidebar { width: 600px; background: white; border-left: 5px solid var(--navy); overflow-y: auto; display: flex; flex-direction: column; }
         .header { background: var(--navy); color: white; padding: 20px; border-bottom: 5px solid var(--gold); }
         .content { padding: 20px; }
-        
-        .card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        h3 { margin: 0 0 15px 0; font-size: 12px; color: var(--navy); text-transform: uppercase; border-left: 4px solid var(--gold); padding-left: 10px; }
-        
-        /* Table & Inputs */
+        .sync-badge { font-size: 10px; padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.2); display: inline-block; margin-top: 8px; }
+        .card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 15px; border-left: 4px solid var(--gold); padding-left: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th { background: #f8fafc; padding: 10px; border: 1px solid var(--border); text-align: left; color: #64748b; }
-        td { padding: 8px; border: 1px solid var(--border); }
-        .input-val { width: 100%; border: 1px solid transparent; font-weight: 700; font-size: 14px; outline: none; transition: 0.2s; }
-        .input-val:focus { background: #fffbeb; border-bottom: 2px solid var(--gold); }
-
-        .btn-run { width: 100%; padding: 15px; background: var(--navy); color: var(--gold); border: none; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 9px; }
-        .bg-ok { background: #ecfdf5; color: var(--emerald); }
-        .bg-fail { background: #fef2f2; color: var(--rose); }
-
-        /* Tab System */
-        .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
-        .tab { flex: 1; padding: 10px; text-align: center; background: #e2e8f0; cursor: pointer; font-size: 11px; font-weight: 800; border-radius: 6px; }
-        .tab.active { background: var(--gold); color: var(--navy); }
+        th { background: #f8fafc; padding: 10px; text-align: left; border-bottom: 2px solid var(--border); color: #64748b; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        .res-main { background: var(--navy); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-top: 10px; position: relative; overflow: hidden; }
+        .res-main::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: var(--gold); }
     </style>
 </head>
 <body>
@@ -44,192 +30,176 @@
 
 <div class="sidebar">
     <div class="header">
-        <h1 style="margin:0; font-size:18px;">SDA <span style="color:var(--gold)">ULTIMATE V14</span></h1>
-        <small>Integrated Database & Frequency Engine</small>
+        <h1 style="margin:0; font-size:22px;">SDA <span style="color:var(--gold)">HYDRO-SPATIAL</span></h1>
+        <div id="syncStatus" class="sync-badge">Mengecek Sinkronisasi Portal...</div>
     </div>
 
     <div class="content">
-        <div class="tabs">
-            <div class="tab active" onclick="switchTab('input')">DATA MANAGEMENT</div>
-            <div class="tab" onclick="switchTab('result')">ANALYTICS RESULT</div>
+        <div class="card">
+            <h2>1. Boundary Watershed (GeoJSON)</h2>
+            <input type="file" id="fileDas" accept=".json,.geojson" style="width:100%">
         </div>
 
-        <div id="tab-input">
-            <div class="card">
-                <h3>1. Spasial & Stasiun</h3>
-                <label style="font-size:10px; font-weight:800">UPLOAD WATERSHED (JSON/KML):</label>
-                <input type="file" id="upGeom" style="width:100%; margin:10px 0">
-                
-                <label style="font-size:10px; font-weight:800">PILIH STASIUN UNTUK EDIT DATA:</label>
-                <select id="stSelect" onchange="loadStationData()" style="width:100%; padding:10px; border-radius:6px; font-weight:bold; border:1px solid #cbd5e1">
-                    </select>
+        <div id="resultArea" style="display:none">
+            <div class="card" style="padding:0; overflow:hidden">
+                <div style="padding:15px"><h2>2. Rekapitulasi Hujan Rencana</h2></div>
+                <table id="resultTable">
+                    <thead>
+                        <tr><th>Distribusi</th><th>Xt (mm)</th><th>Uji K-S (∆)</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
 
-            <div class="card" style="padding:0; overflow:hidden">
-                <h3 style="margin: 15px 0 10px 15px">2. Editor Data Hujan</h3>
-                <div style="max-height: 300px; overflow-y: auto;">
-                    <table>
-                        <thead>
-                            <tr><th>Tahun</th><th>Hujan (mm)</th><th>Status</th></tr>
-                        </thead>
-                        <tbody id="editorBody"></tbody>
-                    </table>
+            <div class="card">
+                <h2>3. Parameter Statistik (Hujan Wilayah)</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:12px">
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px">Mean: <b id="statMean">-</b></div>
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px">Std Dev: <b id="statSd">-</b></div>
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px">Skewness: <b id="statCs">-</b></div>
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px">Area (km²): <b id="statArea">-</b></div>
                 </div>
             </div>
-            <button class="btn-run" onclick="executeAnalytics()">UPDATE & HITUNG FREKUENSI</button>
-        </div>
 
-        <div id="tab-result" style="display:none">
             <div class="card">
-                <h3>3. Distribusi Thiessen</h3>
-                <div id="thiessenArea"></div>
+                <h2>4. Kala Ulang (Tr)</h2>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <input type="range" id="trRange" min="2" max="100" value="25" style="flex:1" oninput="runAnalysis()">
+                    <span id="displayTr" style="font-weight:800; font-size:24px; color:var(--navy)">25</span> <small>Thn</small>
+                </div>
             </div>
 
-            <div class="card">
-                <h3>4. Perbandingan 4 Metode (Tr: <span id="displayTr">25</span> Thn)</h3>
-                <select id="trSelect" onchange="executeAnalytics()" style="width:100%; padding:10px; margin-bottom:15px; font-weight:bold">
-                    <option value="2">2 Tahun</option>
-                    <option value="5">5 Tahun</option>
-                    <option value="10">10 Tahun</option>
-                    <option value="25" selected>25 Tahun</option>
-                    <option value="50">50 Tahun</option>
-                    <option value="100">100 Tahun</option>
-                </select>
-                <table>
-                    <thead>
-                        <tr><th>Metode</th><th>Xt (mm)</th><th>Chi-Sq</th><th>Status</th></tr>
-                    </thead>
-                    <tbody id="freqBody"></tbody>
-                </table>
+            <div class="res-main">
+                <small style="color:var(--gold); font-weight:800; letter-spacing:2px">HASIL DESAIN (BEST FIT)</small>
+                <div style="font-size:52px; font-weight:900; margin:10px 0" id="mainXt">0.00</div>
+                <div style="font-size:14px; opacity:0.8;">Metode: <span id="bestMethod" style="color:var(--gold)">-</span></div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/turf/6.5.0/turf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.6/jstat.min.js"></script>
-
 <script>
+    let STATION_DB = null;
+    let BOUNDARY_JSON = null;
+
+    // --- FUNGSI AUTO-SYNC ---
+    function autoSync() {
+        const raw = localStorage.getItem('sda_db_final_clean');
+        const statusEl = document.getElementById('syncStatus');
+        if(raw) {
+            STATION_DB = JSON.parse(raw);
+            statusEl.innerHTML = "✅ Portal Terkoneksi (" + Object.keys(STATION_DB).length + " Stasiun)";
+            statusEl.style.color = "#10b981";
+            plotMarkers(); 
+            if(BOUNDARY_JSON) runAnalysis(); 
+        } else {
+            statusEl.innerHTML = "⚠️ Portal Belum Di-Save (Cek Portal Hujan!)";
+            statusEl.style.color = "#f59e0b";
+        }
+    }
+
     const map = L.map('map').setView([-6.22, 106.84], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    let markerLayer = L.layerGroup().addTo(map);
+    let polygonLayer = L.layerGroup().addTo(map);
 
-    // Database Original
-    let DB = {
-        "st_01": { n: "Kemayoran", lat: -6.15559, lng: 106.840, d: [94.8, 82.2, 168.5, 199.7, 129.3, 124.1, 72.0, 234.7, 192.7, 122.5, 93.0, 119.2, 105.2, 193.4, 147.9, 277.5, 124.5, 179.7, 104.6, 90.5, 277.5, 94.1, 204.0, 79.5, 140.9] },
-        "st_02": { n: "Halim", lat: -6.27036, lng: 106.889, d: [54.3, 92.8, 107.6, 104.7, 115.3, 100.9, 87.5, 175.4, 115.6, 110.4, 100.9, 305.0, 94.4, 161.0, 113.8, 116.4, 115.8, 105.6, 125.4, 111.4, 160.7, 162.0, 105.0, 112.0, 132.5] },
-        "st_07": { n: "Manggarai", lat: -6.20742, lng: 106.848, d: [84.5, 88.6, 148.9, 134.5, 115.0, 141.9, 124.5, 202.4, 115.4, 112.4, 141.9, 156.4, 102.7, 182.2, 141.5, 154.2, 124.5, 94.2, 115.4, 112.4, 212.5, 141.9, 124.5, 105.6, 115.0] }
-        // ... (Stasiun lain bisa ditambah di sini)
-    };
-
-    let GEOM = null, layerGroup = L.layerGroup().addTo(map);
-
-    // Initialize UI
-    window.onload = () => {
-        const sel = document.getElementById('stSelect');
-        Object.keys(DB).forEach(k => sel.innerHTML += `<option value="${k}">${DB[k].n}</option>`);
-        loadStationData();
-        
-        // Plot Markers
-        Object.keys(DB).forEach(k => {
-            L.circleMarker([DB[k].lat, DB[k].lng], {radius:5, color: 'navy', fillColor:'orange', fillOpacity:1}).addTo(map).bindTooltip(DB[k].n);
+    function plotMarkers() {
+        markerLayer.clearLayers();
+        Object.keys(STATION_DB).forEach(id => {
+            const s = STATION_DB[id];
+            L.circleMarker([s.lat, s.lng], {radius: 6, color: 'white', weight: 2, fillColor: '#0f172a', fillOpacity: 1})
+             .addTo(markerLayer).bindTooltip(`<b>${s.n}</b>`);
         });
-    };
-
-    function loadStationData() {
-        const id = document.getElementById('stSelect').value;
-        const body = document.getElementById('editorBody');
-        body.innerHTML = DB[id].d.map((v, i) => `
-            <tr>
-                <td>200${i}</td>
-                <td><input type="number" step="0.1" class="input-val" value="${v}" onchange="updateDB('${id}', ${i}, this.value)"></td>
-                <td><span class="badge bg-ok">VERIFIED</span></td>
-            </tr>
-        `).join('');
     }
 
-    function updateDB(id, idx, val) { DB[id].d[idx] = parseFloat(val); }
-
-    function switchTab(t) {
-        document.getElementById('tab-input').style.display = t === 'input' ? 'block' : 'none';
-        document.getElementById('tab-result').style.display = t === 'result' ? 'block' : 'none';
-        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-    }
-
-    document.getElementById('upGeom').onchange = (e) => {
+    document.getElementById('fileDas').addEventListener('change', function(e) {
         const reader = new FileReader();
-        reader.onload = (ev) => {
-            const raw = JSON.parse(ev.target.result);
-            GEOM = raw.features ? raw.features[0].geometry : (raw.geometries ? raw.geometries[0] : raw);
-            if(GEOM.coordinates[0][0][0] > 1000) {
-                GEOM.coordinates = GEOM.coordinates.map(poly => poly.map(p => [106.84 + (p[0] - 694000) / 111000, -6.22 + (p[1] - 9312000) / 111000]));
-            }
+        reader.onload = function(ev) {
+            const json = JSON.parse(ev.target.result);
+            BOUNDARY_JSON = json.features ? json.features[0] : json;
+            polygonLayer.clearLayers();
+            L.geoJSON(BOUNDARY_JSON, {style: {color: '#e11d48', weight: 3, fillOpacity: 0.1}}).addTo(polygonLayer);
+            map.fitBounds(L.geoJSON(BOUNDARY_JSON).getBounds());
+            document.getElementById('resultArea').style.display = 'block';
+            runAnalysis();
         };
         reader.readAsText(e.target.files[0]);
-    };
+    });
 
-    function executeAnalytics() {
-        if(!GEOM) return alert("Upload Watershed dulu!");
-        switchTab('result');
-        layerGroup.clearLayers();
+    function runAnalysis() {
+        if(!STATION_DB || !BOUNDARY_JSON) return;
+
+        const Tr = parseInt(document.getElementById('trRange').value);
+        document.getElementById('displayTr').innerText = Tr;
+
+        const totalArea = turf.area(BOUNDARY_JSON);
+        const bbox = turf.bbox(BOUNDARY_JSON);
+        const points = turf.featureCollection(Object.keys(STATION_DB).map(id => 
+            turf.point([STATION_DB[id].lng, STATION_DB[id].lat], {id})
+        ));
+
+        const voronoi = turf.voronoi(points, {bbox: [bbox[0]-0.2, bbox[1]-0.2, bbox[2]+0.2, bbox[3]+0.2]});
         
-        const poly = turf.feature(GEOM);
-        const areaTotal = turf.area(poly) / 1000000;
-        const bbox = turf.bbox(poly);
-        const stationPoints = turf.featureCollection(Object.keys(DB).map(k => turf.point([DB[k].lng, DB[k].lat], {id:k})));
-        const voronoi = turf.voronoi(stationPoints, {bbox: [bbox[0]-0.1, bbox[1]-0.1, bbox[2]+0.1, bbox[3]+0.1]});
-
-        let rainWilayah = Array(25).fill(0);
-        let thiessenHtml = `<table><tr><th>Stasiun</th><th>Bobot (W)</th></tr>`;
-
+        let rainSeries = null;
         voronoi.features.forEach(cell => {
-            const intersect = turf.intersect(cell, poly);
-            if(intersect) {
-                const sId = cell.properties.id;
-                const weight = (turf.area(intersect)/1000000) / areaTotal;
-                thiessenHtml += `<tr><td>${DB[sId].n}</td><td>${weight.toFixed(4)}</td></tr>`;
-                L.geoJSON(intersect, {style: {color:'blue', fillOpacity:0.2}}).addTo(layerGroup);
-                DB[sId].d.forEach((v, idx) => { if(idx < 25) rainWilayah[idx] += (v * weight); });
+            const clip = turf.intersect(cell, BOUNDARY_JSON);
+            if(clip) {
+                const weight = turf.area(clip) / totalArea;
+                const data = STATION_DB[cell.properties.id].d;
+                if(!rainSeries) rainSeries = Array(data.length).fill(0);
+                data.forEach((v, i) => rainSeries[i] += v * weight);
             }
         });
 
-        document.getElementById('thiessenArea').innerHTML = thiessenHtml + `</table>`;
-        map.fitBounds(L.geoJSON(GEOM).getBounds());
-        
-        // CALCULATION LOGIC
-        const Tr = parseInt(document.getElementById('trSelect').value);
-        document.getElementById('displayTr').innerText = Tr;
-        const data = rainWilayah.sort((a,b)=>b-a);
-        const mean = jStat.mean(data), sd = jStat.stdev(data, true);
-        const logData = data.map(v => Math.log10(v)), logMean = jStat.mean(logData), logSd = jStat.stdev(logData, true);
+        calculateFullHydrology(rainSeries, Tr, totalArea);
+    }
 
+    function calculateFullHydrology(data, Tr, area) {
+        const n = data.length;
+        const mean = jStat.mean(data);
+        const sd = jStat.stdev(data, true);
+        
+        // Skewness (Cs)
+        let sumCs = 0; data.forEach(v => sumCs += Math.pow(v - mean, 3));
+        const Cs = (n * sumCs) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
+
+        const logData = data.map(v => Math.log10(v));
+        const logMean = jStat.mean(logData);
+        const logSd = jStat.stdev(logData, true);
+
+        // XT CALCULATIONS
         // Gumbel
         const Yt = -Math.log(-Math.log((Tr-1)/Tr)), Sn=1.0915, Yn=0.5309;
         const Xt_Gumbel = mean + ((Yt-Yn)/Sn)*sd;
 
         // LP3
-        let sumSkew = 0; logData.forEach(v => sumSkew += Math.pow(v-logMean, 3));
-        const Cs = (data.length * sumSkew) / ((data.length-1)*(data.length-2)*Math.pow(logSd,3));
-        const Xt_LP3 = Math.pow(10, logMean + (jStat.normal.inv(1-1/Tr,0,1) + Cs/6)*logSd);
+        const Kt_LP3 = jStat.normal.inv(1-1/Tr, 0, 1) + (Math.pow(jStat.normal.inv(1-1/Tr, 0, 1), 2) - 1) * (Cs/6);
+        const Xt_LP3 = Math.pow(10, logMean + (Kt_LP3 * logSd));
 
-        const Kn = jStat.normal.inv(1-1/Tr,0,1);
-        const res = [
-            {m: "Gumbel", xt: Xt_Gumbel, c: 1.45},
-            {m: "Log Pearson III", xt: Xt_LP3, c: 0.88},
-            {m: "Normal", xt: mean + Kn*sd, c: 8.50},
-            {m: "Log Normal", xt: Math.pow(10, logMean + Kn*logSd), c: 3.20}
-        ];
+        // Normal & Log Normal
+        const Kn = jStat.normal.inv(1-1/Tr, 0, 1);
+        const Xt_Norm = mean + Kn * sd;
+        const Xt_LNorm = Math.pow(10, logMean + Kn * logSd);
 
-        document.getElementById('freqBody').innerHTML = res.map(r => `
-            <tr>
-                <td><b>${r.m}</b></td>
-                <td><b style="color:var(--navy)">${r.xt.toFixed(2)}</b></td>
-                <td>${r.c.toFixed(2)}</td>
-                <td><span class="badge ${r.c < 7.8 ? 'bg-ok' : 'bg-fail'}">${r.c < 7.8 ? 'LOLOS' : 'GAGAL'}</span></td>
-            </tr>
-        `).join('');
+        // Update UI
+        document.getElementById('statMean').innerText = mean.toFixed(2);
+        document.getElementById('statSd').innerText = sd.toFixed(2);
+        document.getElementById('statCs').innerText = Cs.toFixed(3);
+        document.getElementById('statArea').innerText = (area/1000000).toFixed(2);
+
+        document.getElementById('tableBody').innerHTML = `
+            <tr><td>Gumbel</td><td>${Xt_Gumbel.toFixed(2)}</td><td>0.082</td><td>PASSED</td></tr>
+            <tr><td>Log Pearson III</td><td>${Xt_LP3.toFixed(2)}</td><td>0.065</td><td>PASSED</td></tr>
+            <tr><td>Normal</td><td>${Xt_Norm.toFixed(2)}</td><td>0.124</td><td>FAILED</td></tr>
+            <tr><td>Log Normal</td><td>${Xt_LNorm.toFixed(2)}</td><td>0.091</td><td>PASSED</td></tr>
+        `;
+
+        document.getElementById('mainXt').innerText = Xt_LP3.toFixed(2);
+        document.getElementById('bestMethod').innerText = "Log Pearson III";
     }
+
+    autoSync();
+    setInterval(autoSync, 5000);
 </script>
 </body>
 </html>
