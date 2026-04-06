@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA WEBGIS ULTIMATE | ANALISIS HIDROLIKA DINAMIS</title>
+    <title>SDA WEBGIS ULTIMATE | ANALISIS HIDROLIKA LENGKAP</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -25,8 +25,8 @@
         .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 10px; margin-bottom: 10px; }
         .grid-input label { font-weight: bold; color: #475569; display: block; }
         .grid-input select, .grid-input input { width: 100%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; }
-        .best-badge { background: var(--main); color: white; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px; border-left: 5px solid var(--accent); font-size: 11px; line-height: 1.6; }
-        #visualContainer { margin-top: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; }
+        .best-badge { color: white; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 11px; line-height: 1.6; }
+        #visualContainer { margin-top: 15px; background: white; border: 2px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center; }
     </style>
 </head>
 <body>
@@ -34,60 +34,53 @@
 <div id="map"></div>
 <div id="panel">
     <h2>HYDRO-SPATIAL ULTIMATE</h2>
-    <div id="dbStatus"></div>
-
+    
     <div class="card">
         <h3>1. Input Area DAS (GeoJSON)</h3>
-        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">PILIH FILE DAS</button>
+        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">UPLOAD DAS & PROSES</button>
         <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
     </div>
 
     <div id="resThiessen" class="card" style="display:none">
-        <h3>2. Koefisien Thiessen</h3>
+        <h3>2. Analisis Luas & Thiessen</h3>
         <table>
-            <thead><tr><th style="text-align:left">Stasiun</th><th>Luas (km²)</th><th>W</th></tr></thead>
+            <thead><tr><th style="text-align:left">Stasiun</th><th>Luas (km²)</th><th>Bobot (W)</th></tr></thead>
             <tbody id="tBody"></tbody>
             <tfoot id="tFoot"></tfoot>
         </table>
     </div>
 
-    <div id="resYearly" class="card" style="display:none">
-        <h3>3. Tren Hujan Rerata</h3>
-        <canvas id="rainChart"></canvas>
-        <div id="yBody" style="display:none"></div>
-    </div>
-
     <div id="resFreq" class="card" style="display:none">
-        <h3>4. Analisis Frekuensi (LP-III)</h3>
-        <table id="fTable">
-            <thead><tr><th>T (Th)</th><th>Hujan Rencana (mm)</th></tr></thead>
+        <h3>3. Hasil Hujan Rencana (LP-III)</h3>
+        <table>
+            <thead><tr><th>Kala Ulang</th><th>Curah Hujan (mm)</th></tr></thead>
             <tbody id="fBody"></tbody>
         </table>
     </div>
 
     <div id="resHydraulics" class="card" style="display:none">
-        <h3>5. Simulasi Tinggi Muka Air (TMA)</h3>
+        <h3>4. Simulasi Hidrolika (Reverse yn)</h3>
         <div class="grid-input">
             <div style="grid-column: span 2;">
-                <label>Koefisien Pengaliran (C):</label>
+                <label>Tipe Tutupan Lahan (Koef. C):</label>
                 <select id="selectC">
-                    <option value="0.82">Daerah Kota (0.70-0.95)</option>
-                    <option value="0.60">Dekat Kota (0.50-0.70)</option>
+                    <option value="0.82">Daerah Perkotaan (0.70-0.95)</option>
+                    <option value="0.60">Pinggiran Kota (0.50-0.70)</option>
                     <option value="0.40">Pemukiman (0.30-0.50)</option>
-                    <option value="0.20">RTH / Taman (0.10-0.30)</option>
+                    <option value="0.20">Taman / Terbuka (0.10-0.30)</option>
                 </select>
             </div>
             <div>
-                <label>Bentuk Saluran:</label>
+                <label>Jenis Penampang:</label>
                 <select id="geomType" onchange="toggleGeom()">
                     <option value="precast">U-Ditch Precast</option>
-                    <option value="persegi">Persegi (Custom)</option>
+                    <option value="persegi">Persegi (Manual)</option>
                     <option value="trapesium">Trapesium</option>
-                    <option value="lingkaran">Lingkaran / Pipa</option>
+                    <option value="lingkaran">Lingkaran (RCP)</option>
                 </select>
             </div>
             <div id="boxPrecast">
-                <label>Dimensi U-Ditch:</label>
+                <label>Pilih Ukuran:</label>
                 <select id="selectU">
                     <option value="40x40">40x40 cm</option>
                     <option value="60x60" selected>60x60 cm</option>
@@ -95,29 +88,27 @@
                     <option value="100x100">100x100 cm</option>
                 </select>
             </div>
-            <div id="boxB" style="display:none"><label>Lebar B / Dia (m):</label><input type="number" id="inpB" value="0.6" step="0.1"></div>
-            <div id="boxH" style="display:none"><label>Tinggi H (m):</label><input type="number" id="inpH" value="0.6" step="0.1"></div>
-            <div id="boxZ" style="display:none"><label>Kemiringan (z):</label><input type="number" id="inpZ" value="1" step="0.5"></div>
+            <div id="boxB" style="display:none"><label>Lebar B / Dia (m):</label><input type="number" id="inpB" value="0.6"></div>
+            <div id="boxH" style="display:none"><label>Tinggi H (m):</label><input type="number" id="inpH" value="0.6"></div>
+            <div id="boxZ" style="display:none"><label>Z (Trapesium):</label><input type="number" id="inpZ" value="1"></div>
             <div><label>Kala Ulang (T):</label>
-                <select id="selectT">
-                    <option value="2">2 Th</option><option value="5" selected>5 Th</option>
-                    <option value="10">10 Th</option><option value="25">25 Th</option>
-                </select>
+                <select id="selectT"><option value="2">2 Th</option><option value="5" selected>5 Th</option><option value="10">10 Th</option></select>
             </div>
             <div><label>Kemiringan S:</label><input type="number" id="inputS" value="0.001" step="0.0001"></div>
             <div><label>Manning n:</label><input type="number" id="inputN" value="0.015" step="0.001"></div>
             <div><label>Panjang L (m):</label><input type="number" id="inputL" value="100"></div>
         </div>
 
-        <button class="upload-btn" style="background:var(--blue)" onclick="calculateHydraulics()">HITUNG & SIMULASI TMA</button>
+        <button class="upload-btn" style="background:var(--blue)" onclick="calculateHydraulics()">RUN SIMULASI TMA</button>
 
         <div id="visualContainer">
-            <svg id="hydraulicsSVG" width="220" height="150" viewBox="0 0 220 150">
+            <h4 style="font-size:10px; margin:0 0 10px 0; color:#64748b;">ILUSTRASI TAMPANG SALURAN</h4>
+            <svg id="hydraulicsSVG" width="240" height="160" viewBox="0 0 240 160">
                 <path id="svgWater" d="" fill="#3b82f6" opacity="0.7">
                     <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite" />
                 </path>
-                <path id="svgChannel" d="" fill="none" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"/>
-                <text id="txtLuber" x="110" y="30" fill="red" font-weight="bold" font-size="12" text-anchor="middle" style="display:none">MELUAP!</text>
+                <path id="svgChannel" d="" fill="none" stroke="#1e293b" stroke-width="5" stroke-linejoin="round"/>
+                <text id="txtStatus" x="120" y="25" fill="red" font-weight="bold" font-size="14" text-anchor="middle" style="display:none">MELUAP!</text>
             </svg>
             <div id="hydraulicResult"></div>
         </div>
@@ -125,22 +116,19 @@
 </div>
 
 <script>
-    proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
     const KATALOG_UDITCH = {
         "40x40": { b: 0.4, h: 0.4 }, "60x60": { b: 0.6, h: 0.6 },
         "80x80": { b: 0.8, h: 0.8 }, "100x100": { b: 1.0, h: 1.0 }
     };
 
     const map = L.map('map').setView([-6.2, 106.8], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}.png').addTo(map);
     let analysisLayer = L.layerGroup().addTo(map);
-    let rainChart = null;
 
-    // DATABASE AWAL (MOCKUP/SAMPEL)
+    // Database Mockup
     let currentDB = {
-        "ST1": { n: "Stasiun A", lat: -6.21, lng: 106.81, d: [120, 110, 135, 98, 145, 112, 130, 125, 118, 140] },
-        "ST2": { n: "Stasiun B", lat: -6.23, lng: 106.85, d: [100, 115, 120, 105, 130, 110, 125, 115, 110, 135] }
+        "A": { n: "Stasiun 1", lat: -6.21, lng: 106.81, d: [120, 130, 115, 140, 125, 110, 135, 120, 130, 115] },
+        "B": { n: "Stasiun 2", lat: -6.23, lng: 106.85, d: [110, 120, 105, 130, 115, 100, 125, 110, 120, 105] }
     };
 
     function toggleGeom() {
@@ -161,10 +149,10 @@
     function processHydrology(json) {
         analysisLayer.clearLayers();
         const mergedDAS = json.features ? turf.union(...json.features) : json;
-        L.geoJSON(mergedDAS, {style:{color:'red', fillOpacity:0.1}}).addTo(analysisLayer);
+        L.geoJSON(mergedDAS, {style:{color:'red', weight:2, fillOpacity:0.1}}).addTo(analysisLayer);
         map.fitBounds(L.geoJSON(mergedDAS).getBounds());
 
-        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], {name: currentDB[id].n, id:id})));
+        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], {id:id})));
         const voronoi = turf.voronoi(pts, {bbox: turf.bbox(mergedDAS)});
         
         let totalArea = 0, results = [];
@@ -173,97 +161,92 @@
             if(clip) {
                 const area = turf.area(clip)/1000000;
                 totalArea += area;
-                results.push({id: pts.features[i].properties.id, name: pts.features[i].properties.name, area: area});
-                L.geoJSON(clip, {style:{color:'blue', weight:1, fillOpacity:0.3}}).addTo(analysisLayer);
+                results.push({id: pts.features[i].properties.id, area: area});
+                L.geoJSON(clip, {style:{color:'blue', weight:1, fillOpacity:0.2}}).addTo(analysisLayer);
             }
         });
 
         let rainSeries = [];
         for(let t=0; t<10; t++) {
             let pAvg = 0;
-            results.forEach(res => {
-                res.w = res.area / totalArea;
-                pAvg += (currentDB[res.id].d[t] * res.w);
-            });
+            results.forEach(res => { pAvg += (currentDB[res.id].d[t] * (res.area/totalArea)); });
             rainSeries.push(pAvg);
         }
 
-        document.getElementById('tBody').innerHTML = results.map(r => `<tr><td>${r.name}</td><td>${r.area.toFixed(2)}</td><td>${r.w.toFixed(3)}</td></tr>`).join('');
-        document.getElementById('tFoot').innerHTML = `<tr><td>TOTAL</td><td>${totalArea.toFixed(2)}</td><td>1.000</td></tr>`;
+        document.getElementById('tBody').innerHTML = results.map(r => `<tr><td>${r.id}</td><td>${r.area.toFixed(2)}</td><td>${(r.area/totalArea).toFixed(3)}</td></tr>`).join('');
+        document.getElementById('tFoot').innerHTML = `<tr><td>TOTAL</td><td id="totalLuas">${totalArea.toFixed(2)}</td><td>1.000</td></tr>`;
         
-        runFrequency(rainSeries);
-        updateChart(rainSeries);
-        ['resThiessen', 'resYearly', 'resFreq', 'resHydraulics'].forEach(id => document.getElementById(id).style.display = 'block');
-    }
-
-    function runFrequency(data) {
-        const n = data.length;
-        const mean = data.reduce((a,b)=>a+b)/n;
-        const logD = data.map(x => Math.log10(x));
-        const lMean = logD.reduce((a,b)=>a+b)/n;
-        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
+        const logD = rainSeries.map(x => Math.log10(x));
+        const lMean = logD.reduce((a,b)=>a+b)/10;
+        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/9);
         
         document.getElementById('fBody').innerHTML = "";
-        [2, 5, 10, 25].forEach(t => {
-            const kt = {2:0, 5:0.842, 10:1.282, 25:1.751}[t];
+        [2, 5, 10].forEach(t => {
+            const kt = {2:0, 5:0.842, 10:1.282}[t];
             const rLP = Math.pow(10, lMean + (kt * lSd));
-            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rLP.toFixed(1)}</td></tr>`;
+            document.getElementById('fBody').innerHTML += `<tr><td>Kala Ulang ${t} Tahun</td><td>${rLP.toFixed(1)}</td></tr>`;
         });
+
+        ['resThiessen', 'resFreq', 'resHydraulics'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
-    function updateChart(data) {
-        const ctx = document.getElementById('rainChart').getContext('2d');
-        if(rainChart) rainChart.destroy();
-        rainChart = new Chart(ctx, { type: 'line', data: { labels: [1,2,3,4,5,6,7,8,9,10], datasets: [{label:'Hujan Rerata', data:data, borderColor:'blue'}] } });
-    }
-
-    // LOGIKA HIDROLIKA UTAMA (ITERASI TMA)
     function calculateHydraulics() {
-        const areaKm2 = parseFloat(document.getElementById('tFoot').cells[1].innerText);
+        const areaKm2 = parseFloat(document.getElementById('totalLuas').innerText);
         const C = parseFloat(document.getElementById('selectC').value);
         const T = document.getElementById('selectT').value;
         const S = parseFloat(document.getElementById('inputS').value);
         const n = parseFloat(document.getElementById('inputN').value);
         const geom = document.getElementById('geomType').value;
 
-        let R24 = 0;
+        // Ambil Hujan Rencana
         const rows = document.getElementById('fBody').rows;
+        let R24 = 0;
         for(let i=0; i<rows.length; i++) {
             if(rows[i].cells[0].innerText.includes(T)) R24 = parseFloat(rows[i].cells[1].innerText);
         }
 
+        // Q Rasional
         const Q_rencana = (1/360) * C * ( (R24/24) * Math.pow(24/1, 2/3) ) * areaKm2;
 
         let b, H_max, z = 0;
-        if(geom === 'precast') { b = KATALOG_UDITCH[document.getElementById('selectU').value].b; H_max = KATALOG_UDITCH[document.getElementById('selectU').value].h; }
-        else if(geom === 'persegi' || geom === 'trapesium') { b = parseFloat(document.getElementById('inpB').value); H_max = parseFloat(document.getElementById('inpH').value); z = (geom==='trapesium')?parseFloat(document.getElementById('inpZ').value):0; }
-        else { b = parseFloat(document.getElementById('inpB').value); H_max = b; }
+        if(geom === 'precast') { 
+            const d = KATALOG_UDITCH[document.getElementById('selectU').value];
+            b = d.b; H_max = d.h; 
+        } else if(geom === 'persegi' || geom === 'trapesium') { 
+            b = parseFloat(document.getElementById('inpB').value); 
+            H_max = parseFloat(document.getElementById('inpH').value); 
+            z = (geom==='trapesium') ? parseFloat(document.getElementById('inpZ').value) : 0; 
+        } else { 
+            b = parseFloat(document.getElementById('inpB').value); H_max = b; 
+        }
 
-        // Iterasi mencari yn (Reverse Engineering)
-        let yn = 0.01;
-        while(yn < H_max * 2) {
+        // Iterasi mencari yn aktual
+        let yn = 0.005, Q_cek = 0;
+        for(let i=0; i<2000; i++) {
             let A = (geom==='lingkaran') ? (b*b/4)*(Math.acos(1-2*yn/b)-(1-2*yn/b)*Math.sqrt(4*yn/b-4*yn*yn/(b*b))) : (b + z * yn) * yn;
             let P = (geom==='lingkaran') ? b * Math.acos(1-2*yn/b) : b + 2 * yn * Math.sqrt(1 + z * z);
-            let Q_cek = (1/n) * A * Math.pow(A/P, 2/3) * Math.sqrt(S);
-            if(Q_cek >= Q_rencana) break;
+            Q_cek = (1/n) * A * Math.pow(A/P, 2/3) * Math.sqrt(S);
+            if(Q_cek >= Q_rencana || yn > H_max * 2) break;
             yn += 0.002;
         }
 
         drawVisual(geom, b, H_max, yn, z);
         const isLuber = yn > H_max;
-        document.getElementById('txtLuber').style.display = isLuber ? 'block' : 'none';
+        document.getElementById('txtStatus').style.display = isLuber ? 'block' : 'none';
         document.getElementById('hydraulicResult').innerHTML = `
             <div class="best-badge" style="background:${isLuber? 'var(--red)' : 'var(--green)'}">
-                Q Rencana: ${Q_rencana.toFixed(3)} m³/s<br>Tinggi Air (yn): ${yn.toFixed(3)} m (${((yn/H_max)*100).toFixed(1)}%)
+                Debit Banjir (Q): ${Q_rencana.toFixed(3)} m³/s<br>
+                Tinggi Air Aktual (yn): ${yn.toFixed(3)} m<br>
+                Status: ${isLuber ? 'MELUAP' : 'AMAN'}
             </div>`;
     }
 
     function drawVisual(geom, b, H, yn, z) {
         const chan = document.getElementById('svgChannel');
         const wat = document.getElementById('svgWater');
-        const scale = 100 / Math.max(b + 2*z*H, H, yn);
+        const scale = 120 / Math.max(b + 2*z*H, H, yn);
         const b_px = b * scale, h_px = H * scale, yn_px = yn * scale, z_px = z * h_px, zn_px = z * yn_px;
-        const cX = 110, bY = 130;
+        const cX = 120, bY = 140;
 
         if(geom === 'lingkaran') {
             const r = (b_px/2);
