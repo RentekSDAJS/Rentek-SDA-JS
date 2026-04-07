@@ -110,7 +110,7 @@
         </table>
     </div>
 
-<div id="resCheck" class="card" style="display:none">
+<div id="resTestBody" class="card" style="display:none">
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead>
@@ -160,7 +160,10 @@
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
+    let rainSeries = [];
+    let totalArea = 0;  
+    let rainChart = null;
+    let currentDB = null;
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -171,8 +174,6 @@
     // Inisialisasi LayerGroup untuk Saluran
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
-    
-    let rainChart = null;
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
@@ -231,7 +232,6 @@
     };
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
-    let currentDB = null;
     function refreshDatabase() {
         const rawData = localStorage.getItem('sda_db_final_clean');
         if (rawData) {
@@ -297,7 +297,6 @@ function processHydrology(json) {
     });
 
     // Hitung Hujan Wilayah
-    let rainSeries = [];
     let labelsYear = [];
     const startYear = 2000;
     const firstStId = Object.keys(currentDB)[0];
@@ -474,15 +473,19 @@ function tampilkanHasilDebit(r24, luas) {
         </div>
     `;
     container.appendChild(divDebit);
+    
+function triggerUpdateDebit() {
+    // Mengecek apakah data hujan sudah ada dari hasil upload
+    if (rainSeries && rainSeries.length > 0) {
+        // Ambil data hujan tahun terakhir dan hitung ulang
+        tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
+    }
 }
-    [document.getElementById('selectC'), document.getElementById('inputL'), document.getElementById('inputS')].forEach(el => {
-    el.addEventListener('change', () => {
-        // Panggil fungsi tampilkan jika data hujan sudah ada
-        if(rainSeries && rainSeries.length > 0) {
-            tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
-        }
-    });
-});
+
+// Menghubungkan input manual dengan fungsi update otomatis
+document.getElementById('selectC').addEventListener('change', triggerUpdateDebit);
+document.getElementById('inputL').addEventListener('input', triggerUpdateDebit);
+document.getElementById('inputS').addEventListener('input', triggerUpdateDebit);
 
 </script>
 </body>
