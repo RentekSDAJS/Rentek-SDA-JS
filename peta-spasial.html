@@ -53,19 +53,6 @@
     margin-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.2);
     padding-top: 10px;}
-        @keyframes highlight {
-    0% { background-color: #f59e0b; transform: scale(1.02); }
-    100% { background-color: #1e293b; transform: scale(1); }
-}
-
-.debit-card {
-    transition: all 0.3s ease;
-}
-
-/* Tambahkan class ini untuk efek saat di klik */
-.flash-update {
-    animation: highlight 0.6s ease-out;
-}
     </style>
 </head>
 <body>
@@ -123,7 +110,37 @@
         </table>
     </div>
 
- <div id="resTest" class="card" style="display:none">
+    <div id="resTest" class="card" style="display:none">
+        <div class="card">
+    <h3>7. Parameter Hidrolika (Input Manual)</h3>
+    <div style="margin-bottom: 10px;">
+        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
+        <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
+            <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
+            <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
+            <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
+            <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
+            <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
+            <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
+            <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
+            <option value="0.75">Industri Berat (0.60 - 0.90)</option>
+            <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
+            <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
+            <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
+        </select>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
+            <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        </div>
+        <div style="flex: 1;">
+            <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
+            <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        </div>
+    </div>
+</div>
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
@@ -131,43 +148,7 @@
         </table>
         <div id="bestMethod"></div>
     </div>
-
-    <div class="card">
-        <h3>7. Parameter Hidrolika (Input Manual)</h3>
-        
-        <div style="margin-bottom: 10px;">
-            <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
-            <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px; background: white;">
-                <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
-                <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
-                <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
-                <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
-                <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
-                <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
-                <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
-                <option value="0.75">Industri Berat (0.60 - 0.90)</option>
-                <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
-                <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
-                <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
-            </select>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <div style="flex: 1;">
-                <label style="font-size: 10px; display: block;">Panjang (m):</label>
-                <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            </div>
-            <div style="flex: 1;">
-                <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
-                <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            </div>
-        </div>
-
-        <button class="upload-btn" onclick="manualHydraulicUpdate()" style="background: var(--blue);">
-            UPDATE ANALISIS HIDROLIKA
-        </button>
-    </div>
-</div> 
+</div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
@@ -182,8 +163,7 @@
     // Inisialisasi LayerGroup untuk Saluran
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
-    let lastRainValue = 0; // Menyimpan curah hujan rerata terakhir
-    let lastAreaValue = 0; // Menyimpan luas DAS terakhir
+    
     let rainChart = null;
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
@@ -271,7 +251,6 @@
 
 function processHydrology(json) {
     analysisLayer.clearLayers();
-    // Reset isi tabel
     ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = "";
@@ -327,8 +306,10 @@ function processHydrology(json) {
         document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
     }
 
-    // Isi Tabel Thiessen
+    // Tampilkan Tabel Thiessen
+    let sumW = 0;
     thiessenResults.forEach(res => {
+        sumW += res.w;
         document.getElementById('tBody').innerHTML += `
             <tr>
                 <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
@@ -336,15 +317,18 @@ function processHydrology(json) {
                 <td>${res.w.toFixed(4)}</td>
             </tr>`;
     });
-    document.getElementById('tFoot').innerHTML = `<tr class="tfoot-bold"><td style="text-align:left">TOTAL</td><td>${totalArea.toFixed(2)}</td><td>1.0000</td></tr>`;
-
-    // Simpan ke variabel global untuk tombol update manual
-    lastRainValue = rainSeries[rainSeries.length - 1];
-    lastAreaValue = totalArea;
+    document.getElementById('tFoot').innerHTML = `
+        <tr class="tfoot-bold">
+            <td style="text-align:left">TOTAL</td>
+            <td>${totalArea.toFixed(2)}</td>
+            <td>${sumW.toFixed(0)}.0000</td>
+        </tr>`;
 
     updateChart(labelsYear, rainSeries);
     runFullAnalysis(rainSeries);
-    tampilkanHasilDebit(lastRainValue, lastAreaValue);
+    
+    // Tampilkan hasil Debit (Menggunakan data tahun terakhir)
+    tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
 
     ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
         const el = document.getElementById(id);
@@ -483,25 +467,7 @@ function tampilkanHasilDebit(r24, luas) {
     `;
     container.appendChild(divDebit);
 }
-function manualHydraulicUpdate() {
-    // 1. Cek apakah data hidrologi sudah ada
-    if (!lastRainValue || !lastAreaValue) {
-        alert("Peringatan: Data dasar (Luas DAS & Hujan) belum tersedia. Silakan upload file GeoJSON terlebih dahulu.");
-        return;
-    }
 
-    // 2. Jalankan ulang kalkulasi dan tampilan
-    tampilkanHasilDebit(lastRainValue, lastAreaValue);
-    
-    // 3. Tambahkan efek animasi agar user tahu data sudah ter-refresh
-    const card = document.querySelector('.debit-card');
-    if (card) {
-        card.classList.remove('flash-update');
-        void card.offsetWidth; // Trigger reflow untuk reset animasi
-        card.classList.add('flash-update');
-    }
-}
-    
 </script>
 </body>
 </html>
