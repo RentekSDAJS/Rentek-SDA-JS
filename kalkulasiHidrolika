@@ -111,6 +111,36 @@
     </div>
 
     <div id="resTest" class="card" style="display:none">
+        <div class="card">
+    <h3>7. Parameter Hidrolika (Input Manual)</h3>
+    <div style="margin-bottom: 10px;">
+        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
+        <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
+            <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
+            <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
+            <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
+            <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
+            <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
+            <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
+            <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
+            <option value="0.75">Industri Berat (0.60 - 0.90)</option>
+            <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
+            <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
+            <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
+        </select>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
+            <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        </div>
+        <div style="flex: 1;">
+            <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
+            <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        </div>
+    </div>
+</div>
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
@@ -383,41 +413,56 @@ function processHydrology(json) {
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     };
 
-    // 1. FUNGSI BARU: Perhitungan Debit Rasional
-function kalkulasiHidrolika(r24, areaKm2) {
-    const C = 0.70; // Koefisien Limpasan
-    const tc = 2;   // Waktu Konsentrasi (jam)
+// FUNGSI BARU: Mengambil input dari UI dan menghitung dengan rumus Kirpich
+function kalkulasiHidrolikaUser(r24, areaKm2) {
+    const C = parseFloat(document.getElementById('selectC').value);
+    const L = parseFloat(document.getElementById('inputL').value);
+    const S = parseFloat(document.getElementById('inputS').value);
     
+    // Proteksi jika user memasukkan angka 0
+    const safeS = S <= 0 ? 0.001 : S;
+    const safeL = L <= 0 ? 1 : L;
+
+    // Rumus Kirpich untuk Tc (menit)
+    const tcMinutes = 0.0195 * Math.pow(safeL, 0.77) * Math.pow(safeS, -0.385);
+    const tcHours = tcMinutes / 60;
+
     // Rumus Mononobe untuk Intensitas (I)
-    const intensitas = (r24 / 24) * Math.pow((24 / tc), (2 / 3));
-    
-    // Rumus Rasional untuk Debit (Q)
+    const intensitas = (r24 / 24) * Math.pow((24 / tcHours), (2 / 3));
+
+    // Rumus Rasional (Q)
     const debit = 0.278 * C * intensitas * areaKm2;
 
     return {
         q: debit.toFixed(3),
         i: intensitas.toFixed(2),
         c: C,
-        tc: tc
+        tc: tcMinutes.toFixed(1),
+        l: safeL,
+        s: safeS
     };
 }
 
-// 2. MODIFIKASI: Masukkan pemicu hitungan ke dalam fungsi processHydrology
-// Cari baris terakhir di fungsi processHydrology(json) milik Anda, 
-// lalu pastikan ada baris seperti di bawah ini:
-
+// FUNGSI BARU: Menampilkan hasil ke panel
 function tampilkanHasilDebit(r24, luas) {
-    const hasil = kalkulasiHidrolika(r24, luas);
+    const hasil = kalkulasiHidrolikaUser(r24, luas);
     const container = document.getElementById('panel');
     
+    // Hapus card hasil sebelumnya agar tidak menumpuk
+    const existingCard = document.querySelector('.debit-card');
+    if (existingCard) existingCard.remove();
+
     const divDebit = document.createElement('div');
     divDebit.className = 'debit-card';
+    divDebit.style.backgroundColor = '#1e293b'; // Warna background gelap
     divDebit.innerHTML = `
-        <small>ESTIMASI DEBIT RASIONAL (Q)</small>
-        <h1 style="margin:5px 0;">${hasil.q} m³/s</h1>
-        <div class="debit-grid">
-            <div>Intensitas (I): <b>${hasil.i} mm/jam</b></div>
-            <div>Luas DAS: <b>${luas.toFixed(2)} km²</b></div>
+        <div style="color: #f59e0b; font-size: 10px; font-weight: bold; margin-bottom: 5px;">ESTIMASI DEBIT (RASIONAL & KIRPICH)</div>
+        <h1 style="margin:0; font-size: 28px; color: white;">${hasil.q} <span style="font-size: 14px;">m³/s</span></h1>
+        <div class="debit-grid" style="grid-template-columns: 1fr 1fr; display: grid; gap: 8px; margin-top: 10px; border-top: 1px solid #475569; padding-top: 10px;">
+            <div>Intensitas (I): <b>${hasil.i} mm/j</b></div>
+            <div>Tc: <b>${hasil.tc} min</b></div>
+            <div>Koef C: <b>${hasil.c}</b></div>
+            <div>S: <b>${hasil.s}</b></div>
         </div>
     `;
     container.appendChild(divDebit);
