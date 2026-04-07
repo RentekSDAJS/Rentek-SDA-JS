@@ -53,19 +53,6 @@
     margin-top: 10px;
     border-top: 1px solid rgba(255,255,255,0.2);
     padding-top: 10px;}
-        @keyframes highlight {
-    0% { background-color: #f59e0b; transform: scale(1.02); }
-    100% { background-color: #1e293b; transform: scale(1); }
-}
-
-.debit-card {
-    transition: all 0.3s ease;
-}
-
-/* Tambahkan class ini untuk efek saat di klik */
-.flash-update {
-    animation: highlight 0.6s ease-out;
-}
     </style>
 </head>
 <body>
@@ -124,22 +111,8 @@
     </div>
 
     <div id="resTest" class="card" style="display:none">
-        
-            <h3>6. Uji Kesesuaian (5% & 1%)</h3>
-        <table>
-            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
-            <tbody id="testBody"></tbody>
-        </table>
-        <div id="bestMethod"></div>
-    </div>
-</div>
-        
-<div class="card">
+        <div class="card">
     <h3>7. Parameter Hidrolika (Input Manual)</h3>
-    <button class="upload-btn" onclick="manualHydraulicUpdate()" style="background: var(--blue); margin-top: 15px;">
-        UPDATE ANALISIS HIDROLIKA
-    </button>
-</div>
     <div style="margin-bottom: 10px;">
         <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
         <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
@@ -168,6 +141,14 @@
         </div>
     </div>
 </div>
+        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+        <table>
+            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
+            <tbody id="testBody"></tbody>
+        </table>
+        <div id="bestMethod"></div>
+    </div>
+</div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
@@ -182,8 +163,7 @@
     // Inisialisasi LayerGroup untuk Saluran
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
-    let lastRainValue = 0; // Menyimpan curah hujan rerata terakhir
-    let lastAreaValue = 0; // Menyimpan luas DAS terakhir
+    
     let rainChart = null;
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
@@ -274,18 +254,6 @@ function processHydrology(json) {
     ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = "";
-        // Simpan ke variabel global untuk update manual nanti
-    lastRainValue = rainSeries[rainSeries.length - 1];
-    lastAreaValue = totalArea;
-
-    // Jalankan tampilan awal
-    tampilkanHasilDebit(lastRainValue, lastAreaValue);
-
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'block';
-    });
-}
     });
 
     let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
@@ -499,25 +467,7 @@ function tampilkanHasilDebit(r24, luas) {
     `;
     container.appendChild(divDebit);
 }
-function manualHydraulicUpdate() {
-    // 1. Cek apakah data hidrologi sudah ada
-    if (!lastRainValue || !lastAreaValue) {
-        alert("Peringatan: Data dasar (Luas DAS & Hujan) belum tersedia. Silakan upload file GeoJSON terlebih dahulu.");
-        return;
-    }
 
-    // 2. Jalankan ulang kalkulasi dan tampilan
-    tampilkanHasilDebit(lastRainValue, lastAreaValue);
-    
-    // 3. Tambahkan efek animasi agar user tahu data sudah ter-refresh
-    const card = document.querySelector('.debit-card');
-    if (card) {
-        card.classList.remove('flash-update');
-        void card.offsetWidth; // Trigger reflow untuk reset animasi
-        card.classList.add('flash-update');
-    }
-}
-    
 </script>
 </body>
 </html>
