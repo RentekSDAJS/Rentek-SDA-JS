@@ -123,51 +123,51 @@
         </table>
     </div>
 
-    <div id="resTest" class="card" style="display:none">
-        
-            <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+ <div id="resTest" class="card" style="display:none">
+        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
     </div>
-</div>
-        
-<div class="card">
-    <h3>7. Parameter Hidrolika (Input Manual)</h3>
-    <button class="upload-btn" onclick="manualHydraulicUpdate()" style="background: var(--blue); margin-top: 15px;">
-        UPDATE ANALISIS HIDROLIKA
-    </button>
-</div>
-    <div style="margin-bottom: 10px;">
-        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
-        <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
-            <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
-            <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
-            <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
-            <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
-            <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
-            <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
-            <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
-            <option value="0.75">Industri Berat (0.60 - 0.90)</option>
-            <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
-            <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
-            <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
-        </select>
-    </div>
 
-    <div style="display: flex; gap: 10px;">
-        <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
-            <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+    <div class="card">
+        <h3>7. Parameter Hidrolika (Input Manual)</h3>
+        
+        <div style="margin-bottom: 10px;">
+            <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
+            <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px; background: white;">
+                <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
+                <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
+                <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
+                <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
+                <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
+                <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
+                <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
+                <option value="0.75">Industri Berat (0.60 - 0.90)</option>
+                <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
+                <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
+                <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
+            </select>
         </div>
-        <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
-            <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <div style="flex: 1;">
+                <label style="font-size: 10px; display: block;">Panjang (m):</label>
+                <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
+                <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
         </div>
+
+        <button class="upload-btn" onclick="manualHydraulicUpdate()" style="background: var(--blue);">
+            UPDATE ANALISIS HIDROLIKA
+        </button>
     </div>
-</div>
+</div> 
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
@@ -271,21 +271,10 @@
 
 function processHydrology(json) {
     analysisLayer.clearLayers();
+    // Reset isi tabel
     ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = "";
-        // Simpan ke variabel global untuk update manual nanti
-    lastRainValue = rainSeries[rainSeries.length - 1];
-    lastAreaValue = totalArea;
-
-    // Jalankan tampilan awal
-    tampilkanHasilDebit(lastRainValue, lastAreaValue);
-
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'block';
-    });
-}
     });
 
     let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
@@ -338,10 +327,8 @@ function processHydrology(json) {
         document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
     }
 
-    // Tampilkan Tabel Thiessen
-    let sumW = 0;
+    // Isi Tabel Thiessen
     thiessenResults.forEach(res => {
-        sumW += res.w;
         document.getElementById('tBody').innerHTML += `
             <tr>
                 <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
@@ -349,18 +336,15 @@ function processHydrology(json) {
                 <td>${res.w.toFixed(4)}</td>
             </tr>`;
     });
-    document.getElementById('tFoot').innerHTML = `
-        <tr class="tfoot-bold">
-            <td style="text-align:left">TOTAL</td>
-            <td>${totalArea.toFixed(2)}</td>
-            <td>${sumW.toFixed(0)}.0000</td>
-        </tr>`;
+    document.getElementById('tFoot').innerHTML = `<tr class="tfoot-bold"><td style="text-align:left">TOTAL</td><td>${totalArea.toFixed(2)}</td><td>1.0000</td></tr>`;
+
+    // Simpan ke variabel global untuk tombol update manual
+    lastRainValue = rainSeries[rainSeries.length - 1];
+    lastAreaValue = totalArea;
 
     updateChart(labelsYear, rainSeries);
     runFullAnalysis(rainSeries);
-    
-    // Tampilkan hasil Debit (Menggunakan data tahun terakhir)
-    tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
+    tampilkanHasilDebit(lastRainValue, lastAreaValue);
 
     ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
         const el = document.getElementById(id);
