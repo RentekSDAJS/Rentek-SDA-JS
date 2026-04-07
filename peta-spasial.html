@@ -110,7 +110,7 @@
         </table>
     </div>
 
-        <div id="resTest" class="card" style="display:none">
+    <div id="resTest" class="card" style="display:none">
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
@@ -118,65 +118,65 @@
         </table>
         <div id="bestMethod"></div>
     </div>
-</div>
 
-        <div class="card">
-    <h3>7. Parameter Hidrolika (Input Manual)</h3>
-    <div style="margin-bottom: 10px;">
-        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
-        <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
-            <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
-            <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
-            <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
-            <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
-            <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
-            <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
-            <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
-            <option value="0.75">Industri Berat (0.60 - 0.90)</option>
-            <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
-            <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
-            <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
-        </select>
-    </div>
-</div>
-
-<div style="margin-bottom: 10px;">
-        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Jenis & Dimensi Saluran:</label>
-        <select id="selectTipeSaluran" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;" onchange="toggleCustomInput()">
-            <optgroup label="Precast (U-Ditch)">
-                <option value="precast_40">Precast 40 x 40 cm</option>
-                <option value="precast_60">Precast 60 x 60 cm</option>
-                <option value="precast_80">Precast 80 x 80 cm</option>
-                <option value="precast_100">Precast 100 x 100 cm</option>
-                <option value="precast_150">Precast 150 x 150 cm</option>
-                <option value="precast_200">Precast 200 x 200 cm</option>
-            </optgroup>
-            <optgroup label="Custom Penampang">
-                <option value="persegi">Persegi (Custom)</option>
-                <option value="trapesium">Trapesium (Custom)</option>
-                <option value="lingkaran">Lingkaran/Pipa (Custom)</option>
-            </optgroup>
-        </select>
-    </div>
-
-    <div id="customDimensi" style="display:none; gap: 5px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 5px;">
-        <input type="number" id="inpB" placeholder="Lebar (m)" style="width:30%; font-size:10px;">
-        <input type="number" id="inpH" placeholder="Tinggi (m)" style="width:30%; font-size:10px;">
-        <input type="number" id="inpZ" placeholder="Z (Trapesium)" style="width:30%; font-size:10px;">
-    </div>
-
-    <div style="display: flex; gap: 10px;">
-        <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Panjang (m):</label>
-            <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+    <div class="card">
+        <h3>7. Parameter Hidrolika</h3>
+        
+        <div style="margin-bottom: 10px;">
+            <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
+            <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
+                <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
+                <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
+                <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
+                <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
+                <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
+                <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
+                <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
+                <option value="0.75">Industri Berat (0.60 - 0.90)</option>
+                <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
+                <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
+                <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
+            </select>
         </div>
-        <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
-            <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+
+        <div style="margin-bottom: 10px;">
+            <label style="font-size: 10px; display: block; margin-bottom: 3px;">Jenis & Dimensi Saluran:</label>
+            <select id="selectTipeSaluran" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;" onchange="toggleCustomInput()">
+                <optgroup label="Precast (U-Ditch)">
+                    <option value="precast_40">Precast 40 x 40 cm</option>
+                    <option value="precast_60">Precast 60 x 60 cm</option>
+                    <option value="precast_80">Precast 80 x 80 cm</option>
+                    <option value="precast_100">Precast 100 x 100 cm</option>
+                    <option value="precast_150">Precast 150 x 150 cm</option>
+                    <option value="precast_200">Precast 200 x 200 cm</option>
+                </optgroup>
+                <optgroup label="Custom Penampang">
+                    <option value="persegi">Persegi (Custom)</option>
+                    <option value="trapesium">Trapesium (Custom)</option>
+                    <option value="lingkaran">Lingkaran/Pipa (Custom)</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div id="customDimensi" style="display:none; gap: 5px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 5px;">
+            <input type="number" id="inpB" placeholder="Lebar (m)" style="width:30%; font-size:10px;">
+            <input type="number" id="inpH" placeholder="Tinggi (m)" style="width:30%; font-size:10px;">
+            <input type="number" id="inpZ" placeholder="Z (Trapesium)" style="width:30%; font-size:10px;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label style="font-size: 10px; display: block;">Panjang (m):</label>
+                <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
+                <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
         </div>
     </div>
 </div>
-
+    
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
     let lastR24 = 0;
