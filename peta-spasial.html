@@ -110,44 +110,53 @@
         </table>
     </div>
 
+<div id="resCheck" class="card" style="display:none">
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
-            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Metode</th>
+                    <th>Param</th>
+                    <th>S-K</th>
+                    <th>Chi-Sq</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
     </div>
     
-     <div id="resTest" class="card" style="display:none">
-    <h3>7. Parameter Hidrolika (Input Manual)</h3>
-    <div style="margin-bottom: 10px;">
-        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
-        <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
-            <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
-            <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
-            <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
-            <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
-            <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
-            <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
-            <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
-            <option value="0.75">Industri Berat (0.60 - 0.90)</option>
-            <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
-            <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
-            <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
-        </select>
-    </div>
+    <div id="resTest" class="card" style="display:none">
+        <h3>7. Parameter Hidrolika (Input Manual)</h3>
+        <div style="margin-bottom: 10px;">
+            <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
+            <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
+                <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
+                <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
+                <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
+                <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
+                <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
+                <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
+                <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
+                <option value="0.75">Industri Berat (0.60 - 0.90)</option>
+                <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
+                <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
+                <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
+            </select>
+        </div>
 
-    <div style="display: flex; gap: 10px;">
-        <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
-            <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
-        </div>
-        <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
-            <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
+                <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
+            <div style="flex: 1;">
+                <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
+                <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            </div>
         </div>
     </div>
-</div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
@@ -466,6 +475,14 @@ function tampilkanHasilDebit(r24, luas) {
     `;
     container.appendChild(divDebit);
 }
+    [document.getElementById('selectC'), document.getElementById('inputL'), document.getElementById('inputS')].forEach(el => {
+    el.addEventListener('change', () => {
+        // Panggil fungsi tampilkan jika data hujan sudah ada
+        if(rainSeries && rainSeries.length > 0) {
+            tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
+        }
+    });
+});
 
 </script>
 </body>
