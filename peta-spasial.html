@@ -110,6 +110,7 @@
         </table>
     </div>
 
+        <div id="resTest" class="card" style="display:none">
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
@@ -119,7 +120,6 @@
     </div>
 </div>
 
-        <div id="resTest" class="card" style="display:none">
         <div class="card">
     <h3>7. Parameter Hidrolika (Input Manual)</h3>
     <div style="margin-bottom: 10px;">
@@ -139,9 +139,34 @@
         </select>
     </div>
 
+<div style="margin-bottom: 10px;">
+        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Jenis & Dimensi Saluran:</label>
+        <select id="selectTipeSaluran" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;" onchange="toggleCustomInput()">
+            <optgroup label="Precast (U-Ditch)">
+                <option value="precast_40">Precast 40 x 40 cm</option>
+                <option value="precast_60">Precast 60 x 60 cm</option>
+                <option value="precast_80">Precast 80 x 80 cm</option>
+                <option value="precast_100">Precast 100 x 100 cm</option>
+                <option value="precast_150">Precast 150 x 150 cm</option>
+                <option value="precast_200">Precast 200 x 200 cm</option>
+            </optgroup>
+            <optgroup label="Custom Penampang">
+                <option value="persegi">Persegi (Custom)</option>
+                <option value="trapesium">Trapesium (Custom)</option>
+                <option value="lingkaran">Lingkaran/Pipa (Custom)</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <div id="customDimensi" style="display:none; gap: 5px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 5px;">
+        <input type="number" id="inpB" placeholder="Lebar (m)" style="width:30%; font-size:10px;">
+        <input type="number" id="inpH" placeholder="Tinggi (m)" style="width:30%; font-size:10px;">
+        <input type="number" id="inpZ" placeholder="Z (Trapesium)" style="width:30%; font-size:10px;">
+    </div>
+
     <div style="display: flex; gap: 10px;">
         <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
+            <label style="font-size: 10px; display: block;">Panjang (m):</label>
             <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
         </div>
         <div style="flex: 1;">
