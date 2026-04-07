@@ -124,11 +124,11 @@
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
     function createAttrTable(props, title) {
-        let html = <div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">;
+        let html = `<div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">`;
         for (let key in props) {
-            html += <tr><th>${key}</th><td>${props[key]}</td></tr>;
+            html += `<tr><th>${key}</th><td>${props[key]}</td></tr>`;
         }
-        html += </table></div>;
+        html += `</table></div>`;
         return html;
     }
 
@@ -183,13 +183,13 @@
         const rawData = localStorage.getItem('sda_db_final_clean');
         if (rawData) {
             currentDB = JSON.parse(rawData);
-            document.getElementById('dbStatus').innerHTML = <span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>;
+            document.getElementById('dbStatus').innerHTML = `<span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>`;
             stMarkers.clearLayers();
             Object.keys(currentDB).forEach(id => {
                 const st = currentDB[id];
                 const marker = L.circleMarker([st.lat, st.lng], { radius: 6, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 });
                 marker.bindTooltip(st.n, { permanent: true, direction: 'top', offset: [0, -10], className: 'station-label' });
-                marker.bindPopup(<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng});
+                marker.bindPopup(`<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng}`);
                 marker.addTo(stMarkers);
             });
         }
@@ -229,7 +229,7 @@
             if (clip) {
                 const area = turf.area(clip) / 1000000;
                 totalArea += area;
-                const color = hsl(${(i * 137.5) % 360}, 75%, 65%);
+                const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
                 const stId = pts.features[i].properties.id;
                 thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
                 L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
@@ -249,7 +249,7 @@
             });
             rainSeries.push(Number(pAvg.toFixed(2)));
             labelsYear.push(startYear + t);
-            document.getElementById('yBody').innerHTML += <tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>;
+            document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
         }
 
         let sumW = 0;
@@ -310,7 +310,7 @@
         const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
         const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
 
-        document.getElementById('pBody').innerHTML = <tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>;
+        document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
 
         const logD = data.map(x => Math.log10(x));
         const lMean = logD.reduce((a,b)=>a+b)/n;
@@ -325,7 +325,7 @@
             const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
             const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
             const rLP = Math.pow(10, lMean + (kLP * lSd));
-            document.getElementById('fBody').innerHTML += <tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>;
+            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
         });
 
         const skCrit = { "0.05": 0.27, "0.01": 0.32 };
@@ -344,11 +344,11 @@
             const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
             const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
             if(pass) winners.push(m);
-            document.getElementById('testBody').innerHTML += <tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>;
+            document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
         });
 
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
-        document.getElementById('bestMethod').innerHTML = <div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>;
+        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
 </script>
 </body>
