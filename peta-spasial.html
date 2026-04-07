@@ -219,77 +219,92 @@
         reader.readAsText(file);
     };
 
-    function processHydrology(json) {
-        analysisLayer.clearLayers();
-        ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
+function processHydrology(json) {
+    analysisLayer.clearLayers();
+    ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+    });
 
-        let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
-        let mergedDAS;
-        features.forEach(f => {
-            const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
-            f.geometry.coordinates = fix(f.geometry.coordinates);
-            mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
-            // Panggil fungsi tampilkan hasil di akhir analisis
-    tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
-        });
+    let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
+    let mergedDAS = null;
 
-        L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
-        map.fitBounds(L.geoJSON(mergedDAS).getBounds());
+    // Fix Koordinat & Gabungkan Feature
+    features.forEach(f => {
+        const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
+        f.geometry.coordinates = fix(f.geometry.coordinates);
+        mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
+    });
 
-        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
-        const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
-        
-        let thiessenResults = [], totalArea = 0;
+    if (!mergedDAS) return;
 
-        voronoi.features.forEach((v, i) => {
-            const clip = turf.intersect(v, mergedDAS);
-            if (clip) {
-                const area = turf.area(clip) / 1000000;
-                totalArea += area;
-                const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
-                const stId = pts.features[i].properties.id;
-                thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
-                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
-            }
-        });
+    L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
+    map.fitBounds(L.geoJSON(mergedDAS).getBounds());
 
-        let rainSeries = [];
-        let labelsYear = [];
-        const startYear = 2000;
-        const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
+    const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
+    const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
+    
+    let thiessenResults = [], totalArea = 0;
 
-        for (let t = 0; t < thnCount; t++) {
-            let pAvg = 0;
-            thiessenResults.forEach(res => {
-                res.w = res.area / totalArea;
-                pAvg += (currentDB[res.id].d[t] * res.w);
-            });
-            rainSeries.push(Number(pAvg.toFixed(2)));
-            labelsYear.push(startYear + t);
-            document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
+    voronoi.features.forEach((v, i) => {
+        const clip = turf.intersect(v, mergedDAS);
+        if (clip) {
+            const area = turf.area(clip) / 1000000;
+            totalArea += area;
+            const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
+            const stId = pts.features[i].properties.id;
+            thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
+            L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
         }
+    });
 
-        let sumW = 0;
+    // Hitung Hujan Wilayah
+    let rainSeries = [];
+    let labelsYear = [];
+    const startYear = 2000;
+    const firstStId = Object.keys(currentDB)[0];
+    const thnCount = currentDB[firstStId].d.length;
+
+    for (let t = 0; t < thnCount; t++) {
+        let pAvg = 0;
         thiessenResults.forEach(res => {
-            sumW += res.w;
-            document.getElementById('tBody').innerHTML += `
-                <tr>
-                    <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
-                    <td>${res.area.toFixed(2)}</td>
-                    <td>${res.w.toFixed(4)}</td>
-                </tr>`;
+            res.w = res.area / totalArea;
+            pAvg += (currentDB[res.id].d[t] * res.w);
         });
-        document.getElementById('tFoot').innerHTML = `
-            <tr class="tfoot-bold">
-                <td style="text-align:left">TOTAL</td>
-                <td>${totalArea.toFixed(2)}</td>
-                <td>${sumW.toFixed(0)}.0000</td>
-            </tr>`;
-
-        updateChart(labelsYear, rainSeries);
-        runFullAnalysis(rainSeries);
-        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
+        rainSeries.push(Number(pAvg.toFixed(2)));
+        labelsYear.push(startYear + t);
+        document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
     }
+
+    // Tampilkan Tabel Thiessen
+    let sumW = 0;
+    thiessenResults.forEach(res => {
+        sumW += res.w;
+        document.getElementById('tBody').innerHTML += `
+            <tr>
+                <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
+                <td>${res.area.toFixed(2)}</td>
+                <td>${res.w.toFixed(4)}</td>
+            </tr>`;
+    });
+    document.getElementById('tFoot').innerHTML = `
+        <tr class="tfoot-bold">
+            <td style="text-align:left">TOTAL</td>
+            <td>${totalArea.toFixed(2)}</td>
+            <td>${sumW.toFixed(0)}.0000</td>
+        </tr>`;
+
+    updateChart(labelsYear, rainSeries);
+    runFullAnalysis(rainSeries);
+    
+    // Tampilkan hasil Debit (Menggunakan data tahun terakhir)
+    tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
+
+    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+    });
+}
 
     function updateChart(labels, data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
