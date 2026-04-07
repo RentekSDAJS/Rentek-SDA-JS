@@ -481,7 +481,70 @@ function kalkulasiHidrolikaUser(r24, areaKm2) {
 // FUNGSI BARU: Menampilkan hasil ke panel
 function tampilkanHasilDebit(r24, luas) {
     const hasil = kalkulasiHidrolikaUser(r24, luas);
-    const container = document.getElementById('panel');
+    const qKapasitas = hitungKapasitasSaluran(hasil.s);
+    
+    // Logika cek kapasitas
+    const status = qKapasitas > hasil.q ? "✅ AMAN" : "⚠️ MELUAP";
+    const colorStatus = qKapasitas > hasil.q ? "#059669" : "#dc2626";
+
+    let divDebit = document.getElementById('debit-result-card');
+    if (!divDebit) {
+        divDebit = document.createElement('div');
+        divDebit.id = 'debit-result-card';
+        divDebit.className = 'debit-card';
+        document.getElementById('panel').appendChild(divDebit);
+    }
+
+    divDebit.style.backgroundColor = '#1e293b';
+    divDebit.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="color: #f59e0b; font-size: 10px; font-weight: bold;">ANALISIS KAPASITAS MANNING</div>
+            <div style="background:${colorStatus}; color:white; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold;">${status}</div>
+        </div>
+        <h1 style="margin:8px 0; font-size: 26px; color: white;">Q<sub>Banjir</sub>: ${hasil.q} <span style="font-size: 12px;">m³/s</span></h1>
+        <h2 style="margin:0; font-size: 18px; color: #94a3b8;">Q<sub>Saluran</sub>: ${qKapasitas.toFixed(3)} <span style="font-size: 12px;">m³/s</span></h2>
+        
+        <div class="debit-grid" style="border-top: 1px solid #334155; margin-top: 10px; padding-top: 10px; font-size: 11px;">
+            <div>Intensitas: <b>${hasil.i} mm/j</b></div>
+            <div>Tc: <b>${hasil.tc} min</b></div>
+            <div>n Manning: <b>0.015</b></div>
+            <div>Kemiringan S: <b>${hasil.s}</b></div>
+        </div>
+    `;
+}
+
+function hitungKapasitasSaluran(S) {
+    const tipe = document.getElementById('selectTipeSaluran').value;
+    const n = 0.015; // Koefisien Manning untuk Beton
+    let A = 0, P = 0;
+
+    // Ambil nilai input custom (jika ada)
+    let b = parseFloat(document.getElementById('inpB').value) || 0;
+    let h = parseFloat(document.getElementById('inpH').value) || 0;
+    let z = parseFloat(document.getElementById('inpZ').value) || 0;
+
+    // Logika dimensi berdasarkan pilihan dropdown
+    if (tipe.startsWith('precast_')) {
+        let size = parseFloat(tipe.split('_')[1]) / 100; // cm ke m (contoh 40 jadi 0.4)
+        A = size * size;        // Luas Basah Penampang
+        P = size + (2 * size);  // Keliling Basah
+    } else if (tipe === 'persegi') {
+        A = b * h;
+        P = b + (2 * h);
+    } else if (tipe === 'trapesium') {
+        A = (b + z * h) * h;
+        P = b + 2 * h * Math.sqrt(1 + z * z);
+    } else if (tipe === 'lingkaran') {
+        let D = b; // Gunakan input 'B' sebagai Diameter
+        A = (Math.PI * D * D) / 4;
+        P = Math.PI * D;
+    }
+
+    if (P === 0) return 0;
+    let R = A / P; // Jari-jari Hidrolis
+    let V = (1 / n) * Math.pow(R, 2 / 3) * Math.sqrt(S); // Kecepatan Manning
+    return V * A; // Debit Kapasitas (Q = V * A)
+}
     
     // Hapus card hasil sebelumnya agar tidak menumpuk
     const existingCard = document.querySelector('.debit-card');
@@ -503,12 +566,15 @@ function tampilkanHasilDebit(r24, luas) {
     container.appendChild(divDebit);
 }
 
-['selectC', 'inputL', 'inputS'].forEach(id => {
-    document.getElementById(id).addEventListener('input', () => {
-        if (lastR24 > 0 && lastTotalArea > 0) {
-            tampilkanHasilDebit(lastR24, lastTotalArea);
-        }
-    });
+['selectC', 'inputL', 'inputS', 'selectTipeSaluran', 'inpB', 'inpH', 'inpZ'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', () => {
+            if (lastR24 > 0 && lastTotalArea > 0) {
+                tampilkanHasilDebit(lastR24, lastTotalArea);
+            }
+        });
+    }
 });
     
 </script> </body>
