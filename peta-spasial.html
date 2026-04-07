@@ -110,7 +110,16 @@
         </table>
     </div>
 
-    <div id="resTest" class="card" style="display:none">
+        <div id="resTest" class="card" style="display:none">
+        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+        <table>
+            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
+            <tbody id="testBody"></tbody>
+        </table>
+        <div id="bestMethod"></div>
+    </div>
+</div>
+
         <div class="card">
     <h3>7. Parameter Hidrolika (Input Manual)</h3>
     <div style="margin-bottom: 10px;">
@@ -129,10 +138,36 @@
             <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
         </select>
     </div>
+</div>
+
+<div style="margin-bottom: 10px;">
+        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Jenis & Dimensi Saluran:</label>
+        <select id="selectTipeSaluran" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;" onchange="toggleCustomInput()">
+            <optgroup label="Precast (U-Ditch)">
+                <option value="precast_40">Precast 40 x 40 cm</option>
+                <option value="precast_60">Precast 60 x 60 cm</option>
+                <option value="precast_80">Precast 80 x 80 cm</option>
+                <option value="precast_100">Precast 100 x 100 cm</option>
+                <option value="precast_150">Precast 150 x 150 cm</option>
+                <option value="precast_200">Precast 200 x 200 cm</option>
+            </optgroup>
+            <optgroup label="Custom Penampang">
+                <option value="persegi">Persegi (Custom)</option>
+                <option value="trapesium">Trapesium (Custom)</option>
+                <option value="lingkaran">Lingkaran/Pipa (Custom)</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <div id="customDimensi" style="display:none; gap: 5px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 5px;">
+        <input type="number" id="inpB" placeholder="Lebar (m)" style="width:30%; font-size:10px;">
+        <input type="number" id="inpH" placeholder="Tinggi (m)" style="width:30%; font-size:10px;">
+        <input type="number" id="inpZ" placeholder="Z (Trapesium)" style="width:30%; font-size:10px;">
+    </div>
 
     <div style="display: flex; gap: 10px;">
         <div style="flex: 1;">
-            <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
+            <label style="font-size: 10px; display: block;">Panjang (m):</label>
             <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
         </div>
         <div style="flex: 1;">
@@ -141,18 +176,11 @@
         </div>
     </div>
 </div>
-        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
-        <table>
-            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
-            <tbody id="testBody"></tbody>
-        </table>
-        <div id="bestMethod"></div>
-    </div>
-</div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
+    let lastR24 = 0;
+    let lastTotalArea = 0;
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -176,6 +204,13 @@
         html += `</table></div>`;
         return html;
     }
+
+    function toggleCustomInput() {
+    const tipe = document.getElementById('selectTipeSaluran').value;
+    const div = document.getElementById('customDimensi');
+    // Jika pilih selain precast, munculkan kotak input lebar/tinggi
+    div.style.display = (tipe === 'persegi' || tipe === 'lingkaran') ? 'flex' : 'none';
+}
 
     // --- PROSES SALURAN MIKRO (Cyan, 1.5) ---
     if (typeof dataMikro !== 'undefined') {
@@ -327,15 +362,23 @@ function processHydrology(json) {
     updateChart(labelsYear, rainSeries);
     runFullAnalysis(rainSeries);
     
-    // Tampilkan hasil Debit (Menggunakan data tahun terakhir)
-    tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
+// Cari baris ini di akhir fungsi processHydrology
+    updateChart(labelsYear, rainSeries);
+    runFullAnalysis(rainSeries);
+    
+    // UBAH BAGIAN INI:
+    lastR24 = rainSeries[rainSeries.length - 1]; // Mengambil data tahun terakhir
+    lastTotalArea = totalArea; // Mengambil luas dari hasil hitung Thiessen
+    
+    tampilkanHasilDebit(lastR24, lastTotalArea);
+    // ------------------
 
     ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'block';
     });
-}
-
+} // Akhir fungsi processHydrology
+    
     function updateChart(labels, data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
         if (rainChart) rainChart.destroy();
@@ -446,7 +489,70 @@ function kalkulasiHidrolikaUser(r24, areaKm2) {
 // FUNGSI BARU: Menampilkan hasil ke panel
 function tampilkanHasilDebit(r24, luas) {
     const hasil = kalkulasiHidrolikaUser(r24, luas);
-    const container = document.getElementById('panel');
+    const qKapasitas = hitungKapasitasSaluran(hasil.s);
+    
+    // Logika cek kapasitas
+    const status = qKapasitas > hasil.q ? "✅ AMAN" : "⚠️ MELUAP";
+    const colorStatus = qKapasitas > hasil.q ? "#059669" : "#dc2626";
+
+    let divDebit = document.getElementById('debit-result-card');
+    if (!divDebit) {
+        divDebit = document.createElement('div');
+        divDebit.id = 'debit-result-card';
+        divDebit.className = 'debit-card';
+        document.getElementById('panel').appendChild(divDebit);
+    }
+
+    divDebit.style.backgroundColor = '#1e293b';
+    divDebit.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="color: #f59e0b; font-size: 10px; font-weight: bold;">ANALISIS KAPASITAS MANNING</div>
+            <div style="background:${colorStatus}; color:white; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold;">${status}</div>
+        </div>
+        <h1 style="margin:8px 0; font-size: 26px; color: white;">Q<sub>Banjir</sub>: ${hasil.q} <span style="font-size: 12px;">m³/s</span></h1>
+        <h2 style="margin:0; font-size: 18px; color: #94a3b8;">Q<sub>Saluran</sub>: ${qKapasitas.toFixed(3)} <span style="font-size: 12px;">m³/s</span></h2>
+        
+        <div class="debit-grid" style="border-top: 1px solid #334155; margin-top: 10px; padding-top: 10px; font-size: 11px;">
+            <div>Intensitas: <b>${hasil.i} mm/j</b></div>
+            <div>Tc: <b>${hasil.tc} min</b></div>
+            <div>n Manning: <b>0.015</b></div>
+            <div>Kemiringan S: <b>${hasil.s}</b></div>
+        </div>
+    `;
+}
+
+function hitungKapasitasSaluran(S) {
+    const tipe = document.getElementById('selectTipeSaluran').value;
+    const n = 0.015; // Koefisien Manning untuk Beton
+    let A = 0, P = 0;
+
+    // Ambil nilai input custom (jika ada)
+    let b = parseFloat(document.getElementById('inpB').value) || 0;
+    let h = parseFloat(document.getElementById('inpH').value) || 0;
+    let z = parseFloat(document.getElementById('inpZ').value) || 0;
+
+    // Logika dimensi berdasarkan pilihan dropdown
+    if (tipe.startsWith('precast_')) {
+        let size = parseFloat(tipe.split('_')[1]) / 100; // cm ke m (contoh 40 jadi 0.4)
+        A = size * size;        // Luas Basah Penampang
+        P = size + (2 * size);  // Keliling Basah
+    } else if (tipe === 'persegi') {
+        A = b * h;
+        P = b + (2 * h);
+    } else if (tipe === 'trapesium') {
+        A = (b + z * h) * h;
+        P = b + 2 * h * Math.sqrt(1 + z * z);
+    } else if (tipe === 'lingkaran') {
+        let D = b; // Gunakan input 'B' sebagai Diameter
+        A = (Math.PI * D * D) / 4;
+        P = Math.PI * D;
+    }
+
+    if (P === 0) return 0;
+    let R = A / P; // Jari-jari Hidrolis
+    let V = (1 / n) * Math.pow(R, 2 / 3) * Math.sqrt(S); // Kecepatan Manning
+    return V * A; // Debit Kapasitas (Q = V * A)
+}
     
     // Hapus card hasil sebelumnya agar tidak menumpuk
     const existingCard = document.querySelector('.debit-card');
@@ -468,6 +574,16 @@ function tampilkanHasilDebit(r24, luas) {
     container.appendChild(divDebit);
 }
 
-</script>
-</body>
+['selectC', 'inputL', 'inputS', 'selectTipeSaluran', 'inpB', 'inpH', 'inpZ'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', () => {
+            if (lastR24 > 0 && lastTotalArea > 0) {
+                tampilkanHasilDebit(lastR24, lastTotalArea);
+            }
+        });
+    }
+});
+    
+</script> </body>
 </html>
