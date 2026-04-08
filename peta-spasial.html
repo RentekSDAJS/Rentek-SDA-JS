@@ -38,21 +38,6 @@
         .popup-table tr:nth-child(even) { background: #f8fafc; }
         .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
         .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
-        .debit-card { 
-    background: #2563eb; 
-    color: white; 
-    padding: 15px; 
-    border-radius: 8px; 
-    margin-top: 15px; 
-    border-left: 5px solid #1e293b;}
-.debit-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    font-size: 11px;
-    margin-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.2);
-    padding-top: 10px;}
     </style>
 </head>
 <body>
@@ -110,60 +95,19 @@
         </table>
     </div>
 
-<div id="resTestBody" class="card" style="display:none">
+    <div id="resTest" class="card" style="display:none">
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
-            <thead>
-                <tr>
-                    <th>Metode</th>
-                    <th>Param</th>
-                    <th>S-K</th>
-                    <th>Chi-Sq</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
+            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
     </div>
-    
-    <div id="resTest" class="card" style="display:none">
-        <h3>7. Parameter Hidrolika (Input Manual)</h3>
-        <div style="margin-bottom: 10px;">
-            <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
-            <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
-                <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
-                <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
-                <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
-                <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
-                <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
-                <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
-                <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
-                <option value="0.75">Industri Berat (0.60 - 0.90)</option>
-                <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
-                <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
-                <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
-            </select>
-        </div>
-
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;">
-                <label style="font-size: 10px; display: block;">Panjang Saluran (m):</label>
-                <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            </div>
-            <div style="flex: 1;">
-                <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
-                <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
-            </div>
-        </div>
-    </div>
+</div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    let rainSeries = [];
-    let totalArea = 0;  
-    let rainChart = null;
-    let currentDB = null;
+    
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -174,15 +118,17 @@
     // Inisialisasi LayerGroup untuk Saluran
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
+    
+    let rainChart = null;
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
     function createAttrTable(props, title) {
-        let html = `<div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">`;
+        let html = <div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">;
         for (let key in props) {
-            html += `<tr><th>${key}</th><td>${props[key]}</td></tr>`;
+            html += <tr><th>${key}</th><td>${props[key]}</td></tr>;
         }
-        html += `</table></div>`;
+        html += </table></div>;
         return html;
     }
 
@@ -232,17 +178,18 @@
     };
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
+    let currentDB = null;
     function refreshDatabase() {
         const rawData = localStorage.getItem('sda_db_final_clean');
         if (rawData) {
             currentDB = JSON.parse(rawData);
-            document.getElementById('dbStatus').innerHTML = `<span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>`;
+            document.getElementById('dbStatus').innerHTML = <span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>;
             stMarkers.clearLayers();
             Object.keys(currentDB).forEach(id => {
                 const st = currentDB[id];
                 const marker = L.circleMarker([st.lat, st.lng], { radius: 6, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 });
                 marker.bindTooltip(st.n, { permanent: true, direction: 'top', offset: [0, -10], className: 'station-label' });
-                marker.bindPopup(`<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng}`);
+                marker.bindPopup(<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng});
                 marker.addTo(stMarkers);
             });
         }
@@ -257,91 +204,75 @@
         reader.readAsText(file);
     };
 
-function processHydrology(json) {
-    analysisLayer.clearLayers();
-    ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = "";
-    });
+    function processHydrology(json) {
+        analysisLayer.clearLayers();
+        ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
 
-    let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
-    let mergedDAS = null;
-
-    // Fix Koordinat & Gabungkan Feature
-    features.forEach(f => {
-        const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
-        f.geometry.coordinates = fix(f.geometry.coordinates);
-        mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
-    });
-
-    if (!mergedDAS) return;
-
-    L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
-    map.fitBounds(L.geoJSON(mergedDAS).getBounds());
-
-    const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
-    const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
-    
-    let thiessenResults = [], totalArea = 0;
-
-    voronoi.features.forEach((v, i) => {
-        const clip = turf.intersect(v, mergedDAS);
-        if (clip) {
-            const area = turf.area(clip) / 1000000;
-            totalArea += area;
-            const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
-            const stId = pts.features[i].properties.id;
-            thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
-            L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
-        }
-    });
-
-    // Hitung Hujan Wilayah
-    let labelsYear = [];
-    const startYear = 2000;
-    const firstStId = Object.keys(currentDB)[0];
-    const thnCount = currentDB[firstStId].d.length;
-
-    for (let t = 0; t < thnCount; t++) {
-        let pAvg = 0;
-        thiessenResults.forEach(res => {
-            res.w = res.area / totalArea;
-            pAvg += (currentDB[res.id].d[t] * res.w);
+        let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
+        let mergedDAS;
+        features.forEach(f => {
+            const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
+            f.geometry.coordinates = fix(f.geometry.coordinates);
+            mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
         });
-        rainSeries.push(Number(pAvg.toFixed(2)));
-        labelsYear.push(startYear + t);
-        document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
-    }
 
-    // Tampilkan Tabel Thiessen
-    let sumW = 0;
-    thiessenResults.forEach(res => {
-        sumW += res.w;
-        document.getElementById('tBody').innerHTML += `
-            <tr>
-                <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
-                <td>${res.area.toFixed(2)}</td>
-                <td>${res.w.toFixed(4)}</td>
+        L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
+        map.fitBounds(L.geoJSON(mergedDAS).getBounds());
+
+        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
+        const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
+        
+        let thiessenResults = [], totalArea = 0;
+
+        voronoi.features.forEach((v, i) => {
+            const clip = turf.intersect(v, mergedDAS);
+            if (clip) {
+                const area = turf.area(clip) / 1000000;
+                totalArea += area;
+                const color = hsl(${(i * 137.5) % 360}, 75%, 65%);
+                const stId = pts.features[i].properties.id;
+                thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
+                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
+            }
+        });
+
+        let rainSeries = [];
+        let labelsYear = [];
+        const startYear = 2000;
+        const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
+
+        for (let t = 0; t < thnCount; t++) {
+            let pAvg = 0;
+            thiessenResults.forEach(res => {
+                res.w = res.area / totalArea;
+                pAvg += (currentDB[res.id].d[t] * res.w);
+            });
+            rainSeries.push(Number(pAvg.toFixed(2)));
+            labelsYear.push(startYear + t);
+            document.getElementById('yBody').innerHTML += <tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>;
+        }
+
+        let sumW = 0;
+        thiessenResults.forEach(res => {
+            sumW += res.w;
+            document.getElementById('tBody').innerHTML += `
+                <tr>
+                    <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
+                    <td>${res.area.toFixed(2)}</td>
+                    <td>${res.w.toFixed(4)}</td>
+                </tr>`;
+        });
+        document.getElementById('tFoot').innerHTML = `
+            <tr class="tfoot-bold">
+                <td style="text-align:left">TOTAL</td>
+                <td>${totalArea.toFixed(2)}</td>
+                <td>${sumW.toFixed(0)}.0000</td>
             </tr>`;
-    });
-    document.getElementById('tFoot').innerHTML = `
-        <tr class="tfoot-bold">
-            <td style="text-align:left">TOTAL</td>
-            <td>${totalArea.toFixed(2)}</td>
-            <td>${sumW.toFixed(0)}.0000</td>
-        </tr>`;
 
-    updateChart(labelsYear, rainSeries);
-    runFullAnalysis(rainSeries);
-    
-    // Tampilkan hasil Debit (Menggunakan data tahun terakhir)
-    tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
-
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'block';
-    });
-}
+        updateChart(labelsYear, rainSeries);
+        runFullAnalysis(rainSeries);
+        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
+    }
 
     function updateChart(labels, data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
@@ -379,7 +310,7 @@ function processHydrology(json) {
         const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
         const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
 
-        document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
+        document.getElementById('pBody').innerHTML = <tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>;
 
         const logD = data.map(x => Math.log10(x));
         const lMean = logD.reduce((a,b)=>a+b)/n;
@@ -394,7 +325,7 @@ function processHydrology(json) {
             const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
             const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
             const rLP = Math.pow(10, lMean + (kLP * lSd));
-            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
+            document.getElementById('fBody').innerHTML += <tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>;
         });
 
         const skCrit = { "0.05": 0.27, "0.01": 0.32 };
@@ -413,80 +344,12 @@ function processHydrology(json) {
             const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
             const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
             if(pass) winners.push(m);
-            document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
+            document.getElementById('testBody').innerHTML += <tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>;
         });
 
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
-        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
-    };
-
-// FUNGSI BARU: Mengambil input dari UI dan menghitung dengan rumus Kirpich
-function kalkulasiHidrolikaUser(r24, areaKm2) {
-    const C = parseFloat(document.getElementById('selectC').value);
-    const L = parseFloat(document.getElementById('inputL').value);
-    const S = parseFloat(document.getElementById('inputS').value);
-    
-    // Proteksi jika user memasukkan angka 0
-    const safeS = S <= 0 ? 0.001 : S;
-    const safeL = L <= 0 ? 1 : L;
-
-    // Rumus Kirpich untuk Tc (menit)
-    const tcMinutes = 0.0195 * Math.pow(safeL, 0.77) * Math.pow(safeS, -0.385);
-    const tcHours = tcMinutes / 60;
-
-    // Rumus Mononobe untuk Intensitas (I)
-    const intensitas = (r24 / 24) * Math.pow((24 / tcHours), (2 / 3));
-
-    // Rumus Rasional (Q)
-    const debit = 0.278 * C * intensitas * areaKm2;
-
-    return {
-        q: debit.toFixed(3),
-        i: intensitas.toFixed(2),
-        c: C,
-        tc: tcMinutes.toFixed(1),
-        l: safeL,
-        s: safeS
-    };
-}
-
-// FUNGSI BARU: Menampilkan hasil ke panel
-function tampilkanHasilDebit(r24, luas) {
-    const hasil = kalkulasiHidrolikaUser(r24, luas);
-    const container = document.getElementById('panel');
-    
-    // Hapus card hasil sebelumnya agar tidak menumpuk
-    const existingCard = document.querySelector('.debit-card');
-    if (existingCard) existingCard.remove();
-
-    const divDebit = document.createElement('div');
-    divDebit.className = 'debit-card';
-    divDebit.style.backgroundColor = '#1e293b'; // Warna background gelap
-    divDebit.innerHTML = `
-        <div style="color: #f59e0b; font-size: 10px; font-weight: bold; margin-bottom: 5px;">ESTIMASI DEBIT (RASIONAL & KIRPICH)</div>
-        <h1 style="margin:0; font-size: 28px; color: white;">${hasil.q} <span style="font-size: 14px;">m³/s</span></h1>
-        <div class="debit-grid" style="grid-template-columns: 1fr 1fr; display: grid; gap: 8px; margin-top: 10px; border-top: 1px solid #475569; padding-top: 10px;">
-            <div>Intensitas (I): <b>${hasil.i} mm/j</b></div>
-            <div>Tc: <b>${hasil.tc} min</b></div>
-            <div>Koef C: <b>${hasil.c}</b></div>
-            <div>S: <b>${hasil.s}</b></div>
-        </div>
-    `;
-    container.appendChild(divDebit);
-    
-function triggerUpdateDebit() {
-    // Mengecek apakah data hujan sudah ada dari hasil upload
-    if (rainSeries && rainSeries.length > 0) {
-        // Ambil data hujan tahun terakhir dan hitung ulang
-        tampilkanHasilDebit(rainSeries[rainSeries.length - 1], totalArea);
+        document.getElementById('bestMethod').innerHTML = <div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>;
     }
-}
-
-// Menghubungkan input manual dengan fungsi update otomatis
-document.getElementById('selectC').addEventListener('change', triggerUpdateDebit);
-document.getElementById('inputL').addEventListener('input', triggerUpdateDebit);
-document.getElementById('inputS').addEventListener('input', triggerUpdateDebit);
-
 </script>
 </body>
 </html>
