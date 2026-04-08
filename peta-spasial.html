@@ -38,6 +38,12 @@
         .popup-table tr:nth-child(even) { background: #f8fafc; }
         .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
         .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
+
+.nav-container { display: flex; gap: 10px; margin-bottom: 20px; }
+.nav-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.3s; background: #e2e8f0; color: #64748b; }
+.nav-btn.active { background: var(--blue); color: white; }
+.hidden { display: none !important; }
+        
     </style>
 </head>
 <body>
@@ -47,6 +53,24 @@
     <h2>HYDRO-SPATIAL ULTIMATE</h2>
     <div id="dbStatus"></div>
 
+<div class="nav-container">
+        <button id="btnHidrologi" class="nav-btn active" onclick="switchTab('hidrologi')">1. HIDROLOGI</button>
+        <button id="btnHidrolika" class="nav-btn" onclick="switchTab('hidrolika')">2. HIDROLIKA</button>
+    </div>
+
+    <div id="sectionHidrologi">
+        <div class="card">
+            <h3>1. Input Area DAS (GeoJSON)</h3>
+            </div>
+        </div>
+
+    <div id="sectionHidrolika" class="hidden">
+        <div class="card">
+            <h3>Analisis Hidrolika (Saluran)</h3>
+            </div>
+    </div>
+</div>
+    
     <div class="card">
         <h3>1. Input Area DAS (GeoJSON)</h3>
         <button class="upload-btn" onclick="document.getElementById('fDAS').click()">PILIH FILE DAS UNTUK ANALISIS</button>
@@ -350,6 +374,26 @@
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
+
+function switchTab(tab) {
+    const hydro = document.getElementById('sectionHidrologi');
+    const hydraulics = document.getElementById('sectionHidrolika');
+    const btnHydro = document.getElementById('btnHidrologi');
+    const btnHydraulics = document.getElementById('btnHidrolika');
+
+    if (tab === 'hidrolika') {
+        hydro.classList.add('hidden');
+        hydraulics.classList.remove('hidden');
+        btnHydraulics.classList.add('active');
+        btnHydro.classList.remove('active');
+    } else {
+        hydraulics.classList.add('hidden');
+        hydro.classList.remove('hidden');
+        btnHydro.classList.add('active');
+        btnHydraulics.classList.remove('active');
+    }
+}
+    
 </script>
 </body>
 </html>
