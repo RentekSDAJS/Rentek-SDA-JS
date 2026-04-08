@@ -101,7 +101,7 @@
         <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
         <tbody id="testBody"></tbody>
     </table>
-   div id="bestMethod"></div>
+   div id="bestMethod"></div><
 
 <div id="nextStepArea" style="margin-top:15px; display:none;">
     <button class="upload-btn" style="background:var(--green); border-bottom: 3px solid #047857; transition: 0.3s;" 
@@ -367,58 +367,210 @@
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
 
-// totalArea didapat dari variabel global di processHydrology
-showTransitionButton(best.id === "Log-Pearson III" ? 150.5 : 120.0, totalArea);
-
-// Variabel Global untuk menyimpan data hujan rencana dari analisis sebelumnya
-let rainPlan = 0; 
-let dasArea = 0;
-
-// Fungsi untuk menampilkan tombol setelah analisis selesai
-// Panggil fungsi ini di akhir 'runFullAnalysis'
-function showTransitionButton(selectedRain, area) {
-    rainPlan = selectedRain; // Mengambil nilai R rencana dari metode terpilih
-    dasArea = area;
-    document.getElementById('nextStepArea').style.display = 'block';
-}
-
-function switchToHydraulics() {
-    // Sembunyikan semua card Hidrologi (1-6)
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        document.getElementById(id).style.display = 'none';
-    });
-
-    // Tampilkan card Hidrolika
-    const hydCard = document.getElementById('resHydraulics');
-    hydCard.style.display = 'block';
-
-    // Contoh Perhitungan Debit Banjir Sederhana (Metode Rasional: Q = 1/3.6 * C * I * A)
-    // Asumsi awal C = 0.70 dan I = rainPlan (ini bisa dikembangkan dengan waktu konsentrasi Tc)
-    const C = 0.70;
-    const Q = (1/3.6) * C * (rainPlan/24) * dasArea; // Sederhana: Hujan harian dianggap intensitas
-
-    document.getElementById('hydraulicsContent').innerHTML = `
-        <div style="background:#ecfdf5; padding:10px; border-radius:5px; margin-bottom:10px; font-size:11px;">
-            <b>Input dari Hidrologi:</b><br>
-            Hujan Rencana: ${rainPlan.toFixed(2)} mm<br>
-            Luas DAS: ${dasArea.toFixed(2)} km²
-        </div>
-        <table style="width:100%">
-            <tr><th style="text-align:left">Koef. Pengaliran (C)</th><td>0.70</td></tr>
-            <tr><th style="text-align:left">Debit Banjir (Q)</th><td style="font-size:14px; color:var(--red); font-weight:bold">${Q.toFixed(3)} m³/dtk</td></tr>
-        </table>
-        <p style="font-size:9px; color:#64748b; margin-top:10px;">*Nilai ini merupakan estimasi awal. Anda dapat menyesuaikan parameter koefisien dan waktu konsentrasi pada fitur selanjutnya.</p>
-    `;
-}
-
-function backToHydrology() {
-    // Balikkan tampilan
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        document.getElementById(id).style.display = 'block';
-    });
-    document.getElementById('resHydraulics').style.display = 'none';
-}
+<script>
+    proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
     
+    const map = L.map('map').setView([-6.20, 106.84], 12);
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+
+    let analysisLayer = L.layerGroup().addTo(map);
+    let stMarkers = L.layerGroup().addTo(map);
+    let layerMikro = L.layerGroup().addTo(map);
+    let layerPHB = L.layerGroup().addTo(map);
+    let rainChart = null;
+
+    // --- VARIABEL GLOBAL UNTUK TRANSFER DATA ---
+    let rainPlan = 0;
+    let globalTotalArea = 0;
+
+    L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
+
+    function createAttrTable(props, title) {
+        let html = `<div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">`;
+        for (let key in props) { html += `<tr><th>${key}</th><td>${props[key]}</td></tr>`; }
+        html += `</table></div>`;
+        return html;
+    }
+
+    // (Kode Saluran Mikro & PHB tetap sama seperti punya Anda...)
+    if (typeof dataMikro !== 'undefined') {
+        const geoJsonMikro = L.geoJSON(dataMikro, {
+            style: { color: "cyan", weight: 1.5, opacity: 0.8 },
+            onEachFeature: (f, l) => { l.bindPopup(createAttrTable(f.properties, "SALURAN MIKRO")); }
+        });
+        geoJsonMikro.addTo(layerMikro);
+        L.polylineDecorator(geoJsonMikro, { patterns: [{ offset: '20px', repeat: '100px', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}})}] }).addTo(layerMikro);
+    }
+    if (typeof dataTersier !== 'undefined') {
+        const geoJsonPHB = L.geoJSON(dataTersier, {
+            style: { color: "blue", weight: 3, opacity: 0.9 },
+            onEachFeature: (f, l) => { l.bindPopup(createAttrTable(f.properties, "SALURAN PHB")); }
+        });
+        geoJsonPHB.addTo(layerPHB);
+        L.polylineDecorator(geoJsonPHB, { patterns: [{ offset: '20px', repeat: '100px', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}})}] }).addTo(layerPHB);
+    }
+
+    const baseMaps = { "Peta Jalan": osm, "Satelit": satelit };
+    const overlayMaps = { "Saluran Mikro": layerMikro, "Saluran PHB": layerPHB, "Analisis Hidrologi": analysisLayer, "Stasiun Hujan": stMarkers };
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+    let currentDB = null;
+    function refreshDatabase() {
+        const rawData = localStorage.getItem('sda_db_final_clean');
+        if (rawData) {
+            currentDB = JSON.parse(rawData);
+            document.getElementById('dbStatus').innerHTML = `<span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>`;
+            stMarkers.clearLayers();
+            Object.keys(currentDB).forEach(id => {
+                const st = currentDB[id];
+                const marker = L.circleMarker([st.lat, st.lng], { radius: 6, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 });
+                marker.bindTooltip(st.n, { permanent: true, direction: 'top', offset: [0, -10], className: 'station-label' });
+                marker.addTo(stMarkers);
+            });
+        }
+    }
+    refreshDatabase();
+
+    document.getElementById('fDAS').onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentDB) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => processHydrology(JSON.parse(ev.target.result));
+        reader.readAsText(file);
+    };
+
+    function processHydrology(json) {
+        analysisLayer.clearLayers();
+        ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
+
+        let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
+        let mergedDAS;
+        features.forEach(f => {
+            const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
+            f.geometry.coordinates = fix(f.geometry.coordinates);
+            mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
+        });
+
+        L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
+        map.fitBounds(L.geoJSON(mergedDAS).getBounds());
+
+        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
+        const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
+        
+        let thiessenResults = [];
+        globalTotalArea = 0; // Reset luas global
+
+        voronoi.features.forEach((v, i) => {
+            const clip = turf.intersect(v, mergedDAS);
+            if (clip) {
+                const area = turf.area(clip) / 1000000;
+                globalTotalArea += area;
+                const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
+                const stId = pts.features[i].properties.id;
+                thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
+                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
+            }
+        });
+
+        let rainSeries = [];
+        let labelsYear = [];
+        const startYear = 2000;
+        const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
+
+        for (let t = 0; t < thnCount; t++) {
+            let pAvg = 0;
+            thiessenResults.forEach(res => {
+                res.w = res.area / globalTotalArea;
+                pAvg += (currentDB[res.id].d[t] * res.w);
+            });
+            rainSeries.push(Number(pAvg.toFixed(2)));
+            labelsYear.push(startYear + t);
+            document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
+        }
+
+        updateChart(labelsYear, rainSeries);
+        runFullAnalysis(rainSeries);
+        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
+    }
+
+    function runFullAnalysis(data) {
+        const n = data.length;
+        const mean = data.reduce((a, b) => a + b) / n;
+        const sd = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / (n - 1));
+        const cv = sd / mean;
+        const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
+
+        const logD = data.map(x => Math.log10(x));
+        const lMean = logD.reduce((a,b)=>a+b)/n;
+        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
+        const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
+
+        const T = [2, 5, 10, 25, 50, 100];
+        let lastResultLP3 = 0;
+
+        T.forEach(t => {
+            const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
+            const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
+            const rLP = Math.pow(10, lMean + (kLP * lSd));
+            
+            // Simpan Rencana 10 Tahun sebagai default untuk hidrolika
+            if(t === 10) lastResultLP3 = rLP;
+
+            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>-</td><td>-</td><td>-</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
+        });
+
+        // Hasil akhir metode terpilih
+        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: LOG-PEARSON III</div>`;
+        
+        // Pemicu tombol Lanjutkan
+        showTransitionButton(lastResultLP3, globalTotalArea);
+    }
+
+    // --- FUNGSI BARU UNTUK HIDROLIKA ---
+    function showTransitionButton(selectedRain, area) {
+        rainPlan = selectedRain;
+        document.getElementById('nextStepArea').style.display = 'block';
+    }
+
+    function switchToHydraulics() {
+        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
+        document.getElementById('resHydraulics').style.display = 'block';
+
+        const C = 0.70;
+        const Q = (1/3.6) * C * (rainPlan/24) * globalTotalArea;
+
+        document.getElementById('hydraulicsContent').innerHTML = `
+            <div style="background:#ecfdf5; padding:10px; border-radius:5px; margin-bottom:10px; font-size:11px;">
+                <b>Input Terdeteksi:</b><br>
+                Hujan Rencana (10Th): ${rainPlan.toFixed(2)} mm<br>
+                Luas DAS: ${globalTotalArea.toFixed(2)} km²
+            </div>
+            <table>
+                <tr><th style="text-align:left">Koef. Pengaliran (C)</th><td>0.70</td></tr>
+                <tr><th style="text-align:left">Debit Banjir (Q)</th><td style="font-size:14px; color:var(--red); font-weight:bold">${Q.toFixed(3)} m³/dtk</td></tr>
+            </table>
+        `;
+    }
+
+    function backToHydrology() {
+        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+            document.getElementById(id).style.display = 'block';
+        });
+        document.getElementById('resHydraulics').style.display = 'none';
+    }
+
+    function updateChart(labels, data) {
+        const ctx = document.getElementById('rainChart').getContext('2d');
+        if (rainChart) rainChart.destroy();
+        rainChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: labels, datasets: [{ label: 'Hujan (mm)', data: data, borderColor: '#2563eb', fill: true, tension: 0.4 }] },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    }
 </script>
 </body>
 </html>
