@@ -101,16 +101,17 @@
         <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
         <tbody id="testBody"></tbody>
     </table>
-    <div id="bestMethod"></div>
-    <div id="nextStepArea" style="margin-top:15px; display:none;">
-        <button class="upload-btn" style="background:var(--green)" onclick="switchToHydraulics()">
-            LANJUTKAN KE ANALISIS DEBIT & HIDROLIKA →
-        </button>
-    </div>
+   div id="bestMethod"></div>
+
+<div id="nextStepArea" style="margin-top:15px; display:none;">
+    <button class="upload-btn" style="background:var(--green); border-bottom: 3px solid #047857; transition: 0.3s;" 
+            onclick="switchToHydraulics()">
+        LANJUTKAN KE ANALISIS DEBIT & HIDROLIKA →
+    </button>
 </div>
 
 <div id="resHydraulics" class="card" style="display:none; border-top: 5px solid var(--green);">
-    <h3>7. Analisis Debit Banjir & Kapasitas</h3>
+    <h3>7. Analisis Debit Banjir (Metode Rasional)</h3>
     <div id="hydraulicsContent"></div>
     <button class="upload-btn" style="background:var(--main); margin-top:10px;" onclick="backToHydrology()">
         ← KEMBALI KE HIDROLOGI
