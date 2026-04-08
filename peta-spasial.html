@@ -38,15 +38,6 @@
         .popup-table tr:nth-child(even) { background: #f8fafc; }
         .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
         .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
-
-        /* Modal Hidrolika */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 5% auto; padding: 20px; border-radius: 10px; width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 11px; margin-bottom: 4px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 12px; }
-        .btn-calc { background: var(--blue); color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .res-hydro { margin-top: 15px; background: #e0f2fe; padding: 10px; border-radius: 5px; border-left: 5px solid var(--blue); }
     </style>
 </head>
 <body>
@@ -62,8 +53,46 @@
         <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
     </div>
 
+    <div id="resHydroInput" class="card" style="display:none">
+        <h3>2. Parameter Analisis Hidrolika</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+                <label style="font-size: 9px; font-weight: bold;">Kala Ulang (T)</label>
+                <select id="selT" style="width: 100%; font-size: 11px; padding: 5px;">
+                    <option value="2">2 Tahun</option>
+                    <option value="5" selected>5 Tahun</option>
+                    <option value="10">10 Tahun</option>
+                    <option value="25">25 Tahun</option>
+                    <option value="50">50 Tahun</option>
+                    <option value="100">100 Tahun</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 9px; font-weight: bold;">Koefisien (C)</label>
+                <select id="selC" style="width: 100%; font-size: 11px; padding: 5px;">
+                    <option value="0.85">Aspal/Beton (0.85)</option>
+                    <option value="0.75">Industri (0.75)</option>
+                    <option value="0.40">Pemukiman (0.40)</option>
+                    <option value="0.10">Tanah Kosong (0.10)</option>
+                </select>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div>
+                <label style="font-size: 9px; font-weight: bold;">Panjang (L) m</label>
+                <input type="number" id="inpL" value="100" style="width: 100%; font-size: 11px; padding: 5px; box-sizing: border-box;">
+            </div>
+            <div>
+                <label style="font-size: 9px; font-weight: bold;">Kemiringan (S)</label>
+                <input type="number" id="inpS" step="0.0001" value="0.01" style="width: 100%; font-size: 11px; padding: 5px; box-sizing: border-box;">
+            </div>
+        </div>
+        <button class="upload-btn" style="background:var(--green)" onclick="calculateHydraulics()">HITUNG DEBIT RENCANA</button>
+        <div id="hydroOutput" style="margin-top: 10px; padding: 10px; background: #e0f2fe; border-radius: 5px; display: none;"></div>
+    </div>
+
     <div id="resThiessen" class="card" style="display:none">
-        <h3>2. Koefisien Thiessen & Warna DAS</h3>
+        <h3>3. Koefisien Thiessen & Warna DAS</h3>
         <table>
             <thead>
                 <tr>
@@ -78,7 +107,7 @@
     </div>
 
     <div id="resYearly" class="card" style="display:none">
-        <h3>3. Tren Hujan Rerata Wilayah</h3>
+        <h3>4. Tren Hujan Rerata Wilayah</h3>
         <div class="scroll-container">
             <table>
                 <thead><tr><th>Tahun</th><th>Hujan (mm)</th></tr></thead>
@@ -89,7 +118,7 @@
     </div>
 
     <div id="resParams" class="card" style="display:none">
-        <h3>4. Parameter Statistik Wilayah</h3>
+        <h3>5. Parameter Statistik Wilayah</h3>
         <table>
             <thead><tr><th>Mean</th><th>Sd</th><th>Cv</th><th>Cs</th><th>Ck</th></tr></thead>
             <tbody id="pBody"></tbody>
@@ -97,7 +126,7 @@
     </div>
 
     <div id="resFreq" class="card" style="display:none">
-        <h3>5. Analisis Frekuensi</h3>
+        <h3>6. Analisis Frekuensi</h3>
         <table>
             <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
             <tbody id="fBody"></tbody>
@@ -105,45 +134,17 @@
     </div>
 
     <div id="resTest" class="card" style="display:none">
-        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+        <h3>7. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
-        <button id="btnHydro" class="upload-btn" style="background:var(--green); margin-top:15px; display:none;" onclick="openHydroModal()">MULAI ANALISIS HIDROLIKA</button>
-    </div>
-</div>
-
-<div id="hydroModal" class="modal">
-    <div class="modal-content">
-        <h2 style="font-size: 1.1rem;">Analisis Hidrolika - Metode Rasional</h2>
-        <div class="form-group">
-            <label>Kondisi Permukaan (Koefisien C)</label>
-            <select id="inpC">
-                <option value="0.85">Jalan Aspal / Beton (0.85)</option>
-                <option value="0.75">Daerah Industri (0.75)</option>
-                <option value="0.40">Pemukiman (0.40)</option>
-                <option value="0.10">Tanah Kosong (0.10)</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Panjang Saluran Utama (L) - Meter</label>
-            <input type="number" id="inpL" value="100">
-        </div>
-        <div class="form-group">
-            <label>Kemiringan Saluran (S)</label>
-            <input type="number" id="inpS" step="0.0001" value="0.01">
-        </div>
-        <button class="btn-calc" onclick="calculateHydraulics()">HITUNG DEBIT (Q)</button>
-        <div id="hydroResult" class="res-hydro" style="display:none"></div>
-        <button class="upload-btn" style="background:#64748b; margin-top:10px;" onclick="closeHydroModal()">TUTUP</button>
     </div>
 </div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -152,32 +153,14 @@
     let stMarkers = L.layerGroup().addTo(map);
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
+    
     let rainChart = null;
     let currentAreaHa = 0;
-    let designRainfall = 0;
+    let freqResults = {}; // Simpan hasil frekuensi untuk akses hidrolika
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
-    if (typeof dataMikro !== 'undefined') {
-        const geoJsonMikro = L.geoJSON(dataMikro, {
-            style: { color: "cyan", weight: 1.5, opacity: 0.8 },
-            onEachFeature: (f, l) => { l.bindPopup(`<b>SALURAN MIKRO</b>`); }
-        });
-        geoJsonMikro.addTo(layerMikro);
-    }
-
-    if (typeof dataTersier !== 'undefined') {
-        const geoJsonPHB = L.geoJSON(dataTersier, {
-            style: { color: "blue", weight: 3, opacity: 0.9 },
-            onEachFeature: (f, l) => { l.bindPopup(`<b>SALURAN PHB</b>`); }
-        });
-        geoJsonPHB.addTo(layerPHB);
-    }
-
-    const baseMaps = { "Peta Jalan": osm, "Satelit": satelit };
-    const overlayMaps = { "Saluran Mikro": layerMikro, "Saluran PHB": layerPHB, "Analisis Hidrologi": analysisLayer, "Stasiun Hujan": stMarkers };
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
+    // Inisialisasi Database
     let currentDB = null;
     function refreshDatabase() {
         const rawData = localStorage.getItem('sda_db_final_clean');
@@ -232,6 +215,8 @@
             }
         });
 
+        currentAreaHa = totalArea * 100;
+
         let rainSeries = [];
         let labelsYear = [];
         const startYear = 2000;
@@ -256,9 +241,7 @@
         updateChart(labelsYear, rainSeries);
         runFullAnalysis(rainSeries);
         
-        currentAreaHa = totalArea * 100;
-        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
-        document.getElementById('btnHydro').style.display = 'block';
+        ['resHydroInput', 'resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
     function updateChart(labels, data) {
@@ -286,6 +269,8 @@
         const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
 
         const T = [2, 5, 10, 25, 50, 100];
+        freqResults = {}; // Reset
+
         T.forEach(t => {
             const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
             const rN = mean + (kt * sd);
@@ -293,13 +278,15 @@
             const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
             const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
             const rLP = Math.pow(10, lMean + (kLP * lSd));
+            
+            freqResults[t] = rLP; // Secara default menggunakan LP-III untuk hidrolika
+
             document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
-            if(t === 5) designRainfall = rLP;
         });
 
+        // Uji Statistik (S-K & Chi-Sq)
         const skCrit = { "0.05": 0.27, "0.01": 0.32 };
         const chiCrit = { "0.05": 5.99, "0.01": 9.21 };
-        
         const testData = [
             { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
             { id: "Log-Normal", d: 0.14, chi: 10.5, okP: Math.abs(cs - (3*cv)) < 0.1 },
@@ -315,23 +302,38 @@
             if(pass) winners.push(m);
             document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
         });
-
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
 
-    function openHydroModal() { document.getElementById('hydroModal').style.display = 'block'; }
-    function closeHydroModal() { document.getElementById('hydroModal').style.display = 'none'; }
+    // LOGIKA HIDROLIKA
     function calculateHydraulics() {
-        const C = parseFloat(document.getElementById('inpC').value);
+        const T = document.getElementById('selT').value;
+        const R = freqResults[T]; // Ambil hujan rencana sesuai kala ulang pilihan
+        const C = parseFloat(document.getElementById('selC').value);
         const L = parseFloat(document.getElementById('inpL').value);
         const S = parseFloat(document.getElementById('inpS').value);
-        if(!L || !S) return alert("Isi data!");
+
+        if(!R) return alert("Analisis frekuensi belum tersedia");
+        
+        // Perhitungan Waktu Konsentrasi (tc) - Kirpich
         const tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
-        const I = (designRainfall / 24) * Math.pow((24 / (tc/60)), (2/3));
+        // Intensitas Hujan (I) - Mononobe
+        const I = (R / 24) * Math.pow((24 / (tc/60)), (2/3));
+        // Debit (Q) - Rasional
         const Q = 0.00278 * C * I * currentAreaHa;
-        document.getElementById('hydroResult').style.display = 'block';
-        document.getElementById('hydroResult').innerHTML = `<b>DEBIT (Q): ${Q.toFixed(3)} m³/s</b><br><small>Hujan: ${designRainfall.toFixed(1)} mm</small>`;
+
+        const out = document.getElementById('hydroOutput');
+        out.style.display = 'block';
+        out.innerHTML = `
+            <table style="width:100%; font-size:11px;">
+                <tr><td>Hujan Rencana (R${T})</td><td style="text-align:right"><b>${R.toFixed(1)} mm</b></td></tr>
+                <tr><td>Intensitas (I)</td><td style="text-align:right"><b>${I.toFixed(2)} mm/jam</b></td></tr>
+                <tr style="color:var(--red); font-size:13px; font-weight:bold;">
+                    <td>DEBIT (Q)</td><td style="text-align:right">${Q.toFixed(3)} m³/s</td>
+                </tr>
+            </table>
+        `;
     }
 </script>
 </body>
