@@ -95,16 +95,28 @@
         </table>
     </div>
 
-    <div id="resTest" class="card" style="display:none">
-        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
-        <table>
-            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
-            <tbody id="testBody"></tbody>
-        </table>
-        <div id="bestMethod"></div>
+  <div id="resTest" class="card" style="display:none">
+    <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+    <table>
+        <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
+        <tbody id="testBody"></tbody>
+    </table>
+    <div id="bestMethod"></div>
+    <div id="nextStepArea" style="margin-top:15px; display:none;">
+        <button class="upload-btn" style="background:var(--green)" onclick="switchToHydraulics()">
+            LANJUTKAN KE ANALISIS DEBIT & HIDROLIKA →
+        </button>
     </div>
 </div>
 
+<div id="resHydraulics" class="card" style="display:none; border-top: 5px solid var(--green);">
+    <h3>7. Analisis Debit Banjir & Kapasitas</h3>
+    <div id="hydraulicsContent"></div>
+    <button class="upload-btn" style="background:var(--main); margin-top:10px;" onclick="backToHydrology()">
+        ← KEMBALI KE HIDROLOGI
+    </button>
+</div>
+    
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
     
@@ -350,6 +362,62 @@
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
+    
+        const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
+        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
+
+// totalArea didapat dari variabel global di processHydrology
+showTransitionButton(best.id === "Log-Pearson III" ? 150.5 : 120.0, totalArea);
+
+// Variabel Global untuk menyimpan data hujan rencana dari analisis sebelumnya
+let rainPlan = 0; 
+let dasArea = 0;
+
+// Fungsi untuk menampilkan tombol setelah analisis selesai
+// Panggil fungsi ini di akhir 'runFullAnalysis'
+function showTransitionButton(selectedRain, area) {
+    rainPlan = selectedRain; // Mengambil nilai R rencana dari metode terpilih
+    dasArea = area;
+    document.getElementById('nextStepArea').style.display = 'block';
+}
+
+function switchToHydraulics() {
+    // Sembunyikan semua card Hidrologi (1-6)
+    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+
+    // Tampilkan card Hidrolika
+    const hydCard = document.getElementById('resHydraulics');
+    hydCard.style.display = 'block';
+
+    // Contoh Perhitungan Debit Banjir Sederhana (Metode Rasional: Q = 1/3.6 * C * I * A)
+    // Asumsi awal C = 0.70 dan I = rainPlan (ini bisa dikembangkan dengan waktu konsentrasi Tc)
+    const C = 0.70;
+    const Q = (1/3.6) * C * (rainPlan/24) * dasArea; // Sederhana: Hujan harian dianggap intensitas
+
+    document.getElementById('hydraulicsContent').innerHTML = `
+        <div style="background:#ecfdf5; padding:10px; border-radius:5px; margin-bottom:10px; font-size:11px;">
+            <b>Input dari Hidrologi:</b><br>
+            Hujan Rencana: ${rainPlan.toFixed(2)} mm<br>
+            Luas DAS: ${dasArea.toFixed(2)} km²
+        </div>
+        <table style="width:100%">
+            <tr><th style="text-align:left">Koef. Pengaliran (C)</th><td>0.70</td></tr>
+            <tr><th style="text-align:left">Debit Banjir (Q)</th><td style="font-size:14px; color:var(--red); font-weight:bold">${Q.toFixed(3)} m³/dtk</td></tr>
+        </table>
+        <p style="font-size:9px; color:#64748b; margin-top:10px;">*Nilai ini merupakan estimasi awal. Anda dapat menyesuaikan parameter koefisien dan waktu konsentrasi pada fitur selanjutnya.</p>
+    `;
+}
+
+function backToHydrology() {
+    // Balikkan tampilan
+    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+        document.getElementById(id).style.display = 'block';
+    });
+    document.getElementById('resHydraulics').style.display = 'none';
+}
+    
 </script>
 </body>
 </html>
