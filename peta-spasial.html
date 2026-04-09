@@ -33,6 +33,10 @@
         .station-label { background: rgba(255, 255, 255, 0.9) !important; border: 1px solid #1e293b !important; border-radius: 3px !important; padding: 1px 4px !important; font-weight: 800 !important; color: #1e293b !important; font-size: 11px !important; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         .scroll-container { max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 5px; margin-bottom: 10px; }
         .best-badge { background: var(--main); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border-left: 5px solid var(--accent); }
+        .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .input-group label { font-size: 11px; color: #475569; }
+        .input-group input, .input-group select { width: 80px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; }
+        .input-group input[readonly] { background: #f1f5f9; cursor: not-allowed; }
         .color-box { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1); }
         .popup-table { width: 100%; font-size: 11px; }
         .popup-table tr:nth-child(even) { background: #f8fafc; }
@@ -105,6 +109,45 @@
     </div>
 </div>
 
+<div id="hydraulicSection" style="display:none; border-top: 2px dashed #e2e8f0; margin-top: 20px; padding-top: 20px;">
+    <button class="upload-btn" style="background:#64748b; margin-bottom: 15px;" onclick="backToHydrology()">← KEMBALI KE HIDROLOGI</button>
+    <h2>ANALISIS DEBIT RASIONAL</h2>
+    
+    <div class="card">
+        <h3>1. Parameter Fisik & Waktu Konsentrasi (tc)</h3>
+        <div class="input-group">
+            <label>Panjang Saluran (L)</label>
+            <div><input type="number" id="lInput" placeholder="m"> <small>m</small></div>
+        </div>
+        <div class="input-group">
+            <label>Kemiringan Lahan (S)</label>
+            <div><input type="number" id="sLandInput" placeholder="m/m" step="0.0001"> <small>m/m</small></div>
+        </div>
+        <div class="input-group">
+            <label>Hujan Rancangan (R24)</label>
+            <div><input type="number" id="r24Input" readonly> <small>mm</small></div>
+        </div>
+        <div class="input-group">
+            <label>Koef. Pengaliran (C)</label>
+            <select id="cInput">
+                <option value="0.75">Kota (0.75)</option>
+                <option value="0.60">Pemukiman (0.60)</option>
+                <option value="0.30">Taman (0.30)</option>
+            </select>
+        </div>
+        <button class="upload-btn" style="margin-top:10px; background:var(--blue)" onclick="calculateFullRational()">HITUNG DEBIT PUNCAK</button>
+    </div>
+
+    <div id="resRational" class="card" style="display:none">
+        <h3>2. Hasil Perhitungan (Mononobe)</h3>
+        <table>
+            <tr><td style="text-align:left">Waktu Konsentrasi (tc)</td><td id="tcRes" style="font-weight:bold">-</td></tr>
+            <tr><td style="text-align:left">Intensitas (I)</td><td id="iRes" style="font-weight:bold">-</td></tr>
+        </table>
+        <div id="rationalResult" class="best-badge" style="background: var(--main); border-left: 5px solid var(--accent);"></div>
+    </div>
+</div>
+    
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
     
@@ -179,6 +222,7 @@
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
     let currentDB = null;
+    let totalAreaGlobal = 0; 
     function refreshDatabase() {
         const rawData = localStorage.getItem('sda_db_final_clean');
         if (rawData) {
@@ -229,6 +273,7 @@
             if (clip) {
                 const area = turf.area(clip) / 1000000;
                 totalArea += area;
+                totalAreaGlobal = totalArea; 
                 const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
                 const stId = pts.features[i].properties.id;
                 thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
@@ -350,6 +395,61 @@
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
+
+    if(!document.getElementById('btnGoToHydraulic')){
+        const btn = document.createElement('button');
+        btn.id = 'btnGoToHydraulic';
+        btn.className = 'upload-btn';
+        btn.style.marginTop = '15px';
+        btn.style.background = 'var(--green)';
+        btn.innerText = 'LANJUT ANALISIS DEBIT PUNCAK →';
+        btn.onclick = () => switchToHydraulic();
+        document.getElementById('resTest').appendChild(btn);
+    }
+
+    function switchToHydraulic() {
+    const rows = document.querySelectorAll('#fBody tr');
+    if (rows.length === 0) return alert("Lakukan analisis hidrologi dahulu!");
+    
+    const r10 = parseFloat(rows[2].cells[4].innerText); 
+    document.getElementById('r24Input').value = r10;
+
+    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('hydraulicSection').style.display = 'block';
+}
+
+function backToHydrology() {
+    document.getElementById('hydraulicSection').style.display = 'none';
+    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+        document.getElementById(id).style.display = 'block';
+    });
+}
+
+function calculateFullRational() {
+    const L = parseFloat(document.getElementById('lInput').value);
+    const S = parseFloat(document.getElementById('sLandInput').value);
+    const R24 = parseFloat(document.getElementById('r24Input').value);
+    const C = parseFloat(document.getElementById('cInput').value);
+    const A = totalAreaGlobal; 
+
+    if (!L || !S) return alert("Masukkan Panjang dan Kemiringan Saluran!");
+
+    const tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
+    const tcJam = tc / 60;
+    const I = (R24 / 24) * Math.pow((24 / tcJam), (2/3));
+    const Q = 0.278 * C * I * A;
+
+    document.getElementById('tcRes').innerText = tc.toFixed(2) + " Menit";
+    document.getElementById('iRes').innerText = I.toFixed(2) + " mm/jam";
+    document.getElementById('resRational').style.display = 'block';
+    document.getElementById('rationalResult').innerHTML = `
+        DEBIT PUNCAK (Q10):<br>
+        <span style="font-size:24px">${Q.toFixed(3)} m³/s</span>
+    `;
+}
+    
 </script>
 </body>
 </html>
