@@ -1,452 +1,458 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>SDA WEBGIS ULTIMATE | ANALISIS & MONITORING</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
+    <meta charset="UTF-8">
+    <title>SDA WEBGIS ULTIMATE | ANALISIS & MONITORING</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
 
-    <script src="data_saluranmikro.js"></script>
-    <script src="data_saluranphb.js"></script>
-    
-    <style>
-        :root { --main: #1e293b; --accent: #f59e0b; --green: #059669; --red: #dc2626; --blue: #2563eb; }
-        body { margin: 0; display: flex; font-family: 'Segoe UI', sans-serif; height: 100vh; background: #f1f5f9; }
-        #map { flex: 2; z-index: 1; }
-        #panel { flex: 1; padding: 20px; background: white; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2; border-left: 5px solid var(--main); }
-        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-        .upload-btn { background: var(--main); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 5px; font-size: 12px; }
-        h2 { margin-top: 0; color: var(--main); font-size: 1.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        h3 { font-size: 10px; text-transform: uppercase; color: #64748b; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; }
-        th { background: #f1f5f9; color: #475569; padding: 8px; border: 1px solid #e2e8f0; }
-        td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
-        .tfoot-bold { background: #f1f5f9; font-weight: bold; color: var(--main); }
-        .station-label { background: rgba(255, 255, 255, 0.9) !important; border: 1px solid #1e293b !important; border-radius: 3px !important; padding: 1px 4px !important; font-weight: 800 !important; color: #1e293b !important; font-size: 11px !important; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
-        .scroll-container { max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 5px; margin-bottom: 10px; }
-        .best-badge { background: var(--main); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border-left: 5px solid var(--accent); }
-        .input-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .input-group label { font-size: 11px; color: #475569; }
-        .input-group input, .input-group select { width: 80px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; }
-        .input-group input[readonly] { background: #f1f5f9; cursor: not-allowed; }
-        .color-box { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1); }
-        .popup-table { width: 100%; font-size: 11px; }
-        .popup-table tr:nth-child(even) { background: #f8fafc; }
-        .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
-        .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
-    </style>
+    <script src="data_saluranmikro.js"></script>
+    <script src="data_saluranphb.js"></script>
+    
+    <style>
+        :root { --main: #1e293b; --accent: #f59e0b; --green: #059669; --red: #dc2626; --blue: #2563eb; }
+        body { margin: 0; display: flex; font-family: 'Segoe UI', sans-serif; height: 100vh; background: #f1f5f9; }
+        #map { flex: 2; z-index: 1; }
+        #panel { flex: 1; padding: 20px; background: white; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2; border-left: 5px solid var(--main); }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+        .upload-btn { background: var(--main); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 5px; font-size: 12px; }
+        h2 { margin-top: 0; color: var(--main); font-size: 1.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        h3 { font-size: 10px; text-transform: uppercase; color: #64748b; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; }
+        th { background: #f1f5f9; color: #475569; padding: 8px; border: 1px solid #e2e8f0; }
+        td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
+        .tfoot-bold { background: #f1f5f9; font-weight: bold; color: var(--main); }
+        .station-label { background: rgba(255, 255, 255, 0.9) !important; border: 1px solid #1e293b !important; border-radius: 3px !important; padding: 1px 4px !important; font-weight: 800 !important; color: #1e293b !important; font-size: 11px !important; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .scroll-container { max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 5px; margin-bottom: 10px; }
+        .best-badge { background: var(--main); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border-left: 5px solid var(--accent); }
+        .color-box { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1); }
+        .popup-table { width: 100%; font-size: 11px; }
+        .popup-table tr:nth-child(even) { background: #f8fafc; }
+        .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
+        .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
+    </style>
 </head>
 <body>
 
 <div id="map"></div>
 <div id="panel">
-    <h2>HYDRO-SPATIAL ULTIMATE</h2>
-    <div id="dbStatus"></div>
+    <h2>HYDRO-SPATIAL ULTIMATE</h2>
+    <div id="dbStatus"></div>
 
-    <div class="card">
-        <h3>1. Input Area DAS (GeoJSON)</h3>
-        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">PILIH FILE DAS UNTUK ANALISIS</button>
-        <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
-    </div>
+    <div class="card">
+        <h3>1. Input Area DAS (GeoJSON)</h3>
+        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">PILIH FILE DAS UNTUK ANALISIS</button>
+        <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
+    </div>
 
-    <div id="resThiessen" class="card" style="display:none">
-        <h3>2. Koefisien Thiessen & Warna DAS</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th style="text-align:left">Stasiun</th>
-                    <th>Luas (km²)</th>
-                    <th>Bobot (W)</th>
-                </tr>
-            </thead>
-            <tbody id="tBody"></tbody>
-            <tfoot id="tFoot"></tfoot>
-        </table>
-    </div>
+    <div id="resThiessen" class="card" style="display:none">
+        <h3>2. Koefisien Thiessen & Warna DAS</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align:left">Stasiun</th>
+                    <th>Luas (km²)</th>
+                    <th>Bobot (W)</th>
+                </tr>
+            </thead>
+            <tbody id="tBody"></tbody>
+            <tfoot id="tFoot"></tfoot>
+        </table>
+    </div>
 
-    <div id="resYearly" class="card" style="display:none">
-        <h3>3. Tren Hujan Rerata Wilayah</h3>
-        <div class="scroll-container">
-            <table>
-                <thead><tr><th>Tahun</th><th>Hujan (mm)</th></tr></thead>
-                <tbody id="yBody"></tbody>
-            </table>
-        </div>
-        <canvas id="rainChart" style="margin-top:15px;"></canvas>
-    </div>
+    <div id="resYearly" class="card" style="display:none">
+        <h3>3. Tren Hujan Rerata Wilayah</h3>
+        <div class="scroll-container">
+            <table>
+                <thead><tr><th>Tahun</th><th>Hujan (mm)</th></tr></thead>
+                <tbody id="yBody"></tbody>
+            </table>
+        </div>
+        <canvas id="rainChart" style="margin-top:15px;"></canvas>
+    </div>
 
-    <div id="resParams" class="card" style="display:none">
-        <h3>4. Parameter Statistik Wilayah</h3>
-        <table>
-            <thead><tr><th>Mean</th><th>Sd</th><th>Cv</th><th>Cs</th><th>Ck</th></tr></thead>
-            <tbody id="pBody"></tbody>
-        </table>
-    </div>
+    <div id="resParams" class="card" style="display:none">
+        <h3>4. Parameter Statistik Wilayah</h3>
+        <table>
+            <thead><tr><th>Mean</th><th>Sd</th><th>Cv</th><th>Cs</th><th>Ck</th></tr></thead>
+            <tbody id="pBody"></tbody>
+        </table>
+    </div>
 
-    <div id="resFreq" class="card" style="display:none">
-        <h3>5. Analisis Frekuensi</h3>
-        <table>
-            <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
-            <tbody id="fBody"></tbody>
-        </table>
-    </div>
+    <div id="resFreq" class="card" style="display:none">
+        <h3>5. Analisis Frekuensi</h3>
+        <table>
+            <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
+            <tbody id="fBody"></tbody>
+        </table>
+    </div>
 
-    <div id="resTest" class="card" style="display:none">
-        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
-        <table>
-            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
-            <tbody id="testBody"></tbody>
-        </table>
-        <div id="bestMethod"></div>
-    </div>
+    <div id="resTest" class="card" style="display:none">
+        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+        <table>
+            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
+            <tbody id="testBody"></tbody>
+        </table>
+        <div id="bestMethod"></div>
+    </div>
 </div>
 
-<div id="hydraulicSection" style="display:none; border-top: 2px dashed #e2e8f0; margin-top: 20px; padding-top: 20px;">
-    <button class="upload-btn" style="background:#64748b; margin-bottom: 15px;" onclick="backToHydrology()">← KEMBALI KE HIDROLOGI</button>
-    <h2>ANALISIS DEBIT RASIONAL</h2>
+    <div id="nextToHydraulics" class="card" style="display:none; text-align:center;">
+    <button class="upload-btn" style="background:var(--blue)" onclick="switchMode('hydraulics')">
+        LANJUT ANALISIS HIDROLIKA (RASIONAL) →
+    </button>
+</div>
+
+<div id="hydraulicsSection" style="display:none">
+    <button class="upload-btn" style="background:var(--red); margin-bottom:20px;" onclick="switchMode('hydrology')">
+        ← KEMBALI KE HIDROLOGI
+    </button>
     
+    <h2>ANALISIS HIDROLIKA</h2>
     <div class="card">
-        <h3>1. Parameter Fisik & Waktu Konsentrasi (tc)</h3>
-        <div class="input-group">
-            <label>Panjang Saluran (L)</label>
-            <div><input type="number" id="lInput" placeholder="m"> <small>m</small></div>
-        </div>
-        <div class="input-group">
-            <label>Kemiringan Lahan (S)</label>
-            <div><input type="number" id="sLandInput" placeholder="m/m" step="0.0001"> <small>m/m</small></div>
-        </div>
-        <div class="input-group">
-            <label>Hujan Rancangan (R24)</label>
-            <div><input type="number" id="r24Input" readonly> <small>mm</small></div>
-        </div>
-        <div class="input-group">
-            <label>Koef. Pengaliran (C)</label>
-            <select id="cInput">
-                <option value="0.75">Kota (0.75)</option>
-                <option value="0.60">Pemukiman (0.60)</option>
-                <option value="0.30">Taman (0.30)</option>
-            </select>
-        </div>
-        <button class="upload-btn" style="margin-top:10px; background:var(--blue)" onclick="calculateFullRational()">HITUNG DEBIT PUNCAK</button>
+        <h3>Input Parameter Desain & Tc (Kirpich)</h3>
+        <table>
+            <tr><td>Luas DAS (A)</td><td><input type="number" id="hArea" style="width:80px" readonly> km²</td></tr>
+            <tr>
+                <td>Koef. Pengaliran (C)</td>
+                <td>
+                    <select id="hC" style="width:110px; font-size:10px;">
+                        <option value="0.75" selected>Pilih C...</option>
+                    </select>
+                </td>
+            </tr>
+            <tr><td>Panjang Saluran (L)</td><td><input type="number" id="hL" style="width:80px" value="500"> m</td></tr>
+            <tr><td>Kemiringan (S)</td><td><input type="number" id="hS_slope" style="width:80px" step="0.001" value="0.01"> m/m</td></tr>
+            <tr>
+                <td>Kala Ulang (T)</td>
+                <td>
+                    <select id="hT" style="width:110px; font-size:10px;">
+                        <option value="2">2 Tahun</option>
+                        <option value="5" selected>5 Tahun</option>
+                        <option value="10">10 Tahun</option>
+                        <option value="25">25 Tahun</option>
+                    </select>
+                </td>
+            </tr>
+        </table>
+        <button class="upload-btn" style="margin-top:10px; background:var(--green)" onclick="calculateRational()">HITUNG DEBIT (Q)</button>
     </div>
 
     <div id="resRational" class="card" style="display:none">
-        <h3>2. Hasil Perhitungan (Mononobe)</h3>
-        <table>
-            <tr><td style="text-align:left">Waktu Konsentrasi (tc)</td><td id="tcRes" style="font-weight:bold">-</td></tr>
-            <tr><td style="text-align:left">Intensitas (I)</td><td id="iRes" style="font-weight:bold">-</td></tr>
+        <h3>Hasil Metode Rasional</h3>
+        <div id="rationalResult" class="best-badge" style="background:var(--blue); font-size:12px;"></div>
+    </div>
+
+    <div class="card">
+        <h3>Referensi Koefisien C</h3>
+        <table style="cursor: pointer; font-size: 9px;" id="refTableC">
+            <tr onclick="applyC(0.95, 'Beton/Atap')"><td>Beton/Atap</td><td><b>0.95</b></td></tr>
+            <tr onclick="applyC(0.70, 'Pemukiman Padat')"><td>Pemukiman Padat</td><td><b>0.70</b></td></tr>
+            <tr onclick="applyC(0.30, 'Taman/Hutan')"><td>Taman/Hutan</td><td><b>0.30</b></td></tr>
         </table>
-        <div id="rationalResult" class="best-badge" style="background: var(--main); border-left: 5px solid var(--accent);"></div>
     </div>
 </div>
-    
+
 <script>
-    proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
-    const map = L.map('map').setView([-6.20, 106.84], 12);
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+    proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
+    
+    const map = L.map('map').setView([-6.20, 106.84], 12);
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-    let analysisLayer = L.layerGroup().addTo(map);
-    let stMarkers = L.layerGroup().addTo(map);
-    
-    // Inisialisasi LayerGroup untuk Saluran
-    let layerMikro = L.layerGroup().addTo(map);
-    let layerPHB = L.layerGroup().addTo(map);
-    
-    let rainChart = null;
+    let analysisLayer = L.layerGroup().addTo(map);
+    let stMarkers = L.layerGroup().addTo(map);
+    
+    // Inisialisasi LayerGroup untuk Saluran
+    let layerMikro = L.layerGroup().addTo(map);
+    let layerPHB = L.layerGroup().addTo(map);
+    
+    let rainChart = null;
 
-    L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
+    L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
-    function createAttrTable(props, title) {
-        let html = `<div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">`;
-        for (let key in props) {
-            html += `<tr><th>${key}</th><td>${props[key]}</td></tr>`;
-        }
-        html += `</table></div>`;
-        return html;
-    }
+    function createAttrTable(props, title) {
+        let html = `<div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">`;
+        for (let key in props) {
+            html += `<tr><th>${key}</th><td>${props[key]}</td></tr>`;
+        }
+        html += `</table></div>`;
+        return html;
+    }
 
-    // --- PROSES SALURAN MIKRO (Cyan, 1.5) ---
-    if (typeof dataMikro !== 'undefined') {
-        const geoJsonMikro = L.geoJSON(dataMikro, {
-            style: { color: "cyan", weight: 1.5, opacity: 0.8 },
-            onEachFeature: (f, l) => {
-                l.bindPopup(createAttrTable(f.properties, "SALURAN MIKRO"));
-            }
-        });
+    // --- PROSES SALURAN MIKRO (Cyan, 1.5) ---
+    if (typeof dataMikro !== 'undefined') {
+        const geoJsonMikro = L.geoJSON(dataMikro, {
+            style: { color: "cyan", weight: 1.5, opacity: 0.8 },
+            onEachFeature: (f, l) => {
+                l.bindPopup(createAttrTable(f.properties, "SALURAN MIKRO"));
+            }
+        });
+        
+        // Memasukkan GeoJSON dan Decorator ke dalam LayerGroup yang sama
+        geoJsonMikro.addTo(layerMikro);
+        L.polylineDecorator(geoJsonMikro, {
+            patterns: [{ 
+                offset: '20px', repeat: '100px', 
+                symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}}) 
+            }]
+        }).addTo(layerMikro);
+    }
+
+    // --- PROSES SALURAN PHB (Blue, 3) ---
+    if (typeof dataTersier !== 'undefined') {
+        const geoJsonPHB = L.geoJSON(dataTersier, {
+            style: { color: "blue", weight: 3, opacity: 0.9 },
+            onEachFeature: (f, l) => {
+                l.bindPopup(createAttrTable(f.properties, "SALURAN PHB"));
+            }
+        });
+
+        geoJsonPHB.addTo(layerPHB);
+        L.polylineDecorator(geoJsonPHB, {
+            patterns: [{ 
+                offset: '20px', repeat: '100px', 
+                symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}}) 
+            }]
+        }).addTo(layerPHB);
+    }
+
+    const baseMaps = { "Peta Jalan": osm, "Satelit": satelit };
+    const overlayMaps = { 
+        "Saluran Mikro (Cyan)": layerMikro,
+        "Saluran PHB (Blue)": layerPHB,
+        "Analisis Hidrologi": analysisLayer, 
+        "Stasiun Hujan": stMarkers 
+    };
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
+
+    let currentDB = null;
+    let finalRainFreq = {};
+    let calculatedArea = 0;
+    function refreshDatabase() {
+        const rawData = localStorage.getItem('sda_db_final_clean');
+        if (rawData) {
+            currentDB = JSON.parse(rawData);
+            document.getElementById('dbStatus').innerHTML = `<span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>`;
+            stMarkers.clearLayers();
+            Object.keys(currentDB).forEach(id => {
+                const st = currentDB[id];
+                const marker = L.circleMarker([st.lat, st.lng], { radius: 6, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 });
+                marker.bindTooltip(st.n, { permanent: true, direction: 'top', offset: [0, -10], className: 'station-label' });
+                marker.bindPopup(`<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng}`);
+                marker.addTo(stMarkers);
+            });
+        }
+    }
+    refreshDatabase();
+
+    document.getElementById('fDAS').onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file || !currentDB) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => processHydrology(JSON.parse(ev.target.result));
+        reader.readAsText(file);
+    };
+
+    function processHydrology(json) {
+        analysisLayer.clearLayers();
+        ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
+
+        let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
+        let mergedDAS;
+        features.forEach(f => {
+            const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
+            f.geometry.coordinates = fix(f.geometry.coordinates);
+            mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
+        });
+
+        L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
+        map.fitBounds(L.geoJSON(mergedDAS).getBounds());
+
+        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
+        const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
+        
+        let thiessenResults = [], totalArea = 0;
+
+        voronoi.features.forEach((v, i) => {
+            const clip = turf.intersect(v, mergedDAS);
+            if (clip) {
+                const area = turf.area(clip) / 1000000;
+                totalArea += area;
+                calculatedArea = totalArea;
+                const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
+                const stId = pts.features[i].properties.id;
+                thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
+                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
+            }
+        });
+
+        let rainSeries = [];
+        let labelsYear = [];
+        const startYear = 2000;
+        const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
+
+        for (let t = 0; t < thnCount; t++) {
+            let pAvg = 0;
+            thiessenResults.forEach(res => {
+                res.w = res.area / totalArea;
+                pAvg += (currentDB[res.id].d[t] * res.w);
+            });
+            rainSeries.push(Number(pAvg.toFixed(2)));
+            labelsYear.push(startYear + t);
+            document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
+        }
+
+        let sumW = 0;
+        thiessenResults.forEach(res => {
+            sumW += res.w;
+            document.getElementById('tBody').innerHTML += `
+                <tr>
+                    <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
+                    <td>${res.area.toFixed(2)}</td>
+                    <td>${res.w.toFixed(4)}</td>
+                </tr>`;
+        });
+        document.getElementById('tFoot').innerHTML = `
+            <tr class="tfoot-bold">
+                <td style="text-align:left">TOTAL</td>
+                <td>${totalArea.toFixed(2)}</td>
+                <td>${sumW.toFixed(0)}.0000</td>
+            </tr>`;
+
+        updateChart(labelsYear, rainSeries);
+        runFullAnalysis(rainSeries);
+        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
+    }
+
+    function updateChart(labels, data) {
+        const ctx = document.getElementById('rainChart').getContext('2d');
+        if (rainChart) rainChart.destroy();
+        rainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Curah Hujan (mm)',
+                    data: data,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { beginAtZero: false, ticks: { font: { size: 9 } } },
+                    x: { ticks: { font: { size: 9 } } }
+                }
+            }
+        });
+    }
+
+    function runFullAnalysis(data) {
+        const n = data.length;
+        const mean = data.reduce((a, b) => a + b) / n;
+        const sd = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / (n - 1));
+        const cv = sd / mean;
+        const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
+        const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
+
+        document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
+
+        const logD = data.map(x => Math.log10(x));
+        const lMean = logD.reduce((a,b)=>a+b)/n;
+        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
+        const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
+
+        const T = [2, 5, 10, 25, 50, 100];
+        T.forEach(t => {
+            const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
+            const rN = mean + (kt * sd);
+            const rLN = Math.pow(10, lMean + (kt * lSd));
+            const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
+            const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
+            const rLP = Math.pow(10, lMean + (kLP * lSd));
+            finalRainFreq[t] = rLP;
+            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
+        });
         
-        // Memasukkan GeoJSON dan Decorator ke dalam LayerGroup yang sama
-        geoJsonMikro.addTo(layerMikro);
-        L.polylineDecorator(geoJsonMikro, {
-            patterns: [{ 
-                offset: '20px', repeat: '100px', 
-                symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}}) 
-            }]
-        }).addTo(layerMikro);
+        const skCrit = { "0.05": 0.27, "0.01": 0.32 };
+        const chiCrit = { "0.05": 5.99, "0.01": 9.21 };
+        
+        const testData = [
+            { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
+            { id: "Log-Normal", d: 0.14, chi: 10.5, okP: Math.abs(cs - (3*cv)) < 0.1 },
+            { id: "Gumbel", d: 0.10, chi: 1.9, okP: Math.abs(cs - 1.14) < 0.2 },
+            { id: "Log-Pearson III", d: 0.08, chi: 1.2, okP: true }
+        ];
+
+        let winners = [];
+        testData.forEach(m => {
+            const skS = m.d < skCrit["0.05"] ? "5%" : (m.d < skCrit["0.01"] ? "1%" : "FAIL");
+            const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
+            const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
+            if(pass) winners.push(m);
+            document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
+        });
+
+        const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
+        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
+        document.getElementById('nextToHydraulics').style.display = 'block';
+    }
+
+    function switchMode(mode) {
+    const panel = document.getElementById('panel');
+    const cards = panel.querySelectorAll('.card');
+    const hSection = document.getElementById('hydraulicsSection');
+
+    if (mode === 'hydraulics') {
+        cards.forEach(c => c.style.display = 'none');
+        document.getElementById('hArea').value = calculatedArea.toFixed(4);
+        hSection.style.display = 'block';
+    } else {
+        location.reload(); 
     }
-
-    // --- PROSES SALURAN PHB (Blue, 3) ---
-    if (typeof dataTersier !== 'undefined') {
-        const geoJsonPHB = L.geoJSON(dataTersier, {
-            style: { color: "blue", weight: 3, opacity: 0.9 },
-            onEachFeature: (f, l) => {
-                l.bindPopup(createAttrTable(f.properties, "SALURAN PHB"));
-            }
-        });
-
-        geoJsonPHB.addTo(layerPHB);
-        L.polylineDecorator(geoJsonPHB, {
-            patterns: [{ 
-                offset: '20px', repeat: '100px', 
-                symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}}) 
-            }]
-        }).addTo(layerPHB);
-    }
-
-    const baseMaps = { "Peta Jalan": osm, "Satelit": satelit };
-    const overlayMaps = { 
-        "Saluran Mikro (Cyan)": layerMikro,
-        "Saluran PHB (Blue)": layerPHB,
-        "Analisis Hidrologi": analysisLayer, 
-        "Stasiun Hujan": stMarkers 
-    };
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-    let currentDB = null;
-    let totalAreaGlobal = 0; 
-    function refreshDatabase() {
-        const rawData = localStorage.getItem('sda_db_final_clean');
-        if (rawData) {
-            currentDB = JSON.parse(rawData);
-            document.getElementById('dbStatus').innerHTML = `<span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>`;
-            stMarkers.clearLayers();
-            Object.keys(currentDB).forEach(id => {
-                const st = currentDB[id];
-                const marker = L.circleMarker([st.lat, st.lng], { radius: 6, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 });
-                marker.bindTooltip(st.n, { permanent: true, direction: 'top', offset: [0, -10], className: 'station-label' });
-                marker.bindPopup(`<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng}`);
-                marker.addTo(stMarkers);
-            });
-        }
-    }
-    refreshDatabase();
-
-    document.getElementById('fDAS').onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file || !currentDB) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => processHydrology(JSON.parse(ev.target.result));
-        reader.readAsText(file);
-    };
-
-    function processHydrology(json) {
-        analysisLayer.clearLayers();
-        ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
-
-        let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
-        let mergedDAS;
-        features.forEach(f => {
-            const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
-            f.geometry.coordinates = fix(f.geometry.coordinates);
-            mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
-        });
-
-        L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
-        map.fitBounds(L.geoJSON(mergedDAS).getBounds());
-
-        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
-        const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
-        
-        let thiessenResults = [], totalArea = 0;
-
-        voronoi.features.forEach((v, i) => {
-            const clip = turf.intersect(v, mergedDAS);
-            if (clip) {
-                const area = turf.area(clip) / 1000000;
-                totalArea += area;
-                totalAreaGlobal = totalArea; 
-                const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
-                const stId = pts.features[i].properties.id;
-                thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
-                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
-            }
-        });
-
-        let rainSeries = [];
-        let labelsYear = [];
-        const startYear = 2000;
-        const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
-
-        for (let t = 0; t < thnCount; t++) {
-            let pAvg = 0;
-            thiessenResults.forEach(res => {
-                res.w = res.area / totalArea;
-                pAvg += (currentDB[res.id].d[t] * res.w);
-            });
-            rainSeries.push(Number(pAvg.toFixed(2)));
-            labelsYear.push(startYear + t);
-            document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
-        }
-
-        let sumW = 0;
-        thiessenResults.forEach(res => {
-            sumW += res.w;
-            document.getElementById('tBody').innerHTML += `
-                <tr>
-                    <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
-                    <td>${res.area.toFixed(2)}</td>
-                    <td>${res.w.toFixed(4)}</td>
-                </tr>`;
-        });
-        document.getElementById('tFoot').innerHTML = `
-            <tr class="tfoot-bold">
-                <td style="text-align:left">TOTAL</td>
-                <td>${totalArea.toFixed(2)}</td>
-                <td>${sumW.toFixed(0)}.0000</td>
-            </tr>`;
-
-        updateChart(labelsYear, rainSeries);
-        runFullAnalysis(rainSeries);
-        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
-    }
-
-    function updateChart(labels, data) {
-        const ctx = document.getElementById('rainChart').getContext('2d');
-        if (rainChart) rainChart.destroy();
-        rainChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Curah Hujan (mm)',
-                    data: data,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { beginAtZero: false, ticks: { font: { size: 9 } } },
-                    x: { ticks: { font: { size: 9 } } }
-                }
-            }
-        });
-    }
-
-    function runFullAnalysis(data) {
-        const n = data.length;
-        const mean = data.reduce((a, b) => a + b) / n;
-        const sd = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / (n - 1));
-        const cv = sd / mean;
-        const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
-        const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
-
-        document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
-
-        const logD = data.map(x => Math.log10(x));
-        const lMean = logD.reduce((a,b)=>a+b)/n;
-        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
-        const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
-
-        const T = [2, 5, 10, 25, 50, 100];
-        T.forEach(t => {
-            const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
-            const rN = mean + (kt * sd);
-            const rLN = Math.pow(10, lMean + (kt * lSd));
-            const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
-            const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
-            const rLP = Math.pow(10, lMean + (kLP * lSd));
-            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
-        });
-
-        const skCrit = { "0.05": 0.27, "0.01": 0.32 };
-        const chiCrit = { "0.05": 5.99, "0.01": 9.21 };
-        
-        const testData = [
-            { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
-            { id: "Log-Normal", d: 0.14, chi: 10.5, okP: Math.abs(cs - (3*cv)) < 0.1 },
-            { id: "Gumbel", d: 0.10, chi: 1.9, okP: Math.abs(cs - 1.14) < 0.2 },
-            { id: "Log-Pearson III", d: 0.08, chi: 1.2, okP: true }
-        ];
-
-        let winners = [];
-        testData.forEach(m => {
-            const skS = m.d < skCrit["0.05"] ? "5%" : (m.d < skCrit["0.01"] ? "1%" : "FAIL");
-            const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
-            const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
-            if(pass) winners.push(m);
-            document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
-        });
-
-        const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
-        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
-    }
-
-    if(!document.getElementById('btnGoToHydraulic')){
-        const btn = document.createElement('button');
-        btn.id = 'btnGoToHydraulic';
-        btn.className = 'upload-btn';
-        btn.style.marginTop = '15px';
-        btn.style.background = 'var(--green)';
-        btn.innerText = 'LANJUT ANALISIS DEBIT PUNCAK →';
-        btn.onclick = () => switchToHydraulic();
-        document.getElementById('resTest').appendChild(btn);
-    }
-
-    function switchToHydraulic() {
-    const rows = document.querySelectorAll('#fBody tr');
-    if (rows.length === 0) return alert("Lakukan analisis hidrologi dahulu!");
-    
-    const r10 = parseFloat(rows[2].cells[4].innerText); 
-    document.getElementById('r24Input').value = r10;
-
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        document.getElementById(id).style.display = 'none';
-    });
-    document.getElementById('hydraulicSection').style.display = 'block';
 }
 
-function backToHydrology() {
-    document.getElementById('hydraulicSection').style.display = 'none';
-    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
-        document.getElementById(id).style.display = 'block';
-    });
+function applyC(value, label) {
+    const selectC = document.getElementById('hC');
+    let opt = document.createElement('option');
+    opt.value = value;
+    opt.text = label + " (" + value + ")";
+    selectC.add(opt);
+    selectC.value = value;
 }
 
-function calculateFullRational() {
-    const L = parseFloat(document.getElementById('lInput').value);
-    const S = parseFloat(document.getElementById('sLandInput').value);
-    const R24 = parseFloat(document.getElementById('r24Input').value);
-    const C = parseFloat(document.getElementById('cInput').value);
-    const A = totalAreaGlobal; 
+function calculateRational() {
+    const C = parseFloat(document.getElementById('hC').value);
+    const T = document.getElementById('hT').value;
+    const L = parseFloat(document.getElementById('hL').value);
+    const S = parseFloat(document.getElementById('hS_slope').value);
+    const A_ha = parseFloat(document.getElementById('hArea').value) * 100;
+    
+    const R = finalRainFreq[T];
+    if(!R) return alert("Data hujan tidak ada!");
 
-    if (!L || !S) return alert("Masukkan Panjang dan Kemiringan Saluran!");
+    const Tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
+    const I = (R / 24) * Math.pow((24 / (Tc/60)), (2/3));
+    const Q = 0.00278 * C * I * A_ha;
 
-    const tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
-    const tcJam = tc / 60;
-    const I = (R24 / 24) * Math.pow((24 / tcJam), (2/3));
-    const Q = 0.278 * C * I * A;
-
-    document.getElementById('tcRes').innerText = tc.toFixed(2) + " Menit";
-    document.getElementById('iRes').innerText = I.toFixed(2) + " mm/jam";
     document.getElementById('resRational').style.display = 'block';
     document.getElementById('rationalResult').innerHTML = `
-        DEBIT PUNCAK (Q10):<br>
-        <span style="font-size:24px">${Q.toFixed(3)} m³/s</span>
+        Q RANCANGAN: ${Q.toFixed(3)} m³/s <br>
+        <small>Tc: ${Tc.toFixed(1)} mnt | I: ${I.toFixed(1)} mm/jam</small>
     `;
 }
     
