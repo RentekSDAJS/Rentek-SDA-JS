@@ -102,50 +102,12 @@
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
-
-        <div id="resHydraulics" class="card" style="display:none">
-    <h3>7. Analisis Debit Banjir (Rasional)</h3>
-    <div style="font-size: 10px; margin-bottom: 10px;">
-        <label>Tata Guna Lahan:</label>
-        <select id="selectLanduse" class="upload-btn" style="background:#fff; color:#000; border:1px solid #ccc; margin-top:5px;">
-            <option value="0.70">Perumahan Padat (0.70)</option>
-            <option value="0.50">Perumahan Renggang (0.50)</option>
-            <option value="0.80">Kawasan Industri (0.80)</option>
-            <option value="0.25">RTH / Taman (0.25)</option>
-            <option value="0.95">Jalan Aspal/Beton (0.95)</option>
-        </select>
-        
-        <label>Panjang Saluran Utama (L) - Meter:</label>
-        <input type="number" id="inputL" value="500" style="width:100%; margin-bottom:10px;">
-        
-        <label>Kemiringan Saluran (S):</label>
-        <input type="number" id="inputS" value="0.01" step="0.001" style="width:100%; margin-bottom:10px;">
-        
-        <button class="upload-btn" style="background:var(--green)" onclick="calculateFlood()">HITUNG DEBIT BANJIR</button>
-    </div>
-
-    <table id="floodTable">
-        <thead>
-            <tr><th>Kala Ulang</th><th>I (mm/jam)</th><th>Q (m³/s)</th></tr>
-        </thead>
-        <tbody id="qBody"></tbody>
-    </table>
+    </div>
 </div>
-        
+
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-
-    const koefisienC = {
-        "Perumahan Padat": 0.70,
-        "Perumahan Renggang": 0.50,
-        "Kawasan Industri": 0.80,
-        "Perkantoran/Bisnis": 0.90,
-        "RTH / Taman": 0.25,
-        "Jalan Aspal/Beton": 0.95
-    };
-    let currentResultFlood = {}; 
-    let totalAreaAnalysis = 0;
-    
+    
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -267,7 +229,6 @@
             if (clip) {
                 const area = turf.area(clip) / 1000000;
                 totalArea += area;
-                totalAreaAnalysis = totalArea;
                 const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
                 const stId = pts.features[i].properties.id;
                 thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
@@ -313,8 +274,6 @@
         ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
-
-    
     function updateChart(labels, data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
         if (rainChart) rainChart.destroy();
@@ -391,48 +350,6 @@
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
-
-    function calculateFlood() {
-    const C = parseFloat(document.getElementById('selectLanduse').value);
-    const L = parseFloat(document.getElementById('inputL').value);
-    const S = parseFloat(document.getElementById('inputS').value);
-    const A = totalAreaAnalysis; // Diambil dari totalArea di processHydrology
-
-    if (!A) return alert("Silahkan input DAS terlebih dahulu!");
-
-    // 1. Hitung tc (Kirpich) - Output dalam menit
-    const tcMin = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
-    const tcHour = tcMin / 60;
-
-    const qBody = document.getElementById('qBody');
-    qBody.innerHTML = "";
-
-    // 2. Ambil data curah hujan dari hasil Analisis Frekuensi LP-III (sebagai standar)
-    // Kita asumsikan mengambil data dari baris tabel fBody yang sudah terisi
-    const rows = document.querySelectorAll('#fBody tr');
-    
-    rows.forEach(row => {
-        const T = row.cells[0].innerText;
-        const R24 = parseFloat(row.cells[4].innerText); // Mengambil kolom LP-III
-
-        // 3. Rumus Mononobe untuk Intensitas (I)
-        const I = (R24 / 24) * Math.pow((24 / tcHour), (2/3));
-        
-        // 4. Rumus Rasional Q = 1/360 * C * I * A (A dalam hektar atau km2 menyesuaikan konv)
-        // Jika A dalam km2, maka: Q = 0.278 * C * I * A
-        const Q = (1 / 360) * C * I * (A * 100); // A*100 konversi km2 ke hektar
-
-        qBody.innerHTML += `
-            <tr>
-                <td><b>${T}</b></td>
-                <td>${I.toFixed(2)}</td>
-                <td style="color:var(--red); font-weight:bold">${Q.toFixed(3)}</td>
-            </tr>`;
-    });
-    
-    document.getElementById('resHydraulics').style.display = 'block';
-}
-    
 </script>
 </body>
 </html>
