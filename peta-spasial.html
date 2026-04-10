@@ -38,6 +38,21 @@
         .popup-table tr:nth-child(even) { background: #f8fafc; }
         .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
         .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
+        .debit-card { 
+    background: #2563eb; 
+    color: white; 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-top: 15px; 
+    border-left: 5px solid #1e293b;}
+.debit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 11px;
+    margin-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    padding-top: 10px;}
     </style>
 </head>
 <body>
@@ -95,58 +110,77 @@
         </table>
     </div>
 
-    <div id="resTest" class="card" style="display:none">
+        <div id="resTest" class="card" style="display:none">
         <h3>6. Uji Kesesuaian (5% & 1%)</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
+    </div>
+</div>
 
-    <div id="resHydraulics" class="card" style="display:none">
-        <h3>7. Analisis Hidrolika (Debit Rasional)</h3>
-        <div style="font-size: 11px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-                <label>Koef. Limpasan (C):</label>
-                <input type="number" id="inpC" step="0.01" value="0.70" style="width:100%">
-            </div>
-            <div>
-                <label>Panjang Saluran (L - m):</label>
-                <input type="number" id="inpL" step="1" value="500" style="width:100%">
-            </div>
-            <div>
-                <label>Kemiringan (S):</label>
-                <input type="number" id="inpS" step="0.0001" value="0.01" style="width:100%">
-            </div>
-            <div>
-                <label>Periode Ulang (T):</label>
-                <select id="inpT" style="width:100%">
-                    <option value="0">2 Tahun</option>
-                    <option value="1">5 Tahun</option>
-                    <option value="2">10 Tahun</option>
-                    <option value="3">25 Tahun</option>
-                    <option value="4">50 Tahun</option>
-                    <option value="5">100 Tahun</option>
-                </select>
-            </div>
+        <div class="card">
+    <h3>7. Parameter Hidrolika (Input Manual)</h3>
+    <div style="margin-bottom: 10px;">
+        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Koefisien Pengaliran (C):</label>
+        <select id="selectC" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;">
+            <option value="0.85">Perdagangan Daerah Kota (0.70 - 0.95)</option>
+            <option value="0.60">Perdagangan Dekat Kota (0.50 - 0.70)</option>
+            <option value="0.40" selected>Pemukiman Rumah Tinggi (0.30 - 0.50)</option>
+            <option value="0.50">Pemukiman Terpencar (0.40 - 0.60)</option>
+            <option value="0.32">Kompleks Perumahan (0.25 - 0.40)</option>
+            <option value="0.60">Pemukiman Suburban (0.50 - 0.70)</option>
+            <option value="0.65">Industri Ringan (0.50 - 0.80)</option>
+            <option value="0.75">Industri Berat (0.60 - 0.90)</option>
+            <option value="0.17">Taman, Kuburan, Lapangan (0.10 - 0.25)</option>
+            <option value="0.30">Daerah Halaman KA (0.20 - 0.40)</option>
+            <option value="0.20">Daerah Tidak Terawat (0.10 - 0.30)</option>
+        </select>
+    </div>
+</div>
+
+<div style="margin-bottom: 10px;">
+        <label style="font-size: 10px; display: block; margin-bottom: 3px;">Jenis & Dimensi Saluran:</label>
+        <select id="selectTipeSaluran" style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 11px;" onchange="toggleCustomInput()">
+            <optgroup label="Precast (U-Ditch)">
+                <option value="precast_40">Precast 40 x 40 cm</option>
+                <option value="precast_60">Precast 60 x 60 cm</option>
+                <option value="precast_80">Precast 80 x 80 cm</option>
+                <option value="precast_100">Precast 100 x 100 cm</option>
+                <option value="precast_150">Precast 150 x 150 cm</option>
+                <option value="precast_200">Precast 200 x 200 cm</option>
+            </optgroup>
+            <optgroup label="Custom Penampang">
+                <option value="persegi">Persegi (Custom)</option>
+                <option value="trapesium">Trapesium (Custom)</option>
+                <option value="lingkaran">Lingkaran/Pipa (Custom)</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <div id="customDimensi" style="display:none; gap: 5px; margin-bottom: 10px; background: #f8fafc; padding: 10px; border-radius: 5px;">
+        <input type="number" id="inpB" placeholder="Lebar (m)" style="width:30%; font-size:10px;">
+        <input type="number" id="inpH" placeholder="Tinggi (m)" style="width:30%; font-size:10px;">
+        <input type="number" id="inpZ" placeholder="Z (Trapesium)" style="width:30%; font-size:10px;">
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label style="font-size: 10px; display: block;">Panjang (m):</label>
+            <input type="number" id="inputL" value="1000" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
         </div>
-        <button class="upload-btn" style="background:var(--green)" onclick="calculateRational()">HITUNG DEBIT (Q)</button>
-        
-        <div id="qResult" style="margin-top:15px; display:none">
-            <table style="background: #ecfdf5;">
-                <thead><tr><th>Waktu Kons (Tc)</th><th>Intensitas (I)</th><th>Debit (Q)</th></tr></thead>
-                <tbody><tr>
-                    <td id="outTc" style="font-weight:bold">-</td>
-                    <td id="outI" style="font-weight:bold">-</td>
-                    <td id="outQ" style="color:var(--blue); font-size:14px; font-weight:bold">-</td>
-                </tr></tbody>
-            </table>
+        <div style="flex: 1;">
+            <label style="font-size: 10px; display: block;">Kemiringan (S):</label>
+            <input type="number" id="inputS" value="0.01" step="0.001" style="width: 90%; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px;">
         </div>
     </div>
+</div>
 
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
+    let lastR24 = 0;
+    let lastTotalArea = 0;
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -170,6 +204,13 @@
         html += `</table></div>`;
         return html;
     }
+
+    function toggleCustomInput() {
+    const tipe = document.getElementById('selectTipeSaluran').value;
+    const div = document.getElementById('customDimensi');
+    // Jika pilih selain precast, munculkan kotak input lebar/tinggi
+    div.style.display = (tipe === 'persegi' || tipe === 'lingkaran') ? 'flex' : 'none';
+}
 
     // --- PROSES SALURAN MIKRO (Cyan, 1.5) ---
     if (typeof dataMikro !== 'undefined') {
@@ -243,76 +284,101 @@
         reader.readAsText(file);
     };
 
-    function processHydrology(json) {
-        analysisLayer.clearLayers();
-        ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
+function processHydrology(json) {
+    analysisLayer.clearLayers();
+    ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+    });
 
-        let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
-        let mergedDAS;
-        features.forEach(f => {
-            const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
-            f.geometry.coordinates = fix(f.geometry.coordinates);
-            mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
-        });
+    let features = json.features || (json.geometries ? json.geometries.map(g => ({type:"Feature", geometry:g, properties:{}})) : [json]);
+    let mergedDAS = null;
 
-        L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
-        map.fitBounds(L.geoJSON(mergedDAS).getBounds());
+    // Fix Koordinat & Gabungkan Feature
+    features.forEach(f => {
+        const fix = (coords) => coords.map(c => Array.isArray(c[0]) ? fix(c) : (c[0] > 1000 ? proj4("EPSG:32748", "WGS84", c) : c));
+        f.geometry.coordinates = fix(f.geometry.coordinates);
+        mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
+    });
 
-        const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
-        const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
-        
-        let thiessenResults = [], totalArea = 0;
+    if (!mergedDAS) return;
 
-        voronoi.features.forEach((v, i) => {
-            const clip = turf.intersect(v, mergedDAS);
-            if (clip) {
-                const area = turf.area(clip) / 1000000;
-                totalArea += area;
-                const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
-                const stId = pts.features[i].properties.id;
-                thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
-                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
-            }
-        });
+    L.geoJSON(mergedDAS, { style: { color: '#dc2626', weight: 3, fillOpacity: 0 } }).addTo(analysisLayer);
+    map.fitBounds(L.geoJSON(mergedDAS).getBounds());
 
-        let rainSeries = [];
-        let labelsYear = [];
-        const startYear = 2000;
-        const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
+    const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
+    const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
+    
+    let thiessenResults = [], totalArea = 0;
 
-        for (let t = 0; t < thnCount; t++) {
-            let pAvg = 0;
-            thiessenResults.forEach(res => {
-                res.w = res.area / totalArea;
-                pAvg += (currentDB[res.id].d[t] * res.w);
-            });
-            rainSeries.push(Number(pAvg.toFixed(2)));
-            labelsYear.push(startYear + t);
-            document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
+    voronoi.features.forEach((v, i) => {
+        const clip = turf.intersect(v, mergedDAS);
+        if (clip) {
+            const area = turf.area(clip) / 1000000;
+            totalArea += area;
+            const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
+            const stId = pts.features[i].properties.id;
+            thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
+            L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
         }
+    });
 
-        let sumW = 0;
+    // Hitung Hujan Wilayah
+    let rainSeries = [];
+    let labelsYear = [];
+    const startYear = 2000;
+    const firstStId = Object.keys(currentDB)[0];
+    const thnCount = currentDB[firstStId].d.length;
+
+    for (let t = 0; t < thnCount; t++) {
+        let pAvg = 0;
         thiessenResults.forEach(res => {
-            sumW += res.w;
-            document.getElementById('tBody').innerHTML += `
-                <tr>
-                    <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
-                    <td>${res.area.toFixed(2)}</td>
-                    <td>${res.w.toFixed(4)}</td>
-                </tr>`;
+            res.w = res.area / totalArea;
+            pAvg += (currentDB[res.id].d[t] * res.w);
         });
-        document.getElementById('tFoot').innerHTML = `
-            <tr class="tfoot-bold">
-                <td style="text-align:left">TOTAL</td>
-                <td>${totalArea.toFixed(2)}</td>
-                <td>${sumW.toFixed(0)}.0000</td>
-            </tr>`;
-
-        updateChart(labelsYear, rainSeries);
-        runFullAnalysis(rainSeries);
-        ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
+        rainSeries.push(Number(pAvg.toFixed(2)));
+        labelsYear.push(startYear + t);
+        document.getElementById('yBody').innerHTML += `<tr><td>${startYear + t}</td><td style="font-weight:bold">${pAvg.toFixed(2)}</td></tr>`;
     }
 
+    // Tampilkan Tabel Thiessen
+    let sumW = 0;
+    thiessenResults.forEach(res => {
+        sumW += res.w;
+        document.getElementById('tBody').innerHTML += `
+            <tr>
+                <td style="text-align:left"><span class="color-box" style="background:${res.color}"></span>${res.name}</td>
+                <td>${res.area.toFixed(2)}</td>
+                <td>${res.w.toFixed(4)}</td>
+            </tr>`;
+    });
+    document.getElementById('tFoot').innerHTML = `
+        <tr class="tfoot-bold">
+            <td style="text-align:left">TOTAL</td>
+            <td>${totalArea.toFixed(2)}</td>
+            <td>${sumW.toFixed(0)}.0000</td>
+        </tr>`;
+
+    updateChart(labelsYear, rainSeries);
+    runFullAnalysis(rainSeries);
+    
+// Cari baris ini di akhir fungsi processHydrology
+    updateChart(labelsYear, rainSeries);
+    runFullAnalysis(rainSeries);
+    
+    // UBAH BAGIAN INI:
+    lastR24 = rainSeries[rainSeries.length - 1]; // Mengambil data tahun terakhir
+    lastTotalArea = totalArea; // Mengambil luas dari hasil hitung Thiessen
+    
+    tampilkanHasilDebit(lastR24, lastTotalArea);
+    // ------------------
+
+    ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+    });
+} // Akhir fungsi processHydrology
+    
     function updateChart(labels, data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
         if (rainChart) rainChart.destroy();
@@ -388,56 +454,136 @@
 
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
+    };
+
+// FUNGSI BARU: Mengambil input dari UI dan menghitung dengan rumus Kirpich
+function kalkulasiHidrolikaUser(r24, areaKm2) {
+    const C = parseFloat(document.getElementById('selectC').value);
+    const L = parseFloat(document.getElementById('inputL').value);
+    const S = parseFloat(document.getElementById('inputS').value);
+    
+    // Proteksi jika user memasukkan angka 0
+    const safeS = S <= 0 ? 0.001 : S;
+    const safeL = L <= 0 ? 1 : L;
+
+    // Rumus Kirpich untuk Tc (menit)
+    const tcMinutes = 0.0195 * Math.pow(safeL, 0.77) * Math.pow(safeS, -0.385);
+    const tcHours = tcMinutes / 60;
+
+    // Rumus Mononobe untuk Intensitas (I)
+    const intensitas = (r24 / 24) * Math.pow((24 / tcHours), (2 / 3));
+
+    // Rumus Rasional (Q)
+    const debit = 0.278 * C * intensitas * areaKm2;
+
+    return {
+        q: debit.toFixed(3),
+        i: intensitas.toFixed(2),
+        c: C,
+        tc: tcMinutes.toFixed(1),
+        l: safeL,
+        s: safeS
+    };
+}
+
+// FUNGSI BARU: Menampilkan hasil ke panel
+function tampilkanHasilDebit(r24, luas) {
+    const hasil = kalkulasiHidrolikaUser(r24, luas);
+    const qKapasitas = hitungKapasitasSaluran(hasil.s);
+    
+    // Logika cek kapasitas
+    const status = qKapasitas > hasil.q ? "✅ AMAN" : "⚠️ MELUAP";
+    const colorStatus = qKapasitas > hasil.q ? "#059669" : "#dc2626";
+
+    let divDebit = document.getElementById('debit-result-card');
+    if (!divDebit) {
+        divDebit = document.createElement('div');
+        divDebit.id = 'debit-result-card';
+        divDebit.className = 'debit-card';
+        document.getElementById('panel').appendChild(divDebit);
     }
 
-    // Global variable untuk menyimpan hasil frekuensi agar bisa diakses di hidrolika
-    let designRainfall = [];
-
-    // Modifikasi bagian akhir runFullAnalysis untuk menyimpan data hujan rencana
-    // (Tambahkan baris ini di baris terakhir runFullAnalysis)
-    // designRainfall = [rN, rLN, rG, rLP]; // Tergantung metode terpilih
-
-    function calculateRational() {
-        const C = parseFloat(document.getElementById('inpC').value);
-        const L = parseFloat(document.getElementById('inpL').value);
-        const S = parseFloat(document.getElementById('inpS').value);
-        const idxT = document.getElementById('inpT').selectedIndex;
+    divDebit.style.backgroundColor = '#1e293b';
+    divDebit.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="color: #f59e0b; font-size: 10px; font-weight: bold;">ANALISIS KAPASITAS MANNING</div>
+            <div style="background:${colorStatus}; color:white; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold;">${status}</div>
+        </div>
+        <h1 style="margin:8px 0; font-size: 26px; color: white;">Q<sub>Banjir</sub>: ${hasil.q} <span style="font-size: 12px;">m³/s</span></h1>
+        <h2 style="margin:0; font-size: 18px; color: #94a3b8;">Q<sub>Saluran</sub>: ${qKapasitas.toFixed(3)} <span style="font-size: 12px;">m³/s</span></h2>
         
-        // Luas DAS otomatis diambil dari totalArea hasil Thiessen (km2)
-        // Kita butuh luas dalam satuan Hektar (Ha) untuk rumus Rasional praktis: Q = 0.00278 * C * I * A
-        const AreaHa = totalArea * 100; 
+        <div class="debit-grid" style="border-top: 1px solid #334155; margin-top: 10px; padding-top: 10px; font-size: 11px;">
+            <div>Intensitas: <b>${hasil.i} mm/j</b></div>
+            <div>Tc: <b>${hasil.tc} min</b></div>
+            <div>n Manning: <b>0.015</b></div>
+            <div>Kemiringan S: <b>${hasil.s}</b></div>
+        </div>
+    `;
+}
 
-        // 1. Hitung Tc (Waktu Konsentrasi) rumus Kirpich
-        // Tc = 0.0195 * L^0.77 * S^-0.385 (L dalam meter)
-        const TcMin = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
-        const TcJam = TcMin / 60;
+function hitungKapasitasSaluran(S) {
+    const tipe = document.getElementById('selectTipeSaluran').value;
+    const n = 0.015; // Koefisien Manning untuk Beton
+    let A = 0, P = 0;
 
-        // 2. Ambil Hujan Rencana (R24) dari baris tabel Analisis Frekuensi sesuai T terpilih
-        const rows = document.getElementById('fBody').getElementsByTagName('tr');
-        const cells = rows[idxT].getElementsByTagName('td');
-        // Kita ambil kolom ke-5 (Log-Pearson III) sebagai default teknis sesuai UI master Anda
-        const R24 = parseFloat(cells[4].innerText);
+    // Ambil nilai input custom (jika ada)
+    let b = parseFloat(document.getElementById('inpB').value) || 0;
+    let h = parseFloat(document.getElementById('inpH').value) || 0;
+    let z = parseFloat(document.getElementById('inpZ').value) || 0;
 
-        // 3. Hitung Intensitas (I) menggunakan rumus Mononobe
-        // I = (R24/24) * (24/Tc)^(2/3)
-        const I = (R24 / 24) * Math.pow((24 / TcJam), (2/3));
-
-        // 4. Hitung Debit (Q) = 0.00278 * C * I * A
-        const Q = 0.00278 * C * I * AreaHa;
-
-        // Tampilkan Hasil
-        document.getElementById('outTc').innerText = TcMin.toFixed(2) + " Menit";
-        document.getElementById('outI').innerText = I.toFixed(2) + " mm/jam";
-        document.getElementById('outQ').innerText = Q.toFixed(3) + " m³/det";
-        document.getElementById('qResult').style.display = 'block';
+    // Logika dimensi berdasarkan pilihan dropdown
+    if (tipe.startsWith('precast_')) {
+        let size = parseFloat(tipe.split('_')[1]) / 100; // cm ke m (contoh 40 jadi 0.4)
+        A = size * size;        // Luas Basah Penampang
+        P = size + (2 * size);  // Keliling Basah
+    } else if (tipe === 'persegi') {
+        A = b * h;
+        P = b + (2 * h);
+    } else if (tipe === 'trapesium') {
+        A = (b + z * h) * h;
+        P = b + 2 * h * Math.sqrt(1 + z * z);
+    } else if (tipe === 'lingkaran') {
+        let D = b; // Gunakan input 'B' sebagai Diameter
+        A = (Math.PI * D * D) / 4;
+        P = Math.PI * D;
     }
 
-    // Pastikan card hidrolika muncul saat proses selesai
-    // Tambahkan 'resHydraulics' ke array display di akhir fungsi processHydrology
-    // ['resThiessen', ..., 'resTest', 'resHydraulics'].forEach(...)
+    if (P === 0) return 0;
+    let R = A / P; // Jari-jari Hidrolis
+    let V = (1 / n) * Math.pow(R, 2 / 3) * Math.sqrt(S); // Kecepatan Manning
+    return V * A; // Debit Kapasitas (Q = V * A)
+}
     
-let designRainfall = [];
+    // Hapus card hasil sebelumnya agar tidak menumpuk
+    const existingCard = document.querySelector('.debit-card');
+    if (existingCard) existingCard.remove();
+
+    const divDebit = document.createElement('div');
+    divDebit.className = 'debit-card';
+    divDebit.style.backgroundColor = '#1e293b'; // Warna background gelap
+    divDebit.innerHTML = `
+        <div style="color: #f59e0b; font-size: 10px; font-weight: bold; margin-bottom: 5px;">ESTIMASI DEBIT (RASIONAL & KIRPICH)</div>
+        <h1 style="margin:0; font-size: 28px; color: white;">${hasil.q} <span style="font-size: 14px;">m³/s</span></h1>
+        <div class="debit-grid" style="grid-template-columns: 1fr 1fr; display: grid; gap: 8px; margin-top: 10px; border-top: 1px solid #475569; padding-top: 10px;">
+            <div>Intensitas (I): <b>${hasil.i} mm/j</b></div>
+            <div>Tc: <b>${hasil.tc} min</b></div>
+            <div>Koef C: <b>${hasil.c}</b></div>
+            <div>S: <b>${hasil.s}</b></div>
+        </div>
+    `;
+    container.appendChild(divDebit);
+}
+
+['selectC', 'inputL', 'inputS', 'selectTipeSaluran', 'inpB', 'inpH', 'inpZ'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('input', () => {
+            if (lastR24 > 0 && lastTotalArea > 0) {
+                tampilkanHasilDebit(lastR24, lastTotalArea);
+            }
+        });
+    }
+});
     
-</script>
-</body>
+</script> </body>
 </html>
