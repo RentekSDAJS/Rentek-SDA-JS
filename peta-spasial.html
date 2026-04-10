@@ -105,6 +105,47 @@
     </div>
 </div>
 
+    <div id="resHydraulics" class="card" style="display:none">
+        <h3>7. Analisis Hidrolika (Debit Rasional)</h3>
+        <div style="font-size: 11px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+                <label>Koef. Limpasan (C):</label>
+                <input type="number" id="inpC" step="0.01" value="0.70" style="width:100%">
+            </div>
+            <div>
+                <label>Panjang Saluran (L - m):</label>
+                <input type="number" id="inpL" step="1" value="500" style="width:100%">
+            </div>
+            <div>
+                <label>Kemiringan (S):</label>
+                <input type="number" id="inpS" step="0.0001" value="0.01" style="width:100%">
+            </div>
+            <div>
+                <label>Periode Ulang (T):</label>
+                <select id="inpT" style="width:100%">
+                    <option value="0">2 Tahun</option>
+                    <option value="1">5 Tahun</option>
+                    <option value="2">10 Tahun</option>
+                    <option value="3">25 Tahun</option>
+                    <option value="4">50 Tahun</option>
+                    <option value="5">100 Tahun</option>
+                </select>
+            </div>
+        </div>
+        <button class="upload-btn" style="background:var(--green)" onclick="calculateRational()">HITUNG DEBIT (Q)</button>
+        
+        <div id="qResult" style="margin-top:15px; display:none">
+            <table style="background: #ecfdf5;">
+                <thead><tr><th>Waktu Kons (Tc)</th><th>Intensitas (I)</th><th>Debit (Q)</th></tr></thead>
+                <tbody><tr>
+                    <td id="outTc" style="font-weight:bold">-</td>
+                    <td id="outI" style="font-weight:bold">-</td>
+                    <td id="outQ" style="color:var(--blue); font-size:14px; font-weight:bold">-</td>
+                </tr></tbody>
+            </table>
+        </div>
+    </div>
+
 <script>
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
     
@@ -350,6 +391,55 @@
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     }
+
+    // Global variable untuk menyimpan hasil frekuensi agar bisa diakses di hidrolika
+    let designRainfall = [];
+
+    // Modifikasi bagian akhir runFullAnalysis untuk menyimpan data hujan rencana
+    // (Tambahkan baris ini di baris terakhir runFullAnalysis)
+    // designRainfall = [rN, rLN, rG, rLP]; // Tergantung metode terpilih
+
+    function calculateRational() {
+        const C = parseFloat(document.getElementById('inpC').value);
+        const L = parseFloat(document.getElementById('inpL').value);
+        const S = parseFloat(document.getElementById('inpS').value);
+        const idxT = document.getElementById('inpT').selectedIndex;
+        
+        // Luas DAS otomatis diambil dari totalArea hasil Thiessen (km2)
+        // Kita butuh luas dalam satuan Hektar (Ha) untuk rumus Rasional praktis: Q = 0.00278 * C * I * A
+        const AreaHa = totalArea * 100; 
+
+        // 1. Hitung Tc (Waktu Konsentrasi) rumus Kirpich
+        // Tc = 0.0195 * L^0.77 * S^-0.385 (L dalam meter)
+        const TcMin = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
+        const TcJam = TcMin / 60;
+
+        // 2. Ambil Hujan Rencana (R24) dari baris tabel Analisis Frekuensi sesuai T terpilih
+        const rows = document.getElementById('fBody').getElementsByTagName('tr');
+        const cells = rows[idxT].getElementsByTagName('td');
+        // Kita ambil kolom ke-5 (Log-Pearson III) sebagai default teknis sesuai UI master Anda
+        const R24 = parseFloat(cells[4].innerText);
+
+        // 3. Hitung Intensitas (I) menggunakan rumus Mononobe
+        // I = (R24/24) * (24/Tc)^(2/3)
+        const I = (R24 / 24) * Math.pow((24 / TcJam), (2/3));
+
+        // 4. Hitung Debit (Q) = 0.00278 * C * I * A
+        const Q = 0.00278 * C * I * AreaHa;
+
+        // Tampilkan Hasil
+        document.getElementById('outTc').innerText = TcMin.toFixed(2) + " Menit";
+        document.getElementById('outI').innerText = I.toFixed(2) + " mm/jam";
+        document.getElementById('outQ').innerText = Q.toFixed(3) + " m³/det";
+        document.getElementById('qResult').style.display = 'block';
+    }
+
+    // Pastikan card hidrolika muncul saat proses selesai
+    // Tambahkan 'resHydraulics' ke array display di akhir fungsi processHydrology
+    // ['resThiessen', ..., 'resTest', 'resHydraulics'].forEach(...)
+    
+let designRainfall = [];
+    
 </script>
 </body>
 </html>
