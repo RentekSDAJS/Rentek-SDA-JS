@@ -182,6 +182,10 @@
         const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
         
         let thiessen = [], totalArea = 0;
+// Definisikan palet warna untuk membedakan tiap area stasiun
+        const colors = ['#2563eb', '#059669', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
+        
+        let thiessen = [], totalArea = 0;
         voronoi.features.forEach((v, i) => {
             const clip = turf.intersect(v, mergedDAS);
             if (clip) {
@@ -189,7 +193,16 @@
                 totalArea += a;
                 const sid = pts.features[i].properties.id;
                 thiessen.push({ id: sid, name: pts.features[i].properties.name, area: a });
-                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillOpacity: 0.3 } }).addTo(analysisLayer);
+                
+                // BERIKAN WARNA BERBEDA DI SINI
+                L.geoJSON(clip, { 
+                    style: { 
+                        color: 'white', 
+                        weight: 1.5, 
+                        fillColor: colors[i % colors.length], // Mengambil warna dari palet berdasarkan urutan
+                        fillOpacity: 0.4 // Tingkatkan sedikit opacity agar warna terlihat jelas
+                    } 
+                }).addTo(analysisLayer);
             }
         });
 
