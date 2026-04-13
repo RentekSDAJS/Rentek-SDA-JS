@@ -111,7 +111,7 @@
             </td></tr>
             <tr><td style="text-align:left">Tutupan Lahan (C)</td><td>
                 <select id="h-c-select" style="width:100%" onchange="document.getElementById('h-c').value = this.value">
-                    <option value="0.90">Perdagangan/Kota (0.7-0.95)</option>
+                    <option value="0.90">Perdagangan Daerah Kota (0.70-0.95)</option>                 
                     <option value="0.60">Pemukiman Padat (0.5-0.7)</option>
                     <option value="0.40">Pemukiman Renggang (0.3-0.5)</option>
                     <option value="0.70">Industri (0.5-0.9)</option>
@@ -331,7 +331,7 @@ function hitungKapasitasSaluran() {
     const tBody = document.getElementById('fBody');
     if (!mergedDAS || tBody.rows.length === 0) return alert("Selesaikan Analisis Hidrologi dulu!");
 
-    // 1. Debit Rencana (Beban)
+    // 1. Ambil Parameter Input
     const idx = {"2":0, "5":1, "10":2, "25":3, "50":4, "100":5}[document.getElementById('h-t-select').value];
     const R24 = parseFloat(tBody.rows[idx].cells[4].innerText); 
     const C = parseFloat(document.getElementById('h-c').value);
@@ -339,11 +339,12 @@ function hitungKapasitasSaluran() {
     const S = parseFloat(document.getElementById('h-s-ras').value);
     const A_km2 = turf.area(mergedDAS) / 1000000;
 
+    // Perhitungan Q Rencana (Rasional)
     const Tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
     const I = (R24 / 24) * Math.pow((24 / (Tc / 60)), (2/3));
     const Q_rencana = 0.278 * C * I * A_km2;
 
-    // 2. Dimensi & Kapasitas Full
+    // 2. Dimensi Saluran
     const tipe = document.getElementById('h-tipe').value;
     const n = parseFloat(document.getElementById('h-n').value);
     let b, H_total;
@@ -355,48 +356,46 @@ function hitungKapasitasSaluran() {
         H_total = parseFloat(document.getElementById('h-h').value);
     }
 
-    // Hitung Kapasitas Full (Manning)
+    // Perhitungan Kapasitas Maksimum (Q Full)
     const A_full = b * H_total;
     const P_full = b + (2 * H_total);
     const Q_full = (1/n) * A_full * Math.pow((A_full/P_full), 2/3) * Math.sqrt(S);
 
-    // 3. Estimasi Tinggi Muka Air (y) & Kecepatan (V)
-    // Pendekatan rasio untuk saluran persegi (y/H ≈ (Q_rencana/Q_full)^0.6 untuk estimasi cepat)
+    // 3. Kalkulasi Tinggi Muka Air Aktual (y)
+    // Menggunakan Power Law Approximation untuk Saluran Persegi
     let y = H_total * Math.pow((Q_rencana / Q_full), 0.6);
-    if (y > H_total) y = H_total; // Mentok di tinggi saluran
-    const V_aktual = Q_rencana / (b * y);
-
-    // 4. Penentuan Freeboard (F) Berdasarkan Tabel Referensi Anda
-    let f_required = 0.50; // Default untuk > 15 m3/s
-    if (Q_rencana <= 1.5) f_required = 0.20;
-    else if (Q_rencana <= 5.0) f_required = 0.20;
-    else if (Q_rencana <= 10.0) f_required = 0.25;
-    else if (Q_rencana <= 15.0) f_required = 0.30;
-
+    if (y > H_total) y = H_total; 
     const f_aktual = H_total - y;
-    const isSafe = (Q_rencana < Q_full) && (f_aktual >= f_required);
 
-    // 5. Tampilan Hasil
+    // 4. LOGIKA TABEL FREEBOARD (SESUAI PERMINTAAN)
+    let f_required = 0.10; // Default sangat kecil
+    if (Q_rencana >= 0.50 && Q_rencana < 5.00) f_required = 0.20;
+    else if (Q_rencana >= 5.00 && Q_rencana < 10.00) f_required = 0.25;
+    else if (Q_rencana >= 10.00 && Q_rencana <= 15.00) f_required = 0.30;
+    else if (Q_rencana > 15.00) f_required = 0.40;
+
+    // 5. Validasi Final
+    const isSafeQ = Q_rencana < Q_full;
+    const isSafeF = f_aktual >= f_required;
+    const isSafeTotal = isSafeQ && isSafeF;
+
+    // Tampilkan ke UI
     document.getElementById('resHydraulic').style.display = 'block';
     const resDiv = document.getElementById('hydResultSummary');
-    resDiv.className = isSafe ? 'best-badge' : 'best-badge'; // Tetap gunakan class badge Anda
-    resDiv.style.background = isSafe ? 'var(--green)' : 'var(--red)';
-    resDiv.style.borderLeft = "5px solid white";
+    resDiv.style.background = isSafeTotal ? 'var(--green)' : 'var(--red)';
 
     resDiv.innerHTML = `
-        <h2 style="color:white; margin:0">${isSafe ? 'AMAN' : 'OVERFLOW/KRITIS'}</h2>
-        <div style="font-size:11px; margin-bottom:10px">Status Tinggi Jagaan (Freeboard)</div>
+        <h2 style="color:white; margin:0">${isSafeTotal ? 'AMAN' : 'TIDAK AMAN'}</h2>
+        <p style="color:white; font-size:10px; margin:5px 0">
+            ${!isSafeQ ? '⚠️ Kapasitas saluran tidak cukup!' : (!isSafeF ? '⚠️ Freeboard tidak memenuhi syarat!' : 'Kapasitas & Freeboard OK')}
+        </p>
         
-        <table style="background:rgba(255,255,255,0.1); color:white; width:100%">
-            <tr><td>Tinggi Saluran (H)</td><td>${H_total.toFixed(2)} m</td></tr>
-            <tr><td>Tinggi Muka Air (y)</td><td>${y.toFixed(2)} m</td></tr>
-            <tr><td>Freeboard Tersedia</td><td style="font-weight:bold">${f_aktual.toFixed(2)} m</td></tr>
+        <table style="background:rgba(255,255,255,0.1); color:white; width:100%; margin-top:10px">
+            <tr><td>Q Rencana</td><td>${Q_rencana.toFixed(3)} m³/dt</td></tr>
+            <tr><td>Freeboard Aktual</td><td>${f_aktual.toFixed(2)} m</td></tr>
             <tr><td>Freeboard Syarat</td><td>${f_required.toFixed(2)} m</td></tr>
+            <tr><td>Status Jagaan</td><td><b>${isSafeF ? 'MEMENUHI' : 'KURANG'}</b></td></tr>
         </table>
-
-        <div style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.3); padding-top:5px">
-            <small>Q Beban: ${Q_rencana.toFixed(3)} m³/s | V: ${V_aktual.toFixed(2)} m/s</small>
-        </div>
     `;
 }
     
