@@ -180,12 +180,14 @@
 
         const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
         const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
+    
+// 1. Definisikan palet warna di awal
+        const colors = ['#2563eb', '#059669', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#0ea5e9'];
         
-        let thiessen = [], totalArea = 0;
-// Definisikan palet warna untuk membedakan tiap area stasiun
-        const colors = ['#2563eb', '#059669', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2'];
-        
-        let thiessen = [], totalArea = 0;
+        // 2. Deklarasikan variabel CUKUP SATU KALI
+        let thiessen = [];
+        let totalArea = 0;
+
         voronoi.features.forEach((v, i) => {
             const clip = turf.intersect(v, mergedDAS);
             if (clip) {
@@ -194,13 +196,13 @@
                 const sid = pts.features[i].properties.id;
                 thiessen.push({ id: sid, name: pts.features[i].properties.name, area: a });
                 
-                // BERIKAN WARNA BERBEDA DI SINI
+                // 3. Gambar poligon dengan warna dinamis dari palet
                 L.geoJSON(clip, { 
                     style: { 
-                        color: 'white', 
+                        color: 'white',      // Warna garis tepi
                         weight: 1.5, 
-                        fillColor: colors[i % colors.length], // Mengambil warna dari palet berdasarkan urutan
-                        fillOpacity: 0.4 // Tingkatkan sedikit opacity agar warna terlihat jelas
+                        fillColor: colors[i % colors.length], // Warna isi beda-beda
+                        fillOpacity: 0.5     // Transparansi agar peta dasar terlihat
                     } 
                 }).addTo(analysisLayer);
             }
