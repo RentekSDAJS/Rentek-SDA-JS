@@ -331,9 +331,9 @@ function hitungKapasitasSaluran() {
     const tBody = document.getElementById('fBody');
     if (!mergedDAS || tBody.rows.length === 0) return alert("Selesaikan Analisis Hidrologi dulu!");
 
-    // --- 1. Perhitungan Debit Rasional (Q Rencana) ---
+    // 1. Debit Rencana (Beban)
     const idx = {"2":0, "5":1, "10":2, "25":3, "50":4, "100":5}[document.getElementById('h-t-select').value];
-    const R24 = parseFloat(tBody.rows[idx].cells[4].innerText); // Mengambil kolom LP-III
+    const R24 = parseFloat(tBody.rows[idx].cells[4].innerText); 
     const C = parseFloat(document.getElementById('h-c').value);
     const L = parseFloat(document.getElementById('h-l').value);
     const S = parseFloat(document.getElementById('h-s-ras').value);
@@ -343,51 +343,60 @@ function hitungKapasitasSaluran() {
     const I = (R24 / 24) * Math.pow((24 / (Tc / 60)), (2/3));
     const Q_rencana = 0.278 * C * I * A_km2;
 
-    // --- 2. Perhitungan Kapasitas Saluran (Q Kapasitas - Manning) ---
+    // 2. Dimensi & Kapasitas Full
     const tipe = document.getElementById('h-tipe').value;
     const n = parseFloat(document.getElementById('h-n').value);
-    let A_sal, P_sal, b_val, h_val;
+    let b, H_total;
 
     if (tipe === 'precast') {
-        b_val = h_val = parseFloat(document.getElementById('h-precast-size').value);
-        A_sal = b_val * h_val;
-        P_sal = b_val + (2 * h_val);
-    } else if (tipe === 'persegi') {
-        b_val = parseFloat(document.getElementById('h-b').value);
-        h_val = parseFloat(document.getElementById('h-h').value);
-        A_sal = b_val * h_val;
-        P_sal = b_val + (2 * h_val);
-    } else { // Lingkaran / Pipa
-        const d = parseFloat(document.getElementById('h-b').value); // b sebagai diameter
-        A_sal = 0.25 * Math.PI * Math.pow(d, 2);
-        P_sal = Math.PI * d;
+        b = H_total = parseFloat(document.getElementById('h-precast-size').value);
+    } else {
+        b = parseFloat(document.getElementById('h-b').value);
+        H_total = parseFloat(document.getElementById('h-h').value);
     }
 
-    const R_hidrolis = A_sal / P_sal;
-    const V = (1 / n) * Math.pow(R_hidrolis, (2/3)) * Math.sqrt(S);
-    const Q_kapasitas = A_sal * V;
+    // Hitung Kapasitas Full (Manning)
+    const A_full = b * H_total;
+    const P_full = b + (2 * H_total);
+    const Q_full = (1/n) * A_full * Math.pow((A_full/P_full), 2/3) * Math.sqrt(S);
 
-    // --- 3. Pengujian Terbalik ---
-    const ratio = Q_rencana / Q_kapasitas;
-    const isSafe = ratio < 0.8; // Safety factor 20%
-    const statusColor = isSafe ? 'var(--green)' : 'var(--red)';
-    const statusText = isSafe ? 'AMAN (Kapasitas Mencukupi)' : 'BAHAYA (Kapasitas Melimpah)';
+    // 3. Estimasi Tinggi Muka Air (y) & Kecepatan (V)
+    // Pendekatan rasio untuk saluran persegi (y/H ≈ (Q_rencana/Q_full)^0.6 untuk estimasi cepat)
+    let y = H_total * Math.pow((Q_rencana / Q_full), 0.6);
+    if (y > H_total) y = H_total; // Mentok di tinggi saluran
+    const V_aktual = Q_rencana / (b * y);
 
+    // 4. Penentuan Freeboard (F) Berdasarkan Tabel Referensi Anda
+    let f_required = 0.50; // Default untuk > 15 m3/s
+    if (Q_rencana <= 1.5) f_required = 0.20;
+    else if (Q_rencana <= 5.0) f_required = 0.20;
+    else if (Q_rencana <= 10.0) f_required = 0.25;
+    else if (Q_rencana <= 15.0) f_required = 0.30;
+
+    const f_aktual = H_total - y;
+    const isSafe = (Q_rencana < Q_full) && (f_aktual >= f_required);
+
+    // 5. Tampilan Hasil
     document.getElementById('resHydraulic').style.display = 'block';
-    document.getElementById('hydResultSummary').innerHTML = `
-        <div style="background:${statusColor}; color:white; padding:15px; border-radius:8px; text-align:center;">
-            <h1 style="margin:0">${(ratio * 100).toFixed(1)}%</h1>
-            <b>${statusText}</b>
-        </div>
-        <table style="margin-top:10px">
-            <tr><td>Q Rencana (Beban)</td><td><b>${Q_rencana.toFixed(3)} m³/s</b></td></tr>
-            <tr><td>Q Kapasitas (Saluran)</td><td><b>${Q_kapasitas.toFixed(3)} m³/s</b></td></tr>
-            <tr><td>Kecepatan Aliran (V)</td><td>${V.toFixed(2)} m/s</td></tr>
+    const resDiv = document.getElementById('hydResultSummary');
+    resDiv.className = isSafe ? 'best-badge' : 'best-badge'; // Tetap gunakan class badge Anda
+    resDiv.style.background = isSafe ? 'var(--green)' : 'var(--red)';
+    resDiv.style.borderLeft = "5px solid white";
+
+    resDiv.innerHTML = `
+        <h2 style="color:white; margin:0">${isSafe ? 'AMAN' : 'OVERFLOW/KRITIS'}</h2>
+        <div style="font-size:11px; margin-bottom:10px">Status Tinggi Jagaan (Freeboard)</div>
+        
+        <table style="background:rgba(255,255,255,0.1); color:white; width:100%">
+            <tr><td>Tinggi Saluran (H)</td><td>${H_total.toFixed(2)} m</td></tr>
+            <tr><td>Tinggi Muka Air (y)</td><td>${y.toFixed(2)} m</td></tr>
+            <tr><td>Freeboard Tersedia</td><td style="font-weight:bold">${f_aktual.toFixed(2)} m</td></tr>
+            <tr><td>Freeboard Syarat</td><td>${f_required.toFixed(2)} m</td></tr>
         </table>
-        <p style="font-size:9px; color:#64748b; margin-top:10px;">
-            *Analisis menggunakan asumsi saluran terisi penuh (full flow). 
-            Disarankan ratio beban/kapasitas < 80% sebagai ruang bebas (freeboard).
-        </p>
+
+        <div style="margin-top:10px; border-top:1px solid rgba(255,255,255,0.3); padding-top:5px">
+            <small>Q Beban: ${Q_rencana.toFixed(3)} m³/s | V: ${V_aktual.toFixed(2)} m/s</small>
+        </div>
     `;
 }
     
