@@ -98,60 +98,30 @@
         </div>
     </div>
 
-<div id="section-hidrolika" style="display:none">
-    <div class="card">
-        <h3>1. Parameter Analisis Rasional</h3>
-        <table>
-            <tr><td style="text-align:left">Kala Ulang</td><td>
-                <select id="h-t-select" style="width:100%">
-                    <option value="2">2 Tahun</option><option value="5">5 Tahun</option>
-                    <option value="10" selected>10 Tahun</option><option value="25">25 Tahun</option>
-                    <option value="50">50 Tahun</option><option value="100">100 Tahun</option>
-                </select>
-            </td></tr>
-            <tr><td style="text-align:left">Tutupan Lahan (C)</td><td>
-                <select id="h-c-select" style="width:100%" onchange="document.getElementById('h-c').value = this.value">
-                    <option value="0.90">Perdagangan Daerah Kota (0.70-0.95)</option>                 
-                    <option value="0.60">Pemukiman Padat (0.5-0.7)</option>
-                    <option value="0.40">Pemukiman Renggang (0.3-0.5)</option>
-                    <option value="0.70">Industri (0.5-0.9)</option>
-                    <option value="0.20">Taman/Halaman (0.1-0.4)</option>
-                </select>
-                <input type="number" id="h-c" step="0.01" value="0.90" style="width:100%; margin-top:5px">
-            </td></tr>
-            <tr><td style="text-align:left">Panjang L (m)</td><td><input type="number" id="h-l" value="1000" style="width:70px"></td></tr>
-            <tr><td style="text-align:left">Slope Saluran (S)</td><td><input type="number" id="h-s-ras" step="0.001" value="0.01" style="width:70px"></td></tr>
-        </table>
-    </div>
+    <div id="section-hidrolika" style="display:none">
+        <div class="card">
+            <h3>1. Parameter Analisis Rasional</h3>
+            <table>
+                <tr><td style="text-align:left">Kala Ulang</td><td>
+                    <select id="h-t-select" style="width:100%">
+                        <option value="2">2 Tahun</option><option value="5">5 Tahun</option>
+                        <option value="10" selected>10 Tahun</option><option value="25">25 Tahun</option>
+                        <option value="50">50 Tahun</option><option value="100">100 Tahun</option>
+                    </select>
+                </td></tr>
+                <tr><td style="text-align:left">Koef. C</td><td><input type="number" id="h-c" step="0.01" value="0.75" style="width:70px"></td></tr>
+                <tr><td style="text-align:left">Panjang (L)</td><td><input type="number" id="h-l" value="1000" style="width:70px"> m</td></tr>
+                <tr><td style="text-align:left">Slope (S)</td><td><input type="number" id="h-s-ras" step="0.001" value="0.01" style="width:70px"></td></tr>
+            </table>
+            <button class="upload-btn" style="background:var(--green); margin-top:10px;" onclick="hitungRasionalHidrolika()">ANALISIS DEBIT (Q)</button>
+        </div>
 
-    <div class="card">
-        <h3>2. Konfigurasi Dimensi Saluran</h3>
-        <table style="margin-bottom: 10px;">
-            <tr><td style="text-align:left">Tipe Saluran</td><td>
-                <select id="h-tipe" style="width:100%" onchange="toggleDimensiInput()">
-                    <option value="precast">U-Ditch (Precast)</option>
-                    <option value="persegi">Persegi (Cast-in-situ)</option>
-                    <option value="lingkaran">Pipa / Lingkaran</option>
-                </select>
-            </td></tr>
-            <tr id="row-precast"><td style="text-align:left">Ukuran (cm)</td><td>
-                <select id="h-precast-size" style="width:100%">
-                    <option value="0.4">40 x 40</option><option value="0.6">60 x 60</option>
-                    <option value="0.8">80 x 80</option><option value="1.0" selected>100 x 100</option>
-                    <option value="1.5">150 x 150</option><option value="2.0">200 x 200</option>
-                </select>
-            </td></tr>
-            <tr id="row-custom-b" style="display:none"><td style="text-align:left">Lebar b (m)</td><td><input type="number" id="h-b" value="1.0" step="0.1" style="width:70px"></td></tr>
-            <tr id="row-custom-h" style="display:none"><td style="text-align:left">Tinggi H (m)</td><td><input type="number" id="h-h" value="1.0" step="0.1" style="width:70px"></td></tr>
-            <tr><td style="text-align:left">Koef. Manning (n)</td><td><input type="number" id="h-n" value="0.015" step="0.001" style="width:70px"></td></tr>
-        </table>
-        <button class="upload-btn" style="background:var(--blue);" onclick="hitungKapasitasSaluran()">ANALISIS KAPASITAS & DEBIT</button>
-    </div>
-
-    <div id="resHydraulic" class="card" style="display:none">
-        <h3>Hasil Evaluasi Kapasitas</h3>
-        <div id="hydResultSummary" style="padding: 10px; border-radius: 8px;">
+        <div id="resHydraulic" class="card" style="display:none">
+            <h3>Kapasitas Rencana</h3>
+            <div id="hydResultDisplay" class="best-badge" style="background: var(--main); border-left: 5px solid var(--green);">
+                Q = 0.000 m³/s
             </div>
+        </div>
     </div>
 </div>
 
@@ -211,7 +181,8 @@
         const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
         const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
 
-       const colors = ['#2563eb', '#059669', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#0ea5e9'];
+        // --- PERBAIKAN DI SINI ---
+        const colors = ['#2563eb', '#059669', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#0ea5e9'];
         let thiessen = []; 
         let totalArea = 0;
 
@@ -223,6 +194,7 @@
                 const sid = pts.features[i].properties.id;
                 thiessen.push({ id: sid, name: pts.features[i].properties.name, area: a });
                 
+                // Visualisasi poligon berwarna
                 L.geoJSON(clip, { 
                     style: { 
                         color: 'white', 
@@ -233,7 +205,8 @@
                 }).addTo(analysisLayer);
             }
         });
-        
+        // --- AKHIR PERBAIKAN ---
+
         let rainSeries = [];
         const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
         for (let t = 0; t < thnCount; t++) {
@@ -319,86 +292,6 @@
         if (rainChart) rainChart.destroy();
         rainChart = new Chart(ctx, { type: 'line', data: { labels: data.map((_,i)=>2000+i), datasets: [{ label: 'mm', data: data, borderColor: '#2563eb', tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
     }
-
-    function toggleDimensiInput() {
-    const tipe = document.getElementById('h-tipe').value;
-    document.getElementById('row-precast').style.display = tipe === 'precast' ? 'table-row' : 'none';
-    document.getElementById('row-custom-b').style.display = tipe !== 'precast' ? 'table-row' : 'none';
-    document.getElementById('row-custom-h').style.display = tipe === 'persegi' ? 'table-row' : 'none';
-}
-
-function hitungKapasitasSaluran() {
-    const tBody = document.getElementById('fBody');
-    if (!mergedDAS || tBody.rows.length === 0) return alert("Selesaikan Analisis Hidrologi dulu!");
-
-    // 1. Ambil Parameter Input
-    const idx = {"2":0, "5":1, "10":2, "25":3, "50":4, "100":5}[document.getElementById('h-t-select').value];
-    const R24 = parseFloat(tBody.rows[idx].cells[4].innerText); 
-    const C = parseFloat(document.getElementById('h-c').value);
-    const L = parseFloat(document.getElementById('h-l').value);
-    const S = parseFloat(document.getElementById('h-s-ras').value);
-    const A_km2 = turf.area(mergedDAS) / 1000000;
-
-    // Perhitungan Q Rencana (Rasional)
-    const Tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
-    const I = (R24 / 24) * Math.pow((24 / (Tc / 60)), (2/3));
-    const Q_rencana = 0.278 * C * I * A_km2;
-
-    // 2. Dimensi Saluran
-    const tipe = document.getElementById('h-tipe').value;
-    const n = parseFloat(document.getElementById('h-n').value);
-    let b, H_total;
-
-    if (tipe === 'precast') {
-        b = H_total = parseFloat(document.getElementById('h-precast-size').value);
-    } else {
-        b = parseFloat(document.getElementById('h-b').value);
-        H_total = parseFloat(document.getElementById('h-h').value);
-    }
-
-    // Perhitungan Kapasitas Maksimum (Q Full)
-    const A_full = b * H_total;
-    const P_full = b + (2 * H_total);
-    const Q_full = (1/n) * A_full * Math.pow((A_full/P_full), 2/3) * Math.sqrt(S);
-
-    // 3. Kalkulasi Tinggi Muka Air Aktual (y)
-    // Menggunakan Power Law Approximation untuk Saluran Persegi
-    let y = H_total * Math.pow((Q_rencana / Q_full), 0.6);
-    if (y > H_total) y = H_total; 
-    const f_aktual = H_total - y;
-
-    // 4. LOGIKA TABEL FREEBOARD (SESUAI PERMINTAAN)
-    let f_required = 0.10; // Default sangat kecil
-    if (Q_rencana >= 0.50 && Q_rencana < 5.00) f_required = 0.20;
-    else if (Q_rencana >= 5.00 && Q_rencana < 10.00) f_required = 0.25;
-    else if (Q_rencana >= 10.00 && Q_rencana <= 15.00) f_required = 0.30;
-    else if (Q_rencana > 15.00) f_required = 0.40;
-
-    // 5. Validasi Final
-    const isSafeQ = Q_rencana < Q_full;
-    const isSafeF = f_aktual >= f_required;
-    const isSafeTotal = isSafeQ && isSafeF;
-
-    // Tampilkan ke UI
-    document.getElementById('resHydraulic').style.display = 'block';
-    const resDiv = document.getElementById('hydResultSummary');
-    resDiv.style.background = isSafeTotal ? 'var(--green)' : 'var(--red)';
-
-    resDiv.innerHTML = `
-        <h2 style="color:white; margin:0">${isSafeTotal ? 'AMAN' : 'TIDAK AMAN'}</h2>
-        <p style="color:white; font-size:10px; margin:5px 0">
-            ${!isSafeQ ? '⚠️ Kapasitas saluran tidak cukup!' : (!isSafeF ? '⚠️ Freeboard tidak memenuhi syarat!' : 'Kapasitas & Freeboard OK')}
-        </p>
-        
-        <table style="background:rgba(255,255,255,0.1); color:white; width:100%; margin-top:10px">
-            <tr><td>Q Rencana</td><td>${Q_rencana.toFixed(3)} m³/dt</td></tr>
-            <tr><td>Freeboard Aktual</td><td>${f_aktual.toFixed(2)} m</td></tr>
-            <tr><td>Freeboard Syarat</td><td>${f_required.toFixed(2)} m</td></tr>
-            <tr><td>Status Jagaan</td><td><b>${isSafeF ? 'MEMENUHI' : 'KURANG'}</b></td></tr>
-        </table>
-    ;
-}
-    
 </script>
 </body>
 </html>
