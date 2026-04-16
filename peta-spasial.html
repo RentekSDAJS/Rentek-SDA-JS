@@ -12,16 +12,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
 
-    <script src="data_saluranmikro.js"></script>
-    <script src="data_saluranphb.js"></script>
-    
     <style>
         :root { --main: #1e293b; --accent: #f59e0b; --green: #059669; --red: #dc2626; --blue: #2563eb; }
         body { margin: 0; display: flex; font-family: 'Segoe UI', sans-serif; height: 100vh; background: #f1f5f9; }
-        #map { flex: 2; z-index: 1; }
+        #map { flex: 2; z-index: 1; position: relative; }
         #panel { flex: 1; padding: 20px; background: white; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2; border-left: 5px solid var(--main); }
+        
+        /* Legend Styles */
+        .info.legend {
+            background: white; padding: 10px; line-height: 18px; color: #333;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; font-size: 11px;
+        }
+        .info.legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; border: 1px solid #999; }
+
         .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .upload-btn { background: var(--main); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 5px; font-size: 12px; }
         h2 { margin-top: 0; color: var(--main); font-size: 1.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
@@ -63,7 +67,6 @@
                 <tfoot id="tFoot"></tfoot>
             </table>
         </div>
-
         <div id="resYearly" class="card" style="display:none">
             <h3>3. Tren Hujan Rerata</h3>
             <canvas id="rainChart" style="margin-top:10px;"></canvas>
@@ -115,12 +118,9 @@
             </table>
             <button class="upload-btn" style="background:var(--green); margin-top:10px;" onclick="hitungRasionalHidrolika()">ANALISIS DEBIT (Q)</button>
         </div>
-
         <div id="resHydraulic" class="card" style="display:none">
             <h3>Kapasitas Rencana</h3>
-            <div id="hydResultDisplay" class="best-badge" style="background: var(--main); border-left: 5px solid var(--green);">
-                Q = 0.000 m³/s
-            </div>
+            <div id="hydResultDisplay" class="best-badge" style="background: var(--main); border-left: 5px solid var(--green);">Q = 0.000 m³/s</div>
         </div>
     </div>
 </div>
@@ -132,7 +132,16 @@
 
     let analysisLayer = L.layerGroup().addTo(map);
     let stMarkers = L.layerGroup().addTo(map);
+    let legendControl = null;
     let rainChart = null, currentDB = null, mergedDAS = null;
+
+    // Helper: Generate Random Soft Color
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
+        return color;
+    }
 
     function switchMode(mode) {
         document.getElementById('section-hidrologi').style.display = mode === 'hidrologi' ? 'block' : 'none';
@@ -146,13 +155,20 @@
         if (raw) {
             currentDB = JSON.parse(raw);
             document.getElementById('dbStatus').innerHTML = `<b style="color:green;font-size:10px;">● DB CONNECTED</b>`;
-            Object.keys(currentDB).forEach(id => {
-                const st = currentDB[id];
-                L.circleMarker([st.lat, st.lng], { radius: 5, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1 }).addTo(stMarkers)
-                 .bindTooltip(st.n, { permanent: true, className: 'station-label' });
-            });
+            updateStationMarkers();
         }
     }
+
+    function updateStationMarkers() {
+        stMarkers.clearLayers();
+        Object.keys(currentDB).forEach(id => {
+            const st = currentDB[id];
+            L.circleMarker([st.lat, st.lng], { 
+                radius: 6, color: '#000', weight: 2, fillColor: '#fff', fillOpacity: 1 
+            }).addTo(stMarkers).bindTooltip(st.n, { permanent: true, className: 'station-label' });
+        });
+    }
+
     refreshDatabase();
 
     document.getElementById('fDAS').onchange = (e) => {
@@ -165,6 +181,8 @@
 
     function processHydrology(json) {
         analysisLayer.clearLayers();
+        if (legendControl) map.removeControl(legendControl);
+        
         mergedDAS = null;
         ['tBody', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
 
@@ -175,35 +193,62 @@
             mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
         });
 
-        L.geoJSON(mergedDAS, { style: { color: 'red', weight: 2, fillOpacity: 0.1 } }).addTo(analysisLayer);
+        L.geoJSON(mergedDAS, { style: { color: '#000', weight: 3, fillOpacity: 0, dashArray: '5,5' } }).addTo(analysisLayer);
         map.fitBounds(L.geoJSON(mergedDAS).getBounds());
 
         const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
         const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
         
-        let thiessen = [], totalArea = 0;
+        let thiessenData = [], totalArea = 0;
+        
+        // Buat Legenda
+        legendControl = L.control({position: 'bottomright'});
+        legendControl.onAdd = function() {
+            let div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = '<strong>Legenda DAS</strong><br>';
+            return div;
+        };
+        legendControl.addTo(map);
+
         voronoi.features.forEach((v, i) => {
             const clip = turf.intersect(v, mergedDAS);
             if (clip) {
-                const a = turf.area(clip) / 1000000;
-                totalArea += a;
-                const sid = pts.features[i].properties.id;
-                thiessen.push({ id: sid, name: pts.features[i].properties.name, area: a });
-                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillOpacity: 0.3 } }).addTo(analysisLayer);
+                const areaKm2 = turf.area(clip) / 1000000;
+                totalArea += areaKm2;
+                const stId = pts.features[i].properties.id;
+                const stName = pts.features[i].properties.name;
+                const color = getRandomColor();
+
+                thiessenData.push({ id: stId, name: stName, area: areaKm2, color: color });
+
+                // Render Poligon ke Peta
+                L.geoJSON(clip, { 
+                    style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.6 } 
+                }).addTo(analysisLayer);
+
+                // Update Marker Color
+                L.circleMarker([currentDB[stId].lat, currentDB[stId].lng], {
+                    radius: 7, color: '#000', fillColor: color, fillOpacity: 1, weight: 2
+                }).addTo(analysisLayer);
+
+                // Tambahkan ke Legenda di peta
+                document.querySelector('.legend').innerHTML += `<i><div style="background:${color};width:100%;height:100%"></div></i> ${stName}<br>`;
             }
         });
 
+        // Hitung Hujan Wilayah
         let rainSeries = [];
         const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
         for (let t = 0; t < thnCount; t++) {
             let pAvg = 0;
-            thiessen.forEach(res => { pAvg += (currentDB[res.id].d[t] * (res.area / totalArea)); });
+            thiessenData.forEach(res => { pAvg += (currentDB[res.id].d[t] * (res.area / totalArea)); });
             rainSeries.push(Number(pAvg.toFixed(2)));
-            document.getElementById('yBody').innerHTML += `<tr><td>${2000+t}</td><td>${pAvg.toFixed(2)} mm</td></tr>`;
+            document.getElementById('yBody').innerHTML += `<tr><td>${2020+t}</td><td>${pAvg.toFixed(2)} mm</td></tr>`;
         }
 
-        thiessen.forEach(res => {
-            document.getElementById('tBody').innerHTML += `<tr><td style="text-align:left">${res.name}</td><td>${res.area.toFixed(2)}</td><td>${(res.area/totalArea).toFixed(4)}</td></tr>`;
+        // Isi Tabel Thiessen
+        thiessenData.forEach(res => {
+            document.getElementById('tBody').innerHTML += `<tr><td style="text-align:left; border-left: 10px solid ${res.color}">${res.name}</td><td>${res.area.toFixed(2)}</td><td>${(res.area/totalArea).toFixed(4)}</td></tr>`;
         });
         document.getElementById('tFoot').innerHTML = `<tr class="tfoot-bold"><td>TOTAL</td><td>${totalArea.toFixed(2)}</td><td>1.000</td></tr>`;
 
@@ -212,6 +257,7 @@
         ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
+    // Fungsi runFullAnalysis & hitungRasional tetap sama seperti kode Anda sebelumnya
     function runFullAnalysis(data) {
         const n = data.length;
         const mean = data.reduce((a, b) => a + b) / n;
@@ -236,7 +282,6 @@
             document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
         });
 
-        // --- UJI CHI-SQUARE & SMIRNOV ---
         const testData = [
             { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
             { id: "Log-Normal", d: 0.14, chi: 4.5, okP: Math.abs(cs - (3*cv)) < 0.5 },
@@ -259,16 +304,13 @@
     function hitungRasionalHidrolika() {
         const tBody = document.getElementById('fBody');
         if (!mergedDAS || tBody.rows.length === 0) return alert("Selesaikan Analisis Hidrologi dulu!");
-
         const idx = {"2":0, "5":1, "10":2, "25":3, "50":4, "100":5}[document.getElementById('h-t-select').value];
         const R24 = parseFloat(tBody.rows[idx].cells[4].innerText);
         const C = parseFloat(document.getElementById('h-c').value), L = parseFloat(document.getElementById('h-l').value), S = parseFloat(document.getElementById('h-s-ras').value);
         const A_km2 = turf.area(mergedDAS) / 1000000;
-
         const Tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
         const I = (R24 / 24) * Math.pow((24 / (Tc / 60)), (2/3));
         const Q = 0.278 * C * I * A_km2;
-
         document.getElementById('resHydraulic').style.display = 'block';
         document.getElementById('hydResultDisplay').innerHTML = `Q = ${Q.toFixed(3)} m³/s<br><small style="font-size:9px">Tc: ${Tc.toFixed(1)} mnt | I: ${I.toFixed(1)} mm/j</small>`;
     }
@@ -276,7 +318,7 @@
     function updateChart(data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
         if (rainChart) rainChart.destroy();
-        rainChart = new Chart(ctx, { type: 'line', data: { labels: data.map((_,i)=>2000+i), datasets: [{ label: 'mm', data: data, borderColor: '#2563eb', tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
+        rainChart = new Chart(ctx, { type: 'line', data: { labels: data.map((_,i)=>2020+i), datasets: [{ label: 'mm', data: data, borderColor: '#2563eb', tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
     }
 </script>
 </body>
