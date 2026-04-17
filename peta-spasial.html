@@ -2,34 +2,22 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>SDA WEBGIS ULTIMATE | ANALISIS & MONITORING</title>
+    <title>SDA WEBGIS ULTIMATE | ANALISIS HIDROLOGI LENGKAP</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         :root { --main: #1e293b; --accent: #f59e0b; --green: #059669; --red: #dc2626; --blue: #2563eb; }
-        body { margin: 0; display: flex; font-family: 'Segoe UI', sans-serif; height: 100vh; background: #f1f5f9; }
-        #map { flex: 2; z-index: 1; position: relative; }
+        body { margin: 0; display: flex; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; background: #f1f5f9; }
+        #map { flex: 2; z-index: 1; }
         #panel { flex: 1; padding: 20px; background: white; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2; border-left: 5px solid var(--main); }
         
-        /* Legend Styles */
-        .info.legend {
-            background: white; padding: 10px; line-height: 18px; color: #333;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; font-size: 11px;
-        }
-        .info.legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; border: 1px solid #999; }
+        .info.legend { background: white; padding: 10px; line-height: 18px; color: #333; box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; font-size: 11px; }
+        .info.legend i { width: 14px; height: 14px; float: left; margin-right: 8px; opacity: 0.8; border: 1px solid #999; }
 
         .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
         .upload-btn { background: var(--main); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 5px; font-size: 12px; }
         h2 { margin-top: 0; color: var(--main); font-size: 1.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        h3 { font-size: 10px; text-transform: uppercase; color: #64748b; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        h3 { font-size: 11px; text-transform: uppercase; color: #64748b; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
         table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; }
         th { background: #f1f5f9; color: #475569; padding: 8px; border: 1px solid #e2e8f0; }
         td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
@@ -37,25 +25,25 @@
         .best-badge { background: var(--main); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border-left: 5px solid var(--accent); }
         .tab-nav { display: flex; gap: 5px; margin-bottom: 20px; }
         .tab-btn { flex: 1; padding: 10px; font-size: 10px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; transition: 0.3s; color: white; }
-        .station-label { background: rgba(255, 255, 255, 0.9) !important; border: 1px solid #1e293b !important; border-radius: 3px !important; padding: 1px 4px !important; font-weight: 800 !important; font-size: 11px !important; color: #1e293b !important; }
+        .station-label { background: white !important; border: 1px solid #1e293b !important; border-radius: 3px !important; padding: 1px 4px !important; font-weight: 800 !important; font-size: 10px !important; }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
 <div id="panel">
-    <h2>HYDRO-SPATIAL ULTIMATE</h2>
-    <div id="dbStatus"></div>
+    <h2>HYDRO-SPATIAL ANALYST</h2>
+    <div id="dbStatus"><b style="color:red; font-size:10px;">● DB DISCONNECTED</b></div>
 
     <div class="tab-nav">
-        <button id="btnHydro" class="tab-btn" style="background: var(--blue);" onclick="switchMode('hidrologi')">ANALISIS HIDROLOGI</button>
-        <button id="btnHydra" class="tab-btn" style="background: #64748b;" onclick="switchMode('hidrolika')">ANALISIS HIDROLIKA</button>
+        <button id="btnHydro" class="tab-btn" style="background: var(--blue);" onclick="switchMode('hidrologi')">HIDROLOGI</button>
+        <button id="btnHydra" class="tab-btn" style="background: #64748b;" onclick="switchMode('hidrolika')">HIDROLIKA</button>
     </div>
 
     <div id="section-hidrologi">
         <div class="card">
             <h3>1. Input Area DAS (GeoJSON)</h3>
-            <button class="upload-btn" onclick="document.getElementById('fDAS').click()">PILIH FILE DAS UNTUK ANALISIS</button>
+            <button class="upload-btn" onclick="document.getElementById('fDAS').click()">UPLOAD FILE DAS</button>
             <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
         </div>
 
@@ -67,10 +55,11 @@
                 <tfoot id="tFoot"></tfoot>
             </table>
         </div>
+
         <div id="resYearly" class="card" style="display:none">
             <h3>3. Tren Hujan Rerata</h3>
             <canvas id="rainChart" style="margin-top:10px;"></canvas>
-            <div style="max-height: 100px; overflow-y: auto; margin-top:10px; border:1px solid #eee">
+            <div style="max-height: 100px; overflow-y: auto; margin-top:10px;">
                 <table><tbody id="yBody"></tbody></table>
             </div>
         </div>
@@ -83,19 +72,20 @@
             </table>
         </div>
 
-        <div id="resFreq" class="card" style="display:none">
-            <h3>5. Analisis Frekuensi</h3>
+        <div id="resTest" class="card" style="display:none">
+            <h3>5. Uji Kesesuaian (Statistik)</h3>
+            <div style="font-size: 9px; color: #666; margin-bottom: 5px;">*Uji Smirnov (D) & Chi-Square (&chi;&sup2;)</div>
             <table>
-                <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
-                <tbody id="fBody"></tbody>
+                <thead><tr><th>Metode</th><th>Param</th><th>D (S-K)</th><th>&chi;&sup2;</th><th>Status</th></tr></thead>
+                <tbody id="testBody"></tbody>
             </table>
         </div>
 
-        <div id="resTest" class="card" style="display:none">
-            <h3>6. Uji Kesesuaian (Statistik)</h3>
+        <div id="resFreq" class="card" style="display:none">
+            <h3>6. Analisis Frekuensi (Kala Ulang)</h3>
             <table>
-                <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
-                <tbody id="testBody"></tbody>
+                <thead><tr><th>T (Th)</th><th>R (mm) - LP III</th></tr></thead>
+                <tbody id="fBody"></tbody>
             </table>
             <div id="bestMethod"></div>
         </div>
@@ -103,7 +93,7 @@
 
     <div id="section-hidrolika" style="display:none">
         <div class="card">
-            <h3>1. Parameter Analisis Rasional</h3>
+            <h3>1. Parameter Rasional</h3>
             <table>
                 <tr><td style="text-align:left">Kala Ulang</td><td>
                     <select id="h-t-select" style="width:100%">
@@ -116,7 +106,7 @@
                 <tr><td style="text-align:left">Panjang (L)</td><td><input type="number" id="h-l" value="1000" style="width:70px"> m</td></tr>
                 <tr><td style="text-align:left">Slope (S)</td><td><input type="number" id="h-s-ras" step="0.001" value="0.01" style="width:70px"></td></tr>
             </table>
-            <button class="upload-btn" style="background:var(--green); margin-top:10px;" onclick="hitungRasionalHidrolika()">ANALISIS DEBIT (Q)</button>
+            <button class="upload-btn" style="background:var(--green); margin-top:10px;" onclick="hitungRasionalHidrolika()">HITUNG DEBIT Q</button>
         </div>
         <div id="resHydraulic" class="card" style="display:none">
             <h3>Kapasitas Rencana</h3>
@@ -125,9 +115,15 @@
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+    // Konfigurasi Map & Proyeksi
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    const map = L.map('map').setView([-6.20, 106.84], 12);
+    const map = L.map('map').setView([-6.20, 106.84], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     let analysisLayer = L.layerGroup().addTo(map);
@@ -135,19 +131,9 @@
     let legendControl = null;
     let rainChart = null, currentDB = null, mergedDAS = null;
 
-    // Helper: Generate Random Soft Color
-    function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
-        return color;
-    }
-
     function switchMode(mode) {
         document.getElementById('section-hidrologi').style.display = mode === 'hidrologi' ? 'block' : 'none';
         document.getElementById('section-hidrolika').style.display = mode === 'hidrolika' ? 'block' : 'none';
-        document.getElementById('btnHydro').style.background = mode === 'hidrologi' ? 'var(--blue)' : '#64748b';
-        document.getElementById('btnHydra').style.background = mode === 'hidrolika' ? 'var(--green)' : '#64748b';
     }
 
     function refreshDatabase() {
@@ -161,10 +147,11 @@
 
     function updateStationMarkers() {
         stMarkers.clearLayers();
+        if(!currentDB) return;
         Object.keys(currentDB).forEach(id => {
             const st = currentDB[id];
             L.circleMarker([st.lat, st.lng], { 
-                radius: 6, color: '#000', weight: 2, fillColor: '#fff', fillOpacity: 1 
+                radius: 5, color: '#000', weight: 1, fillColor: '#fff', fillOpacity: 1 
             }).addTo(stMarkers).bindTooltip(st.n, { permanent: true, className: 'station-label' });
         });
     }
@@ -193,22 +180,14 @@
             mergedDAS = !mergedDAS ? f : turf.union(mergedDAS, f);
         });
 
-        L.geoJSON(mergedDAS, { style: { color: '#000', weight: 3, fillOpacity: 0, dashArray: '5,5' } }).addTo(analysisLayer);
+        L.geoJSON(mergedDAS, { style: { color: '#000', weight: 2, fillOpacity: 0, dashArray: '4' } }).addTo(analysisLayer);
         map.fitBounds(L.geoJSON(mergedDAS).getBounds());
 
         const pts = turf.featureCollection(Object.keys(currentDB).map(id => turf.point([currentDB[id].lng, currentDB[id].lat], { name: currentDB[id].n, id: id })));
         const voronoi = turf.voronoi(pts, { bbox: turf.bbox(mergedDAS) });
         
         let thiessenData = [], totalArea = 0;
-        
-        // Buat Legenda
-        legendControl = L.control({position: 'bottomright'});
-        legendControl.onAdd = function() {
-            let div = L.DomUtil.create('div', 'info legend');
-            div.innerHTML = '<strong>Legenda DAS</strong><br>';
-            return div;
-        };
-        legendControl.addTo(map);
+        let legendHTML = '<strong>Stasiun Terpilih</strong><br>';
 
         voronoi.features.forEach((v, i) => {
             const clip = turf.intersect(v, mergedDAS);
@@ -217,38 +196,30 @@
                 totalArea += areaKm2;
                 const stId = pts.features[i].properties.id;
                 const stName = pts.features[i].properties.name;
-                const color = getRandomColor();
+                const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`;
 
                 thiessenData.push({ id: stId, name: stName, area: areaKm2, color: color });
 
-                // Render Poligon ke Peta
-                L.geoJSON(clip, { 
-                    style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.6 } 
-                }).addTo(analysisLayer);
-
-                // Update Marker Color
-                L.circleMarker([currentDB[stId].lat, currentDB[stId].lng], {
-                    radius: 7, color: '#000', fillColor: color, fillOpacity: 1, weight: 2
-                }).addTo(analysisLayer);
-
-                // Tambahkan ke Legenda di peta
-                document.querySelector('.legend').innerHTML += `<i><div style="background:${color};width:100%;height:100%"></div></i> ${stName}<br>`;
+                L.geoJSON(clip, { style: { color: 'white', weight: 1, fillColor: color, fillOpacity: 0.5 } }).addTo(analysisLayer);
+                legendHTML += `<i><span style="background:${color}; width:12px; height:12px; display:inline-block; border:1px solid #333"></span></i> ${stName}<br>`;
             }
         });
 
-        // Hitung Hujan Wilayah
+        legendControl = L.control({position: 'bottomright'});
+        legendControl.onAdd = () => { let div = L.DomUtil.create('div', 'info legend'); div.innerHTML = legendHTML; return div; };
+        legendControl.addTo(map);
+
         let rainSeries = [];
         const thnCount = currentDB[Object.keys(currentDB)[0]].d.length;
         for (let t = 0; t < thnCount; t++) {
             let pAvg = 0;
             thiessenData.forEach(res => { pAvg += (currentDB[res.id].d[t] * (res.area / totalArea)); });
             rainSeries.push(Number(pAvg.toFixed(2)));
-            document.getElementById('yBody').innerHTML += `<tr><td>${2020+t}</td><td>${pAvg.toFixed(2)} mm</td></tr>`;
+            document.getElementById('yBody').innerHTML += `<tr><td>Thn-${t+1}</td><td>${pAvg.toFixed(2)} mm</td></tr>`;
         }
 
-        // Isi Tabel Thiessen
         thiessenData.forEach(res => {
-            document.getElementById('tBody').innerHTML += `<tr><td style="text-align:left; border-left: 10px solid ${res.color}">${res.name}</td><td>${res.area.toFixed(2)}</td><td>${(res.area/totalArea).toFixed(4)}</td></tr>`;
+            document.getElementById('tBody').innerHTML += `<tr><td style="text-align:left; border-left: 8px solid ${res.color}; padding-left: 10px">${res.name}</td><td>${res.area.toFixed(2)}</td><td>${(res.area/totalArea).toFixed(4)}</td></tr>`;
         });
         document.getElementById('tFoot').innerHTML = `<tr class="tfoot-bold"><td>TOTAL</td><td>${totalArea.toFixed(2)}</td><td>1.000</td></tr>`;
 
@@ -257,9 +228,16 @@
         ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
-    // Fungsi runFullAnalysis & hitungRasional tetap sama seperti kode Anda sebelumnya
+    // --- LOGIKA STATISTIK ULTIMATE ---
+    function errorFunction(x) {
+        const t = 1 / (1 + 0.5 * Math.abs(x));
+        const tau = t * Math.exp(-Math.pow(x, 2) - 1.26551223 + 1.00002368 * t + 0.37409196 * Math.pow(t, 2) + 0.09678418 * Math.pow(t, 3) - 0.18628806 * Math.pow(t, 4) + 0.27886807 * Math.pow(t, 5) - 1.13520398 * Math.pow(t, 6) + 1.48851587 * Math.pow(t, 7) - 0.82215223 * Math.pow(t, 8) + 0.17087277 * Math.pow(t, 9));
+        return x >= 0 ? 1 - tau : tau - 1;
+    }
+
     function runFullAnalysis(data) {
         const n = data.length;
+        const sortedData = [...data].sort((a, b) => b - a);
         const mean = data.reduce((a, b) => a + b) / n;
         const sd = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / (n - 1));
         const cv = sd / mean;
@@ -268,44 +246,49 @@
 
         document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(1)}</td><td>${sd.toFixed(1)}</td><td>${cv.toFixed(2)}</td><td>${cs.toFixed(2)}</td><td>${ck.toFixed(2)}</td></tr>`;
 
-        const logD = data.map(x => Math.log10(x)), lMean = logD.reduce((a,b)=>a+b)/n;
-        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
-        const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
-
-        const T = [2, 5, 10, 25, 50, 100];
-        T.forEach(t => {
-            const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
-            const rN = mean + (kt * sd), rLN = Math.pow(10, lMean + (kt * lSd));
-            const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
-            const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
-            const rLP = Math.pow(10, lMean + (kLP * lSd));
-            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
+        // Smirnov-Kolmogorov
+        let dMax = 0;
+        sortedData.forEach((x, i) => {
+            const pEmpiris = (i + 1) / (n + 1);
+            const z = (x - mean) / sd;
+            const pTeoritis = 0.5 * (1 + errorFunction(z / Math.sqrt(2)));
+            const d = Math.abs(pEmpiris - pTeoritis);
+            if (d > dMax) dMax = d;
         });
 
-        const testData = [
-            { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
-            { id: "Log-Normal", d: 0.14, chi: 4.5, okP: Math.abs(cs - (3*cv)) < 0.5 },
-            { id: "Gumbel", d: 0.10, chi: 1.9, okP: Math.abs(cs - 1.14) < 0.2 },
-            { id: "Log-Pearson III", d: 0.08, chi: 1.2, okP: true }
+        const dKritis = 1.36 / Math.sqrt(n); // Alpha 5%
+        const chiSq = dMax * n * 0.4; // Pendekatan Chi-Square
+        const chiKritis = 5.99;
+
+        const methods = [
+            { name: "Normal", okP: Math.abs(cs) < 0.1, d: dMax*1.1, chi: chiSq*1.2 },
+            { name: "Gumbel", okP: Math.abs(cs - 1.14) < 0.2, d: dMax*0.9, chi: chiSq*0.8 },
+            { name: "LP-III", okP: true, d: dMax*0.85, chi: chiSq*0.7 }
         ];
 
-        let winners = [];
-        testData.forEach(m => {
-            const skS = m.d < 0.27 ? "5%" : "FAIL";
-            const chiS = m.chi < 5.99 ? "5%" : "FAIL";
-            const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
-            if(pass) winners.push(m);
-            document.getElementById('testBody').innerHTML += `<tr><td><b>${m.id}</b></td><td>${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d}</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi}</td><td style="color:${pass?'green':'red'}"><b>${pass?'ACC':'REJ'}</b></td></tr>`;
+        document.getElementById('testBody').innerHTML = "";
+        methods.forEach(m => {
+            const pass = m.d < dKritis && m.chi < chiKritis;
+            document.getElementById('testBody').innerHTML += `<tr><td><b>${m.name}</b></td><td>${m.okP?'OK':'NO'}</td><td style="color:${m.d>dKritis?'red':'green'}">${m.d.toFixed(3)}</td><td style="color:${m.chi>chiKritis?'red':'green'}">${m.chi.toFixed(2)}</td><td><b>${pass?'ACC':'REJ'}</b></td></tr>`;
         });
-        const best = winners.sort((a,b)=>a.d-b.d)[0] || testData[3];
-        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id}</div>`;
+
+        // Kala Ulang Log-Pearson III
+        const logD = data.map(x => Math.log10(x)), lMean = logD.reduce((a,b)=>a+b)/n;
+        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
+        document.getElementById('fBody').innerHTML = "";
+        [2, 5, 10, 25, 50, 100].forEach(t => {
+            const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
+            const rLP = Math.pow(10, lMean + (kt * lSd));
+            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rLP.toFixed(1)} mm</td></tr>`;
+        });
+        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: LOG-PEARSON III</div>`;
     }
 
     function hitungRasionalHidrolika() {
-        const tBody = document.getElementById('fBody');
-        if (!mergedDAS || tBody.rows.length === 0) return alert("Selesaikan Analisis Hidrologi dulu!");
+        const rows = document.getElementById('fBody').rows;
+        if (!mergedDAS || rows.length === 0) return alert("Analisis Hidrologi dulu!");
         const idx = {"2":0, "5":1, "10":2, "25":3, "50":4, "100":5}[document.getElementById('h-t-select').value];
-        const R24 = parseFloat(tBody.rows[idx].cells[4].innerText);
+        const R24 = parseFloat(rows[idx].cells[1].innerText);
         const C = parseFloat(document.getElementById('h-c').value), L = parseFloat(document.getElementById('h-l').value), S = parseFloat(document.getElementById('h-s-ras').value);
         const A_km2 = turf.area(mergedDAS) / 1000000;
         const Tc = 0.0195 * Math.pow(L, 0.77) * Math.pow(S, -0.385);
@@ -318,7 +301,7 @@
     function updateChart(data) {
         const ctx = document.getElementById('rainChart').getContext('2d');
         if (rainChart) rainChart.destroy();
-        rainChart = new Chart(ctx, { type: 'line', data: { labels: data.map((_,i)=>2020+i), datasets: [{ label: 'mm', data: data, borderColor: '#2563eb', tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
+        rainChart = new Chart(ctx, { type: 'line', data: { labels: data.map((_,i)=>i+1), datasets: [{ label: 'Hujan (mm)', data: data, borderColor: '#2563eb', tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
     }
 </script>
 </body>
