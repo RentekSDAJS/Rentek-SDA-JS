@@ -6,7 +6,6 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
@@ -18,50 +17,57 @@
     <script src="data_saluranphb.js"></script>
     
     <style>
-        :root { --main: #1e293b; --accent: #f59e0b; --green: #059669; --red: #dc2626; --blue: #2563eb; }
-        body { margin: 0; display: flex; font-family: 'Segoe UI', sans-serif; height: 100vh; background: #f1f5f9; }
+        :root { --main: #1e293b; --accent: #f59e0b; --green: #059669; --red: #dc2626; --blue: #2563eb; --slate: #64748b; }
+        body { margin: 0; display: flex; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; background: #f1f5f9; overflow: hidden; }
+        
+        /* Layout */
         #map { flex: 2; z-index: 1; }
         #panel { flex: 1; padding: 20px; background: white; overflow-y: auto; box-shadow: -5px 0 15px rgba(0,0,0,0.1); z-index: 2; border-left: 5px solid var(--main); }
-        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-        .upload-btn { background: var(--main); color: white; padding: 10px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 5px; font-size: 12px; }
-        h2 { margin-top: 0; color: var(--main); font-size: 1.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        h3 { font-size: 10px; text-transform: uppercase; color: #64748b; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; }
-        th { background: #f1f5f9; color: #475569; padding: 8px; border: 1px solid #e2e8f0; }
+        
+        /* UI Components */
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px; transition: all 0.3s; }
+        .card:hover { border-color: var(--blue); }
+        .upload-btn { background: var(--main); color: white; padding: 12px; width: 100%; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 5px; font-size: 12px; display: block; }
+        .upload-btn:hover { background: #334155; }
+        
+        h2 { margin-top: 0; color: var(--main); font-size: 1.4rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        h3 { font-size: 11px; text-transform: uppercase; color: var(--slate); margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; letter-spacing: 1px; }
+        
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; background: white; }
+        th { background: #f1f5f9; color: #475569; padding: 8px; border: 1px solid #e2e8f0; text-transform: uppercase; }
         td { padding: 8px; border: 1px solid #e2e8f0; text-align: center; }
-        .tfoot-bold { background: #f1f5f9; font-weight: bold; color: var(--main); }
-        .station-label { background: rgba(255, 255, 255, 0.9) !important; border: 1px solid #1e293b !important; border-radius: 3px !important; padding: 1px 4px !important; font-weight: 800 !important; color: #1e293b !important; font-size: 11px !important; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
-        .scroll-container { max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 5px; margin-bottom: 10px; }
-        .best-badge { background: var(--main); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border-left: 5px solid var(--accent); }
-        .color-box { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.1); }
-        .popup-table { width: 100%; font-size: 11px; }
-        .popup-table tr:nth-child(even) { background: #f8fafc; }
-        .popup-table th { text-align: left; background: #eee; width: 40%; padding: 4px; }
-        .popup-table td { text-align: left; padding: 4px; border: 1px solid #e2e8f0; }
+        .tfoot-bold { background: #f8fafc; font-weight: bold; color: var(--main); }
+        
+        /* Map Labels & Badges */
+        .station-label { background: white !important; border: 2px solid var(--main) !important; border-radius: 4px !important; padding: 2px 6px !important; font-weight: 800 !important; color: var(--main) !important; font-size: 11px !important; }
+        .best-badge { background: var(--main); color: white; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 15px; border-left: 5px solid var(--accent); animation: pulse 2s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        
+        .scroll-container { max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 5px; }
+        .color-box { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 8px; vertical-align: middle; }
     </style>
 </head>
 <body>
 
 <div id="map"></div>
+
 <div id="panel">
-    <h2>HYDRO-SPATIAL ULTIMATE</h2>
-    <div id="dbStatus"></div>
+    <h2>HYDRO-SPATIAL <small id="dbStatus" style="font-size: 10px;"></small></h2>
 
     <div class="card">
-        <h3>1. Input Area DAS (GeoJSON)</h3>
-        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">PILIH FILE DAS UNTUK ANALISIS</button>
+        <h3>1. Input Area DAS (GeoJSON/UTM)</h3>
+        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">📁 PILIH FILE DAS UNTUK ANALISIS</button>
         <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
+        <p style="font-size: 9px; color: gray; margin: 5px 0;">*Mendukung koordinat WGS84 & UTM Zone 48S</p>
     </div>
 
     <div id="resThiessen" class="card" style="display:none">
-        <h3>2. Koefisien Thiessen & Warna DAS</h3>
+        <h3>2. Poligon Thiessen & Bobot Wilayah</h3>
         <table>
             <thead>
-                <tr>
-                    <th style="text-align:left">Stasiun</th>
-                    <th>Luas (km²)</th>
-                    <th>Bobot (W)</th>
-                </tr>
+                <tr><th style="text-align:left">Stasiun</th><th>Luas (km²)</th><th>Bobot (W)</th></tr>
             </thead>
             <tbody id="tBody"></tbody>
             <tfoot id="tFoot"></tfoot>
@@ -69,7 +75,7 @@
     </div>
 
     <div id="resYearly" class="card" style="display:none">
-        <h3>3. Tren Hujan Rerata Wilayah</h3>
+        <h3>3. Tren Hujan Rerata (Thiessen)</h3>
         <div class="scroll-container">
             <table>
                 <thead><tr><th>Tahun</th><th>Hujan (mm)</th></tr></thead>
@@ -88,7 +94,7 @@
     </div>
 
     <div id="resFreq" class="card" style="display:none">
-        <h3>5. Analisis Frekuensi</h3>
+        <h3>5. Analisis Frekuensi (Hujan Rencana)</h3>
         <table>
             <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
             <tbody id="fBody"></tbody>
@@ -96,7 +102,7 @@
     </div>
 
     <div id="resTest" class="card" style="display:none">
-        <h3>6. Uji Kesesuaian (5% & 1%)</h3>
+        <h3>6. Uji Kesesuaian Distribusi</h3>
         <table>
             <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
             <tbody id="testBody"></tbody>
@@ -106,104 +112,81 @@
 </div>
 
 <script>
+    // --- KONFIGURASI PROYEKSI ---
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
-    
+
+    // --- INISIALISASI PETA ---
     const map = L.map('map').setView([-6.20, 106.84], 12);
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
     let analysisLayer = L.layerGroup().addTo(map);
     let stMarkers = L.layerGroup().addTo(map);
-    
-    // Inisialisasi LayerGroup untuk Saluran
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
-    
     let rainChart = null;
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
-    function createAttrTable(props, title) {
-        let html = `<div style="max-height:200px; overflow-y:auto; width:250px;"><b style="color:var(--blue)">${title}</b><table class="popup-table">`;
-        for (let key in props) {
-            html += `<tr><th>${key}</th><td>${props[key]}</td></tr>`;
+    // --- RENDER SALURAN (Mikro & PHB) ---
+    function renderChannels() {
+        const arrowPattern = {
+            offset: '20px', repeat: '100px',
+            symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}})
+        };
+
+        if (typeof dataMikro !== 'undefined') {
+            const g = L.geoJSON(dataMikro, { style: { color: "cyan", weight: 1.5, opacity: 0.8 } }).addTo(layerMikro);
+            L.polylineDecorator(g, { patterns: [arrowPattern] }).addTo(layerMikro);
         }
-        html += `</table></div>`;
-        return html;
+        if (typeof dataTersier !== 'undefined') {
+            const g = L.geoJSON(dataTersier, { style: { color: "blue", weight: 3, opacity: 0.9 } }).addTo(layerPHB);
+            L.polylineDecorator(g, { patterns: [arrowPattern] }).addTo(layerPHB);
+        }
     }
-
-    // --- PROSES SALURAN MIKRO (Cyan, 1.5) ---
-    if (typeof dataMikro !== 'undefined') {
-        const geoJsonMikro = L.geoJSON(dataMikro, {
-            style: { color: "cyan", weight: 1.5, opacity: 0.8 },
-            onEachFeature: (f, l) => {
-                l.bindPopup(createAttrTable(f.properties, "SALURAN MIKRO"));
-            }
-        });
-        
-        // Memasukkan GeoJSON dan Decorator ke dalam LayerGroup yang sama
-        geoJsonMikro.addTo(layerMikro);
-        L.polylineDecorator(geoJsonMikro, {
-            patterns: [{ 
-                offset: '20px', repeat: '100px', 
-                symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}}) 
-            }]
-        }).addTo(layerMikro);
-    }
-
-    // --- PROSES SALURAN PHB (Blue, 3) ---
-    if (typeof dataTersier !== 'undefined') {
-        const geoJsonPHB = L.geoJSON(dataTersier, {
-            style: { color: "blue", weight: 3, opacity: 0.9 },
-            onEachFeature: (f, l) => {
-                l.bindPopup(createAttrTable(f.properties, "SALURAN PHB"));
-            }
-        });
-
-        geoJsonPHB.addTo(layerPHB);
-        L.polylineDecorator(geoJsonPHB, {
-            patterns: [{ 
-                offset: '20px', repeat: '100px', 
-                symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color: 'red', weight: 2}}) 
-            }]
-        }).addTo(layerPHB);
-    }
+    renderChannels();
 
     const baseMaps = { "Peta Jalan": osm, "Satelit": satelit };
     const overlayMaps = { 
-        "Saluran Mikro (Cyan)": layerMikro,
-        "Saluran PHB (Blue)": layerPHB,
+        "Saluran Mikro": layerMikro, 
+        "Saluran PHB": layerPHB, 
         "Analisis Hidrologi": analysisLayer, 
         "Stasiun Hujan": stMarkers 
     };
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
+    // --- DATABASE HANDLER ---
     let currentDB = null;
     function refreshDatabase() {
         const rawData = localStorage.getItem('sda_db_final_clean');
         if (rawData) {
             currentDB = JSON.parse(rawData);
-            document.getElementById('dbStatus').innerHTML = `<span style="color:green; font-weight:bold; font-size:10px;">● DATABASE AKTIF</span>`;
+            document.getElementById('dbStatus').innerHTML = `<b style="color:var(--green)">● ONLINE</b>`;
             stMarkers.clearLayers();
             Object.keys(currentDB).forEach(id => {
                 const st = currentDB[id];
                 const marker = L.circleMarker([st.lat, st.lng], { radius: 6, color: '#1e293b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 });
                 marker.bindTooltip(st.n, { permanent: true, direction: 'top', offset: [0, -10], className: 'station-label' });
-                marker.bindPopup(`<b>Stasiun: ${st.n}</b><br>Lat: ${st.lat}<br>Long: ${st.lng}`);
                 marker.addTo(stMarkers);
             });
+        } else {
+            document.getElementById('dbStatus').innerHTML = `<b style="color:var(--red)">● NO DB</b>`;
         }
     }
     refreshDatabase();
 
+    // --- UPLOAD HANDLER ---
     document.getElementById('fDAS').onchange = (e) => {
         const file = e.target.files[0];
-        if (!file || !currentDB) return;
+        if (!file || !currentDB) { alert("Pastikan Database Stasiun Aktif!"); return; }
         const reader = new FileReader();
         reader.onload = (ev) => processHydrology(JSON.parse(ev.target.result));
         reader.readAsText(file);
     };
 
+    // ==========================================
+    // MASTER LOGIC: ANALISIS HIDROLOGI (JANGAN DIUBAH)
+    // ==========================================
     function processHydrology(json) {
         analysisLayer.clearLayers();
         ['tBody', 'tFoot', 'yBody', 'pBody', 'fBody', 'testBody'].forEach(id => document.getElementById(id).innerHTML = "");
@@ -274,34 +257,6 @@
         ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
-    function updateChart(labels, data) {
-        const ctx = document.getElementById('rainChart').getContext('2d');
-        if (rainChart) rainChart.destroy();
-        rainChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Curah Hujan (mm)',
-                    data: data,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { beginAtZero: false, ticks: { font: { size: 9 } } },
-                    x: { ticks: { font: { size: 9 } } }
-                }
-            }
-        });
-    }
-
     function runFullAnalysis(data) {
         const n = data.length;
         const mean = data.reduce((a, b) => a + b) / n;
@@ -349,6 +304,35 @@
 
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
+    }
+
+    // --- UI HELPER: CHART ---
+    function updateChart(labels, data) {
+        const ctx = document.getElementById('rainChart').getContext('2d');
+        if (rainChart) rainChart.destroy();
+        rainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'CH Rerata Wilayah (mm)',
+                    data: data,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { ticks: { font: { size: 9 } } },
+                    x: { ticks: { font: { size: 9 } } }
+                }
+            }
+        });
     }
 </script>
 </body>
