@@ -166,14 +166,24 @@
                     </optgroup>
                 </select>
             </div>
-            <div id="dim-input-container" class="input-grid" style="background:#fff; padding:8px; border-radius:5px; border:1px solid #eee">
-                <div id="box-B" class="input-group"><label>Lebar B (m)</label><input type="number" id="v-B" value="0.4"></div>
-                <div id="box-H" class="input-group"><label>Tinggi H (m)</label><input type="number" id="v-H" value="0.4"></div>
-                <div id="box-Z" class="input-group" style="display:none"><label>Z (Side)</label><input type="number" id="v-Z" value="1"></div>
-                <div id="box-D" class="input-group" style="display:none"><label>Dia D (m)</label><input type="number" id="v-D" value="1"></div>
-            </div>
-            <button class="upload-btn" style="background:var(--green); margin-top:10px" onclick="analyzeHydraulics()">UJI DIMENSI SEKARANG</button>
-        </div>
+<div id="dim-input-container" class="input-grid" style="background:#fff; padding:8px; border-radius:5px; border:1px solid #eee">
+    <div id="box-B" class="input-group">
+        <label>Lebar B (m)</label>
+        <input type="number" id="v-B" value="0.4" step="0.01">
+    </div>
+    <div id="box-H" class="input-group">
+        <label>Tinggi Total H (m)</label>
+        <input type="number" id="v-H" value="0.4" step="0.01">
+    </div>
+    <div id="box-Z" class="input-group" style="display:none">
+        <label>Z (Side Slope 1:z)</label>
+        <input type="number" id="v-Z" value="1" step="0.1">
+    </div>
+    <div id="box-D" class="input-group" style="display:none">
+        <label>Diameter D (m)</label>
+        <input type="number" id="v-D" value="1" step="0.01">
+    </div>
+</div>
 
         <div id="resHidrolikaVisual" class="card" style="display:none">
             <h3>2. Hasil Uji Terbalik Hidrolika</h3>
@@ -424,82 +434,102 @@ function switchTab(tabId) {
 // --- LOGIK INPUT DINAMIS ---
 function toggleDimensi() {
     const tipe = document.getElementById('h-tipe').value;
-    const hideAll = () => { ['box-B','box-H','box-Z','box-D'].forEach(id => document.getElementById(id).style.display = 'none'); };
-    hideAll();
-    
-    if (tipe.includes('ud')) {
-        const s = parseInt(tipe.replace('ud',''))/100;
-        document.getElementById('box-B').style.display = 'block';
-        document.getElementById('box-H').style.display = 'block';
-        document.getElementById('v-B').value = s; document.getElementById('v-H').value = s;
-    } else if (tipe === 'trapesium') {
-        ['box-B','box-H','box-Z'].forEach(id => document.getElementById(id).style.display = 'block');
+    const boxes = {
+        B: document.getElementById('box-B'),
+        H: document.getElementById('box-H'),
+        Z: document.getElementById('box-Z'),
+        D: document.getElementById('box-D')
+    };
+
+    // Reset semua sembunyi
+    Object.values(boxes).forEach(el => el.style.display = 'none');
+
+    if (tipe.includes('ud') || tipe === 'trapesium') {
+        boxes.B.style.display = 'block';
+        boxes.H.style.display = 'block';
+        if (tipe === 'trapesium') boxes.Z.style.display = 'block';
     } else if (tipe === 'lingkaran') {
-        document.getElementById('box-D').style.display = 'block';
+        boxes.D.style.display = 'block';
     }
 }
 
-// --- MASTER ANALISIS HIDROLIKA TERBALIK ---
 function analyzeHydraulics() {
-    // 1. Ambil Q rencana dari Analisis Frekuensi (misal T=10 Th)
-    // Jika user belum upload DAS, beri nilai default
-    const C = parseFloat(document.getElementById('h-c-pupu').value);
-    const I = 120; // Intensitas (bisa dikembangkan ambil dari resFreq)
-    const A_km2 = typeof totalArea !== 'undefined' ? totalArea : 0.05; 
-    const Q_target = 0.278 * C * I * A_km2;
-
-    // 2. Properti Fisik
-    const n = 0.015; // Manning Beton
-    const S = parseFloat(document.getElementById('h-S').value);
+    // 1. Ambil Parameter
     const tipe = document.getElementById('h-tipe').value;
-    const B = parseFloat(document.getElementById('v-B').value);
-    const H_max = parseFloat(document.getElementById('v-H').value);
-    const D = parseFloat(document.getElementById('v-D').value);
-    const z = parseFloat(document.getElementById('v-Z').value);
+    const S = parseFloat(document.getElementById('h-S').value);
+    const n = 0.013; // Manning beton
+    const B = parseFloat(document.getElementById('v-B').value) || 0;
+    const H = parseFloat(document.getElementById('v-H').value) || 0;
+    const D = parseFloat(document.getElementById('v-D').value) || 0;
+    const z = parseFloat(document.getElementById('v-Z').value) || 0;
+    
+    // Q Target dari hasil hidrologi (T=10Th) atau default
+    const Q_target = parseFloat(document.getElementById('hResultBody').dataset.q) || 1.585;
 
-    let y = 0.001; 
-    let Q_calc = 0;
-    let hLimit = (tipe === 'lingkaran') ? D : H_max;
+    let y = 0.001, Q_calc = 0;
+    const limit = (tipe === 'lingkaran') ? D : H;
 
-    // 3. Iterasi Uji Terbalik
-    while (y < hLimit) {
-        let Area, WP;
+    // 2. Iterasi Numerik mencari Kedalaman Normal (y)
+    while (y < limit) {
+        let A, P;
         if (tipe === 'lingkaran') {
             let theta = 2 * Math.acos(1 - (2 * y / D));
-            Area = (D * D / 8) * (theta - Math.sin(theta));
-            WP = (theta * D) / 2;
+            A = (D * D / 8) * (theta - Math.sin(theta));
+            P = (theta * D) / 2;
         } else if (tipe === 'trapesium') {
-            Area = (B + z * y) * y;
-            WP = B + 2 * y * Math.sqrt(1 + z * z);
+            A = (B + z * y) * y;
+            P = B + 2 * y * Math.sqrt(1 + z * z);
         } else {
-            Area = B * y; WP = B + 2 * y;
+            A = B * y; P = B + 2 * y;
         }
-        let R = Area / WP;
-        Q_calc = (1/n) * Area * Math.pow(R, 2/3) * Math.sqrt(S);
+        
+        let R = A / P;
+        Q_calc = (1/n) * A * Math.pow(R, 2/3) * Math.sqrt(S);
         if (Q_calc >= Q_target) break;
         y += 0.001;
     }
 
-    // 4. Update UI
-    document.getElementById('resHidrolikaVisual').style.display = 'block';
-    const pct = (y / hLimit) * 100;
-    document.getElementById('waterLevel').style.height = (pct > 100 ? 100 : pct) + "%";
-    document.getElementById('channelBox').style.borderRadius = (tipe === 'lingkaran' ? '50%' : '0');
+    // 3. Render Visualisasi Dinamis (SVG)
+    renderChannelSVG(tipe, B, H, D, z, y);
     
-    const badge = document.getElementById('statusBadge');
-    if (y >= hLimit) {
-        badge.innerHTML = "MELUAP (OVERFLOW)"; badge.className = "status-badge status-fail";
-    } else if (y > 0.85 * hLimit) {
-        badge.innerHTML = "BAHAYA (JAGAAN < 15%)"; badge.className = "status-badge status-fail";
-    } else {
-        badge.innerHTML = "AMAN (KAPASITAS OK)"; badge.className = "status-badge status-ok";
-    }
+    // 4. Update Tabel Hasil
+    updateHydraulicTable(Q_target, y, limit);
+}
 
-    document.getElementById('hResultBody').innerHTML = `
-        <tr><td>Q Rencana</td><td><b>${Q_target.toFixed(3)} m³/s</b></td></tr>
-        <tr><td>Tinggi Air (y)</td><td>${y.toFixed(3)} m</td></tr>
-        <tr><td>Tinggi Saluran</td><td>${hLimit.toFixed(2)} m</td></tr>
-    `;
+function renderChannelSVG(tipe, B, H, D, z, y) {
+    const box = document.getElementById('channelBox');
+    const svgW = 200, svgH = 150;
+    const margin = 20;
+    const scale = (svgH - 2 * margin) / Math.max(B, H, D, 1);
+    
+    let draw = `<svg width="100%" height="100%" viewBox="0 0 ${svgW} ${svgH}">`;
+    const bottomY = svgH - margin;
+    const centerX = svgW / 2;
+
+    if (tipe === 'lingkaran') {
+        const r = (D/2) * scale;
+        const waterHeight = y * scale;
+        draw += `<circle cx="${centerX}" cy="${bottomY - r}" r="${r}" fill="none" stroke="#64748b" stroke-width="3"/>`;
+        draw += `<path d="M ${centerX - Math.sqrt(r*r - Math.pow(r-waterHeight,2))} ${bottomY - waterHeight} 
+                   A ${r} ${r} 0 0 0 ${centerX + Math.sqrt(r*r - Math.pow(r-waterHeight,2))} ${bottomY - waterHeight} Z" 
+                   fill="rgba(37, 99, 235, 0.6)"/>`;
+    } else {
+        const bHalf = (B/2) * scale;
+        const topW = (B/2 + z * H) * scale;
+        const waterW = (B/2 + z * y) * scale;
+        
+        // Dinding Saluran
+        draw += `<polyline points="${centerX - topW},${bottomY - H*scale} ${centerX - bHalf},${bottomY} 
+                   ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - H*scale}" 
+                   fill="none" stroke="#64748b" stroke-width="3"/>`;
+        // Air
+        draw += `<polygon points="${centerX - waterW},${bottomY - y*scale} ${centerX + waterW},${bottomY - y*scale} 
+                   ${centerX + bHalf},${bottomY} ${centerX - bHalf},${bottomY}" 
+                   fill="rgba(37, 99, 235, 0.6)"/>`;
+    }
+    
+    draw += `</svg>`;
+    box.innerHTML = draw;
 }
     
 </script>
