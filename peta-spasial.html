@@ -76,7 +76,22 @@
 <div id="panel">
     <h2>HYDRO-SPATIAL <small id="dbStatus" style="font-size: 10px;"></small></h2>
 
-    <div class="card">
+    <div class="tab-container">
+        <button id="btn-hujan" class="tab-btn active" onclick="switchTab('hidrologi')">
+            ☁️ HIDROLOGI
+        </button>
+        <button id="btn-saluran" class="tab-btn" onclick="switchTab('hidrolika')">
+            🌊 HIDROLIKA
+        </button>
+    </div>
+
+    <div id="hidrologi" class="tab-content active">
+        </div>
+
+    <div id="hidrolika" class="tab-content">
+        </div>
+</div>
+    
         <h3>1. Input Area DAS (GeoJSON/UTM)</h3>
         <button class="upload-btn" onclick="document.getElementById('fDAS').click()">📁 PILIH FILE DAS UNTUK ANALISIS</button>
         <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
@@ -128,23 +143,6 @@
             <tbody id="testBody"></tbody>
         </table>
         <div id="bestMethod"></div>
-        
-<div id="panel">
-    <h2>HYDRO-SPATIAL <small id="dbStatus" style="font-size: 10px;"></small></h2>
-
-    <div class="tab-container">
-        <button id="btn-hujan" class="tab-btn active" onclick="switchTab('hidrologi')">🌧️ HIDROLOGI</button>
-        <button id="btn-saluran" class="tab-btn" onclick="switchTab('hidrolika')">🌊 HIDROLIKA</button>
-    </div>
-
-    <div id="hidrologi" class="tab-content active">
-        <div class="card">
-            <h3>1. Input Area DAS (GeoJSON/UTM)</h3>
-            <button class="upload-btn" onclick="document.getElementById('fDAS').click()">📁 PILIH FILE DAS</button>
-            <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
-        </div>
-        <div id="resThiessen" class="card" style="display:none">...</div>
-        </div>
 
     <div id="hidrolika" class="tab-content">
         <div class="card">
