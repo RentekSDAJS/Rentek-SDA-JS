@@ -73,8 +73,32 @@
 .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; font-size: 10px; text-align: center; width: 100%; }
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .input-group { margin-bottom: 8px; }
-.input-group label { display: block; font-size: 9px; font-weight: bold; color: var(--slate); margin-bottom: 3px; }
-.input-group input, .input-group select { width: 100%; padding: 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; }
+.input-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 8px;
+    display: block;
+    text-transform: uppercase;
+}
+
+.input-group input, .input-group select {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    width: 100%;
+}
+
+        .result-header {
+    font-size: 1.4rem !important;
+    font-weight: 800;
+    color: #1e293b;
+    padding: 15px 0;
+    text-align: center;
+    border-bottom: 2px solid #f1f5f9;
+}
 
         
     </style>
@@ -162,12 +186,13 @@
                     <option value="ud60">U-Ditch 60x60</option>
                     <option value="ud80">U-Ditch 80x80</option>
                     <option value="ud100">U-Ditch 100x100</option>
+                    <option value="ud100">U-Ditch 120x120</option>
                     <option value="ud150">U-Ditch 150x150</option>
                     <option value="ud200">U-Ditch 200x200</option>
                 </optgroup>
                 <optgroup label="Lainnya">
-                    <option value="trapesium">Trapesium (Tanah/Pasangan)</option>
-                    <option value="lingkaran">Lingkaran (Pipa/Gorong2)</option>
+                    <option value="trapesium">Trapesium </option>
+                    <option value="lingkaran">Lingkaran </option>
                 </optgroup>
             </select>
         </div>
@@ -496,75 +521,70 @@ function analyzeHydraulics() {
         y += 0.001;
     }
 
-    // 3. Render Visualisasi Dinamis (SVG)
-    renderChannelSVG(tipe, B, H, D, z, y);
-    
-    // 4. Update Tabel Hasil
-    updateHydraulicTable(Q_target, y, limit);
-}
-
 function renderChannelSVG(tipe, B, H, D, z, y) {
     const box = document.getElementById('channelBox');
     const svgW = box.clientWidth;
-    const svgH = 200;
+    const svgH = 220; // Wadah sedikit lebih tinggi
     const margin = 40;
     
-    const maxDim = Math.max(B, H, D);
-    const scale = (svgH - 2 * margin) / (maxDim || 1);
+    // Hitung Skala berdasarkan dimensi terbesar
+    const maxDim = (tipe === 'lingkaran') ? D : Math.max(B, H);
+    const scale = (svgH - (2 * margin)) / (maxDim || 1);
+    
     const centerX = svgW / 2;
-    const bottomY = svgH - margin;
+    const bottomY = svgH - margin; // Titik Dasar Saluran
 
-    let draw = `
-    <svg width="100%" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">
+    let draw = `<svg width="100%" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">
         <defs>
             <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#3b82f6; stop-opacity:0.8" />
-                <stop offset="100%" style="stop-color:#1d4ed8; stop-opacity:0.9" />
+                <stop offset="0%" style="stop-color:#60a5fa; stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#2563eb; stop-opacity:1" />
             </linearGradient>
-            <filter id="shadow">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.2"/>
-            </filter>
         </defs>`;
 
     if (tipe === 'lingkaran') {
         const r = (D / 2) * scale;
-        const waterY = bottomY - (y * scale);
-        // Lingkaran luar (beton)
-        draw += `<circle cx="${centerX}" cy="${bottomY - r}" r="${r}" fill="#f1f5f9" stroke="#94a3b8" stroke-width="8" filter="url(#shadow)"/>`;
-        // Air dengan gradien
+        const cy = bottomY - r; // Titik pusat lingkaran
+        
+        // 1. Gambar Lingkaran Saluran (Background)
+        draw += `<circle cx="${centerX}" cy="${cy}" r="${r}" fill="#f8fafc" stroke="#475569" stroke-width="6"/>`;
+        
+        // 2. Gambar Air (Mengisi dari bawah)
         if (y > 0) {
-            const theta = 2 * Math.acos(1 - (2 * y / D));
-            const startX = centerX - Math.sin(theta/2) * r;
-            const endX = centerX + Math.sin(theta/2) * r;
-            draw += `<path d="M ${startX} ${waterY} A ${r} ${r} 0 ${y > D/2 ? 1 : 0} 1 ${endX} ${waterY} Z" fill="url(#waterGrad)"/>`;
-            // Garis permukaan air
-            draw += `<line x1="${startX}" y1="${waterY}" x2="${endX}" y2="${waterY}" class="water-surface" />`;
+            const hAir = Math.min(y, D);
+            const yWater = bottomY - (hAir * scale);
+            const angle = 2 * Math.acos(1 - (2 * hAir / D)); // Sudut sektor
+            const startX = centerX - Math.sin(angle/2) * r;
+            const endX = centerX + Math.sin(angle/2) * r;
+            const largeArc = hAir > (D/2) ? 1 : 0;
+
+            draw += `<path d="M ${startX} ${yWater} A ${r} ${r} 0 ${largeArc} 0 ${endX} ${yWater} Z" fill="url(#waterGrad)"/>`;
+            // Garis permukaan air rata
+            draw += `<line x1="${startX}" y1="${yWater}" x2="${endX}" y2="${yWater}" stroke="white" stroke-width="2" stroke-dasharray="4"/>`;
         }
     } else {
         const bHalf = (B / 2) * scale;
-        const hVal = H * scale;
-        const yVal = y * scale;
-        const sideSlope = tipe.startsWith('ud') ? 0 : z;
-        
-        const topW = bHalf + (sideSlope * hVal);
-        const waterW = bHalf + (sideSlope * yVal);
+        const hFull = H * scale;
+        const yAir = Math.min(y, H) * scale;
+        const sideSlope = (tipe === 'trapesium') ? z : 0; // U-Ditch z=0
 
-        // Gambar beton/saluran (Background)
-        draw += `<polygon points="${centerX - topW - 10},${bottomY - hVal} ${centerX - bHalf - 10},${bottomY + 10} ${centerX + bHalf + 10},${bottomY + 10} ${centerX + topW + 10},${bottomY - hVal}" fill="#e2e8f0" />`;
-        
-        // Air
+        const topW = bHalf + (sideSlope * hFull);
+        const waterTopW = bHalf + (sideSlope * yAir);
+
+        // 1. Gambar Air Terlebih Dahulu (Agar di dalam saluran)
         if (y > 0) {
-            draw += `<polygon points="${centerX - waterW},${bottomY - yVal} ${centerX + waterW},${bottomY - yVal} ${centerX + bHalf},${bottomY} ${centerX - bHalf},${bottomY}" fill="url(#waterGrad)"/>`;
-            draw += `<line x1="${centerX - waterW}" y1="${bottomY - yVal}" x2="${centerX + waterW}" y2="${bottomY - yVal}" class="water-surface" />`;
+            draw += `<polygon points="${centerX - waterTopW},${bottomY - yAir} ${centerX + waterTopW},${bottomY - yAir} ${centerX + bHalf},${bottomY} ${centerX - bHalf},${bottomY}" fill="url(#waterGrad)"/>`;
+            draw += `<line x1="${centerX - waterTopW}" y1="${bottomY - yAir}" x2="${centerX + waterTopW}" y2="${bottomY - yAir}" stroke="white" stroke-width="2" stroke-dasharray="4"/>`;
         }
 
-        // Dinding utama (Garis tegas)
-        draw += `<polyline points="${centerX - topW},${bottomY - hVal} ${centerX - bHalf},${bottomY} ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - hVal}" fill="none" stroke="#475569" stroke-width="6" stroke-linejoin="round" filter="url(#shadow)"/>`;
+        // 2. Gambar Dinding Saluran (Tebal)
+        draw += `<polyline points="${centerX - topW},${bottomY - hFull} ${centerX - bHalf},${bottomY} ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - hFull}" fill="none" stroke="#1e293b" stroke-width="8" stroke-linejoin="round"/>`;
     }
 
     draw += `</svg>`;
     box.innerHTML = draw;
 }
+    
     function updateHydraulicTable(Q_target, y, limit) {
     const resDiv = document.getElementById('resHidrolikaVisual');
     const resultBody = document.getElementById('hResultBody');
