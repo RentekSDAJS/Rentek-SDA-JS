@@ -193,7 +193,10 @@
             return `<div class="card">
                 <div class="seg-header">
                     <span class="badge-l">Panjang: ${L} m</span>
+                    <div style="display:flex; gap:5px; align-items:center">
                     <span class="badge-c">${coefVal}</span>
+                    <button onclick="removeSegment(${i})" style="background:var(--danger); color:white; border:none; border-radius:4px; cursor:pointer; padding:2px 8px; font-weight:bold;">X</button>
+                    </div>
                 </div>
                 <div style="display:flex; gap:10px">
                     <div style="flex:1"><label>Posisi X (m)</label><input type="number" value="${s.x}" onchange="segments[${i}].x=parseFloat(this.value); renderSegmentsUI(); runSimulation();"></div>
