@@ -72,6 +72,7 @@
 <body>
 
 <div id="map"></div>
+
 <div id="panel">
     <h2>HYDRO-SPATIAL <small id="dbStatus" style="font-size: 10px;"></small></h2>
 
@@ -85,65 +86,60 @@
     </div>
 
     <div id="hidrologi" class="tab-content active">
-        </div>
-
-    <div id="hidrolika" class="tab-content">
-        </div>
-</div>
-
-       <div id="section-hidrologi">
         <div class="card">
-        <h3>1. Input Area DAS (GeoJSON/UTM)</h3>
-        <button class="upload-btn" onclick="document.getElementById('fDAS').click()">📁 PILIH FILE DAS UNTUK ANALISIS</button>
-        <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
-        <p style="font-size: 9px; color: gray; margin: 5px 0;">*Mendukung koordinat WGS84 & UTM Zone 48S</p>
-    </div>
+            <h3>1. Input Area DAS (GeoJSON/UTM)</h3>
+            <button class="upload-btn" onclick="document.getElementById('fDAS').click()">📁 PILIH FILE DAS UNTUK ANALISIS</button>
+            <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
+            <p style="font-size: 9px; color: gray; margin: 5px 0;">*Mendukung koordinat WGS84 & UTM Zone 48S</p>
+        </div>
 
-    <div id="resThiessen" class="card" style="display:none">
-        <h3>2. Poligon Thiessen & Bobot Wilayah</h3>
-        <table>
-            <thead>
-                <tr><th style="text-align:left">Stasiun</th><th>Luas (km²)</th><th>Bobot (W)</th></tr>
-            </thead>
-            <tbody id="tBody"></tbody>
-            <tfoot id="tFoot"></tfoot>
-        </table>
-    </div>
-
-    <div id="resYearly" class="card" style="display:none">
-        <h3>3. Tren Hujan Rerata (Thiessen)</h3>
-        <div class="scroll-container">
+        <div id="resThiessen" class="card" style="display:none">
+            <h3>2. Poligon Thiessen & Bobot Wilayah</h3>
             <table>
-                <thead><tr><th>Tahun</th><th>Hujan (mm)</th></tr></thead>
-                <tbody id="yBody"></tbody>
+                <thead>
+                    <tr><th style="text-align:left">Stasiun</th><th>Luas (km²)</th><th>Bobot (W)</th></tr>
+                </thead>
+                <tbody id="tBody"></tbody>
+                <tfoot id="tFoot"></tfoot>
             </table>
         </div>
-        <canvas id="rainChart" style="margin-top:15px;"></canvas>
-    </div>
 
-    <div id="resParams" class="card" style="display:none">
-        <h3>4. Parameter Statistik Wilayah</h3>
-        <table>
-            <thead><tr><th>Mean</th><th>Sd</th><th>Cv</th><th>Cs</th><th>Ck</th></tr></thead>
-            <tbody id="pBody"></tbody>
-        </table>
-    </div>
+        <div id="resYearly" class="card" style="display:none">
+            <h3>3. Tren Hujan Rerata (Thiessen)</h3>
+            <div class="scroll-container">
+                <table>
+                    <thead><tr><th>Tahun</th><th>Hujan (mm)</th></tr></thead>
+                    <tbody id="yBody"></tbody>
+                </table>
+            </div>
+            <canvas id="rainChart" style="margin-top:15px;"></canvas>
+        </div>
 
-    <div id="resFreq" class="card" style="display:none">
-        <h3>5. Analisis Frekuensi (Hujan Rencana)</h3>
-        <table>
-            <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
-            <tbody id="fBody"></tbody>
-        </table>
-    </div>
+        <div id="resParams" class="card" style="display:none">
+            <h3>4. Parameter Statistik Wilayah</h3>
+            <table>
+                <thead><tr><th>Mean</th><th>Sd</th><th>Cv</th><th>Cs</th><th>Ck</th></tr></thead>
+                <tbody id="pBody"></tbody>
+            </table>
+        </div>
 
-    <div id="resTest" class="card" style="display:none">
-        <h3>6. Uji Kesesuaian Distribusi</h3>
-        <table>
-            <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
-            <tbody id="testBody"></tbody>
-        </table>
-        <div id="bestMethod"></div>
+        <div id="resFreq" class="card" style="display:none">
+            <h3>5. Analisis Frekuensi (Hujan Rencana)</h3>
+            <table>
+                <thead><tr><th>T (Th)</th><th>Normal</th><th>Log-N</th><th>Gumbel</th><th>LP-III</th></tr></thead>
+                <tbody id="fBody"></tbody>
+            </table>
+        </div>
+
+        <div id="resTest" class="card" style="display:none">
+            <h3>6. Uji Kesesuaian Distribusi</h3>
+            <table>
+                <thead><tr><th>Metode</th><th>Param</th><th>S-K</th><th>Chi-Sq</th><th>Status</th></tr></thead>
+                <tbody id="testBody"></tbody>
+            </table>
+            <div id="bestMethod"></div>
+        </div>
+    </div>
 
     <div id="hidrolika" class="tab-content">
         <div class="card">
@@ -197,7 +193,7 @@
             </table>
         </div>
     </div>
-</div>
+</div> 
 
 <script>
     // --- KONFIGURASI PROYEKSI ---
