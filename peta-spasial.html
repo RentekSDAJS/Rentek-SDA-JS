@@ -546,29 +546,38 @@ function toggleDimensi() {
 }
 
 function analyzeHydraulics() {
-    // 1. Ambil Parameter dari Dropdown Baru
+    // 1. Ambil Parameter dari Dropdown & Global
     const tPilihan = document.getElementById('h-kala-ulang').value;
     const cPilihan = parseFloat(document.getElementById('h-c-value').value);
     
-    // Ambil R24 berdasarkan kala ulang yang dipilih user
-    const R24 = dataHujanRencana[tPilihan] || 150; 
+    // Pastikan dataHujanRencana ada, jika tidak gunakan default 150
+    const R24 = (typeof dataHujanRencana !== 'undefined' && dataHujanRencana[tPilihan]) ? dataHujanRencana[tPilihan] : 150; 
     const C = cPilihan;
     
-    const S = parseFloat(document.getElementById('h-S').value);
-    const L_m = parseFloat(document.getElementById('h-L').value);
+    const S = parseFloat(document.getElementById('h-S').value) || 0.001;
+    const L_m = parseFloat(document.getElementById('h-L').value) || 100;
     const tipe = document.getElementById('h-tipe').value;
     const n_manning = 0.013;
 
-    // ... (Sisa kode perhitungan Tc, I, dan Q_target tetap sama) ...
+    // --- TAMBAHAN KUNCI: Ambil nilai dimensi dari input ---
+    const B = parseFloat(document.getElementById('v-B').value) || 0;
+    const H = parseFloat(document.getElementById('v-H').value) || 0;
+    const D = parseFloat(document.getElementById('v-D').value) || 0;
+    const z = parseFloat(document.getElementById('v-Z').value) || 0;
+
+    // 2. Hitung Tc, I, dan Q_target
     const Tc_min = 0.0195 * Math.pow(L_m, 0.77) * Math.pow(S, -0.385);
     const Tc_jam = Tc_min / 60;
     const I = (R24 / 24) * Math.pow(24 / Tc_jam, 2/3);
-    const A_km2 = totalAreaGlobal || 0.5; 
+    const A_km2 = totalAreaGlobal || 0.01; // Default 0.01 km2 jika DAS belum diupload
     const Q_target = (1 / 3.6) * C * I * A_km2;
 
-    // 5. ITERASI MANNING (Mencari Kedalaman Air y)
+    // 3. ITERASI MANNING (Mencari Kedalaman Air y)
     let y = 0.001, Q_calc = 0;
     const limit = (tipe === 'lingkaran') ? D : H;
+
+    // Proteksi jika limit 0 agar tidak infinite loop
+    if (limit <= 0) { alert("Masukkan dimensi saluran dahulu!"); return; }
 
     while (y < limit) {
         let Area, P;
@@ -580,16 +589,17 @@ function analyzeHydraulics() {
             Area = (B + z * y) * y;
             P = B + 2 * y * Math.sqrt(1 + z * z);
         } else {
-            Area = B * y; P = B + 2 * y;
+            Area = B * y; 
+            P = B + 2 * y;
         }
         
-        let R = Area / P;
+        let R = Area / (P || 0.001);
         Q_calc = (1 / n_manning) * Area * Math.pow(R, 2/3) * Math.sqrt(S);
         if (Q_calc >= Q_target) break;
-        y += 0.001;
+        y += 0.005; // Step dinaikkan sedikit agar lebih cepat
     }
 
-    // 6. TAMPILKAN HASIL
+    // 4. TAMPILKAN HASIL
     renderChannelSVG(tipe, B, H, D, z, y);
     updateHydraulicTable(Q_target, y, limit, Tc_min, I, R24);
 }
