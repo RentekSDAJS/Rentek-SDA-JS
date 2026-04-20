@@ -200,6 +200,15 @@
     </div>
 </div> </body>
 
+<button class="upload-btn" style="background:var(--green); margin-top:10px;" onclick="analyzeHydraulics()">
+    UJI DIMENSI SEKARANG
+</button>
+
+<div id="resHidrolikaVisual" class="card" style="display:none">
+    ```
+
+---
+    
 <script>
     // --- KONFIGURASI PROYEKSI ---
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
@@ -423,12 +432,25 @@
             }
         });
     }
-// --- FUNGSI NAVIGASI TAB ---
+// --- FUNGSI NAVIGASI TAB (Letakkan di sini) ---
 function switchTab(tabId) {
+    // 1. Sembunyikan semua konten tab
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    // 2. Nonaktifkan semua tombol tab
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    // 3. Tampilkan tab yang dipilih
     document.getElementById(tabId).classList.add('active');
-    document.getElementById(tabId === 'hidrologi' ? 'btn-hujan' : 'btn-saluran').classList.add('active');
+    
+    // 4. Aktifkan tombol yang sesuai
+    const btnId = (tabId === 'hidrologi') ? 'btn-hujan' : 'btn-saluran';
+    document.getElementById(btnId).classList.add('active');
+
+    // 5. AUTO-RUN: Jika pindah ke hidrolika, langsung hitung
+    if(tabId === 'hidrolika') {
+        analyzeHydraulics();
+    }
 }
 
 // --- LOGIK INPUT DINAMIS ---
@@ -531,6 +553,25 @@ function renderChannelSVG(tipe, B, H, D, z, y) {
     draw += `</svg>`;
     box.innerHTML = draw;
 }
+
+    function updateHydraulicTable(Q_target, y, limit) {
+    const resDiv = document.getElementById('resHidrolikaVisual');
+    const resultBody = document.getElementById('hResultBody');
+    const statusBadge = document.getElementById('statusBadge');
+    
+    resDiv.style.display = 'block'; // Munculkan card hasil
+    
+    const isOverflow = y >= limit;
+    statusBadge.innerHTML = isOverflow ? "MELUAP (OVERFLOW)" : "AMAN (KAPASITAS CUKUP)";
+    statusBadge.style.background = isOverflow ? "var(--red)" : "var(--green)";
+    statusBadge.style.color = "white";
+
+    resultBody.innerHTML = `
+        <tr><td>Q Rencana</td><td><b>${Q_target.toFixed(3)} m³/s</b></td></tr>
+        <tr><td>Tinggi Air (y)</td><td>${y >= limit ? limit.toFixed(3) : y.toFixed(3)} m</td></tr>
+        <tr><td>Tinggi Saluran</td><td>${limit.toFixed(2)} m</td></tr>
+    `;
+}    
     
 </script>
 </body>
