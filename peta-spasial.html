@@ -57,8 +57,18 @@
 .tab-content.active { display: block; }
 
 /* Hidrolika Visual */
-.visual-container { display: flex; flex-direction: column; align-items: center; background: #fff; border: 1px dashed var(--slate); padding: 15px; margin-top: 10px; border-radius: 8px; }
+.visual-container {
+    background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
 .channel-draw { width: 160px; height: 120px; border: 4px solid #64748b; border-top: none; position: relative; background: #f8fafc; overflow: hidden; }
+    .water-surface {
+    stroke: rgba(255,255,255,0.8);
+    stroke-width: 2;
+    stroke-dasharray: 5,5;
 .water-fill { position: absolute; bottom: 0; width: 100%; background: rgba(37, 99, 235, 0.6); transition: height 0.5s ease; border-top: 2px solid #2563eb; }
 .status-badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 10px; font-size: 10px; text-align: center; width: 100%; }
 .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -137,77 +147,55 @@
     </div>
 
 <div id="hidrolika" class="tab-content">
-             <div class="card">
-            <h3>1. Parameter Saluran Rencana</h3>
-            <div class="input-grid">
-                <div class="input-group"><label>Panjang (L) - m</label><input type="number" id="h-L" value="100"></div>
-                <div class="input-group"><label>Kemiringan (S)</label><input type="number" id="h-S" value="0.001" step="0.0001"></div>
-            </div>
-            <div class="input-group">
-                <label>Tutupan Lahan (C)</label>
-                <select id="h-c-pupu">
-                    <option value="0.95">Beton/Aspal (0.95)</option>
-                    <option value="0.75">Komersial (0.75)</option>
-                    <option value="0.65">Pemukiman Padat (0.65)</option>
-                    <option value="0.40">Pemukiman Jarang (0.40)</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Tipe Saluran</label>
-                <select id="h-tipe" onchange="toggleDimensi()">
-                    <optgroup label="Precast U-Ditch">
-                        <option value="ud40">U-Ditch 40x40</option>
-                        <option value="ud60">U-Ditch 60x60</option>
-                        <option value="ud100">U-Ditch 100x100</option>
-                    </optgroup>
-                    <optgroup label="Lainnya">
-                        <option value="trapesium">Trapesium (Tanah/Pasangan)</option>
-                        <option value="lingkaran">Lingkaran (Pipa/Gorong2)</option>
-                    </optgroup>
-                </select>
-            </div>
-<div id="dim-input-container" class="input-grid" style="background:#fff; padding:8px; border-radius:5px; border:1px solid #eee">
-    <div id="box-B" class="input-group">
-        <label>Lebar B (m)</label>
-        <input type="number" id="v-B" value="0.4" step="0.01">
+    <div class="card">
+        <h3>1. Parameter Saluran Rencana</h3>
+        <div class="input-grid">
+            <div class="input-group"><label>Panjang (L) - m</label><input type="number" id="h-L" value="100"></div>
+            <div class="input-group"><label>Kemiringan (S)</label><input type="number" id="h-S" value="0.001" step="0.0001"></div>
+        </div>
+        
+        <div class="input-group">
+            <label>Tipe Saluran</label>
+            <select id="h-tipe" onchange="toggleDimensi()">
+                <optgroup label="Precast U-Ditch">
+                    <option value="ud40">U-Ditch 40x40</option>
+                    <option value="ud60">U-Ditch 60x60</option>
+                    <option value="ud80">U-Ditch 80x80</option>
+                    <option value="ud100">U-Ditch 100x100</option>
+                    <option value="ud150">U-Ditch 150x150</option>
+                    <option value="ud200">U-Ditch 200x200</option>
+                </optgroup>
+                <optgroup label="Lainnya">
+                    <option value="trapesium">Trapesium (Tanah/Pasangan)</option>
+                    <option value="lingkaran">Lingkaran (Pipa/Gorong2)</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div id="dim-input-container" class="input-grid">
+            <div id="box-B" class="input-group"><label>Lebar B (m)</label><input type="number" id="v-B" value="0.4"></div>
+            <div id="box-H" class="input-group"><label>Tinggi H (m)</label><input type="number" id="v-H" value="0.4"></div>
+            <div id="box-Z" class="input-group" style="display:none"><label>Z (Slope)</label><input type="number" id="v-Z" value="1"></div>
+            <div id="box-D" class="input-group" style="display:none"><label>Diameter D (m)</label><input type="number" id="v-D" value="1"></div>
+        </div>
+
+        <button class="upload-btn" style="background:var(--green); margin-top:15px;" onclick="analyzeHydraulics()">
+            UJI DIMENSI SEKARANG
+        </button>
     </div>
-    <div id="box-H" class="input-group">
-        <label>Tinggi Total H (m)</label>
-        <input type="number" id="v-H" value="0.4" step="0.01">
-    </div>
-    <div id="box-Z" class="input-group" style="display:none">
-        <label>Z (Side Slope 1:z)</label>
-        <input type="number" id="v-Z" value="1" step="0.1">
-    </div>
-    <div id="box-D" class="input-group" style="display:none">
-        <label>Diameter D (m)</label>
-        <input type="number" id="v-D" value="1" step="0.01">
+
+    <div id="resHidrolikaVisual" class="card" style="display:none">
+        <h3>2. Hasil Analisis Kapasitas</h3>
+        <div class="visual-container">
+            <div id="statusBadge" class="status-badge"></div>
+            <div class="channel-draw" id="channelBox" style="height: 180px; width: 100%; border:none; background: #f8fafc;">
+                </div>
+        </div>
+        <table>
+            <tbody id="hResultBody"></tbody>
+        </table>
     </div>
 </div>
-
-        <div id="resHidrolikaVisual" class="card" style="display:none">
-            <h3>2. Hasil Uji Terbalik Hidrolika</h3>
-            <div class="visual-container">
-                <div id="statusBadge" class="status-badge"></div>
-                <div class="channel-draw" id="channelBox">
-                    <div id="waterLevel" class="water-fill"></div>
-                </div>
-            </div>
-            <table style="margin-top:10px">
-                <tbody id="hResultBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div> </body>
-
-<button class="upload-btn" style="background:var(--green); margin-top:10px;" onclick="analyzeHydraulics()">
-    UJI DIMENSI SEKARANG
-</button>
-
-<div id="resHidrolikaVisual" class="card" style="display:none">
-    ```
-
----
     
 <script>
     // --- KONFIGURASI PROYEKSI ---
@@ -453,25 +441,22 @@ function switchTab(tabId) {
     }
 }
 
-// --- LOGIK INPUT DINAMIS ---
 function toggleDimensi() {
     const tipe = document.getElementById('h-tipe').value;
-    const boxes = {
-        B: document.getElementById('box-B'),
-        H: document.getElementById('box-H'),
-        Z: document.getElementById('box-Z'),
-        D: document.getElementById('box-D')
-    };
+    const boxB = document.getElementById('v-B');
+    const boxH = document.getElementById('v-H');
+    
+    // Sembunyikan/Munculkan Input pendukung
+    document.getElementById('box-Z').style.display = (tipe === 'trapesium') ? 'block' : 'none';
+    document.getElementById('box-D').style.display = (tipe === 'lingkaran') ? 'block' : 'none';
+    document.getElementById('box-B').style.display = (tipe === 'lingkaran') ? 'none' : 'block';
+    document.getElementById('box-H').style.display = (tipe === 'lingkaran') ? 'none' : 'block';
 
-    // Reset semua sembunyi
-    Object.values(boxes).forEach(el => el.style.display = 'none');
-
-    if (tipe.includes('ud') || tipe === 'trapesium') {
-        boxes.B.style.display = 'block';
-        boxes.H.style.display = 'block';
-        if (tipe === 'trapesium') boxes.Z.style.display = 'block';
-    } else if (tipe === 'lingkaran') {
-        boxes.D.style.display = 'block';
+    // Auto-fill nilai jika U-Ditch dipilih
+    if (tipe.startsWith('ud')) {
+        const size = parseInt(tipe.replace('ud', '')) / 100; // konversi cm ke m
+        boxB.value = size;
+        boxH.value = size;
     }
 }
 
@@ -520,40 +505,66 @@ function analyzeHydraulics() {
 
 function renderChannelSVG(tipe, B, H, D, z, y) {
     const box = document.getElementById('channelBox');
-    const svgW = 200, svgH = 150;
-    const margin = 20;
-    const scale = (svgH - 2 * margin) / Math.max(B, H, D, 1);
+    const svgW = box.clientWidth;
+    const svgH = 200;
+    const margin = 40;
     
-    let draw = `<svg width="100%" height="100%" viewBox="0 0 ${svgW} ${svgH}">`;
-    const bottomY = svgH - margin;
+    const maxDim = Math.max(B, H, D);
+    const scale = (svgH - 2 * margin) / (maxDim || 1);
     const centerX = svgW / 2;
+    const bottomY = svgH - margin;
+
+    let draw = `
+    <svg width="100%" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">
+        <defs>
+            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#3b82f6; stop-opacity:0.8" />
+                <stop offset="100%" style="stop-color:#1d4ed8; stop-opacity:0.9" />
+            </linearGradient>
+            <filter id="shadow">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.2"/>
+            </filter>
+        </defs>`;
 
     if (tipe === 'lingkaran') {
-        const r = (D/2) * scale;
-        const waterHeight = y * scale;
-        draw += `<circle cx="${centerX}" cy="${bottomY - r}" r="${r}" fill="none" stroke="#64748b" stroke-width="3"/>`;
-        draw += `<path d="M ${centerX - Math.sqrt(r*r - Math.pow(r-waterHeight,2))} ${bottomY - waterHeight} 
-                   A ${r} ${r} 0 0 0 ${centerX + Math.sqrt(r*r - Math.pow(r-waterHeight,2))} ${bottomY - waterHeight} Z" 
-                   fill="rgba(37, 99, 235, 0.6)"/>`;
+        const r = (D / 2) * scale;
+        const waterY = bottomY - (y * scale);
+        // Lingkaran luar (beton)
+        draw += `<circle cx="${centerX}" cy="${bottomY - r}" r="${r}" fill="#f1f5f9" stroke="#94a3b8" stroke-width="8" filter="url(#shadow)"/>`;
+        // Air dengan gradien
+        if (y > 0) {
+            const theta = 2 * Math.acos(1 - (2 * y / D));
+            const startX = centerX - Math.sin(theta/2) * r;
+            const endX = centerX + Math.sin(theta/2) * r;
+            draw += `<path d="M ${startX} ${waterY} A ${r} ${r} 0 ${y > D/2 ? 1 : 0} 1 ${endX} ${waterY} Z" fill="url(#waterGrad)"/>`;
+            // Garis permukaan air
+            draw += `<line x1="${startX}" y1="${waterY}" x2="${endX}" y2="${waterY}" class="water-surface" />`;
+        }
     } else {
-        const bHalf = (B/2) * scale;
-        const topW = (B/2 + z * H) * scale;
-        const waterW = (B/2 + z * y) * scale;
+        const bHalf = (B / 2) * scale;
+        const hVal = H * scale;
+        const yVal = y * scale;
+        const sideSlope = tipe.startsWith('ud') ? 0 : z;
         
-        // Dinding Saluran
-        draw += `<polyline points="${centerX - topW},${bottomY - H*scale} ${centerX - bHalf},${bottomY} 
-                   ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - H*scale}" 
-                   fill="none" stroke="#64748b" stroke-width="3"/>`;
+        const topW = bHalf + (sideSlope * hVal);
+        const waterW = bHalf + (sideSlope * yVal);
+
+        // Gambar beton/saluran (Background)
+        draw += `<polygon points="${centerX - topW - 10},${bottomY - hVal} ${centerX - bHalf - 10},${bottomY + 10} ${centerX + bHalf + 10},${bottomY + 10} ${centerX + topW + 10},${bottomY - hVal}" fill="#e2e8f0" />`;
+        
         // Air
-        draw += `<polygon points="${centerX - waterW},${bottomY - y*scale} ${centerX + waterW},${bottomY - y*scale} 
-                   ${centerX + bHalf},${bottomY} ${centerX - bHalf},${bottomY}" 
-                   fill="rgba(37, 99, 235, 0.6)"/>`;
+        if (y > 0) {
+            draw += `<polygon points="${centerX - waterW},${bottomY - yVal} ${centerX + waterW},${bottomY - yVal} ${centerX + bHalf},${bottomY} ${centerX - bHalf},${bottomY}" fill="url(#waterGrad)"/>`;
+            draw += `<line x1="${centerX - waterW}" y1="${bottomY - yVal}" x2="${centerX + waterW}" y2="${bottomY - yVal}" class="water-surface" />`;
+        }
+
+        // Dinding utama (Garis tegas)
+        draw += `<polyline points="${centerX - topW},${bottomY - hVal} ${centerX - bHalf},${bottomY} ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - hVal}" fill="none" stroke="#475569" stroke-width="6" stroke-linejoin="round" filter="url(#shadow)"/>`;
     }
-    
+
     draw += `</svg>`;
     box.innerHTML = draw;
 }
-
     function updateHydraulicTable(Q_target, y, limit) {
     const resDiv = document.getElementById('resHidrolikaVisual');
     const resultBody = document.getElementById('hResultBody');
