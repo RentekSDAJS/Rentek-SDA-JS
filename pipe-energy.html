@@ -314,11 +314,22 @@
         ctx.fillStyle = "blue"; ctx.fillRect(c.width-150, 40, 15, 2); ctx.fillStyle = "black"; ctx.fillText("EGL (Total Energy)", c.width-130, 45);
         ctx.fillStyle = "#334155"; ctx.fillRect(c.width-150, 60, 15, 6); ctx.fillStyle = "black"; ctx.fillText("Pipa Jalur", c.width-130, 66);
 
-        // RESERVOIR
-        ctx.fillStyle = "rgba(14, 165, 233, 0.2)"; ctx.fillRect(gX(-40), gY(elD+tA), 40*scaleX, tA*scaleY);
-        ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2; ctx.strokeRect(gX(-40), gY(elD+tA), 40*scaleX, tA*scaleY);
-        ctx.fillStyle = "#0f172a"; ctx.font = "bold 13px Segoe UI"; ctx.textAlign = "center";
-        ctx.fillText("RESERVOIR", gX(-20), gY(elD+tA) - 15);
+        // RESERVOIR (Ukuran Fix)
+const resWidth = 60; // Lebar tetap dalam pixel
+const resHeight = 40; // Tinggi tetap dalam pixel
+const resX = margin; // Posisi X tetap di margin kiri
+const resY = c.height - margin - resHeight; // Posisi Y tetap di bawah
+
+ctx.fillStyle = "rgba(14, 165, 233, 0.2)";
+ctx.fillRect(resX, resY, resWidth, resHeight);
+ctx.strokeStyle = "#0f172a";
+ctx.lineWidth = 2;
+ctx.strokeRect(resX, resY, resWidth, resHeight);
+
+ctx.fillStyle = "#0f172a";
+ctx.font = "bold 13px Segoe UI";
+ctx.textAlign = "center";
+ctx.fillText("RESERVOIR", resX + (resWidth/2), resY - 10);
         
         // HGL STARTING
         ctx.setLineDash([6,4]); ctx.strokeStyle="red"; ctx.beginPath();
