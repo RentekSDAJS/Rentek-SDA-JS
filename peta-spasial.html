@@ -226,6 +226,7 @@
 // --- VARIABEL GLOBAL UNTUK MENGHUBUNGKAN HIDROLOGI & HIDROLIKA ---
     let hujanRencanaTerpilih = 0;
     let luasDASTerpilih = 0;
+    let totalAreaGlobal = 0;
     
     // --- KONFIGURASI PROYEKSI ---
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
@@ -327,6 +328,8 @@
             if (clip) {
                 const area = turf.area(clip) / 1000000;
                 totalArea += area;
+                totalAreaGlobal = totalArea;
+                
                 const color = `hsl(${(i * 137.5) % 360}, 75%, 65%)`;
                 const stId = pts.features[i].properties.id;
                 thiessenResults.push({ id: stId, name: pts.features[i].properties.name, area: area, color: color });
@@ -372,58 +375,72 @@
         ['resThiessen', 'resYearly', 'resParams', 'resFreq', 'resTest'].forEach(id => document.getElementById(id).style.display = 'block');
     }
 
-    function runFullAnalysis(data) {
-        const n = data.length;
-        const mean = data.reduce((a, b) => a + b) / n;
-        const sd = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / (n - 1));
-        const cv = sd / mean;
-        const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
-        const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
+function runFullAnalysis(data) {
+    const n = data.length;
+    const mean = data.reduce((a, b) => a + b) / n;
+    const sd = Math.sqrt(data.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b) / (n - 1));
+    const cv = sd / mean;
+    const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
+    const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
 
-        document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
+    document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
 
-        const logD = data.map(x => Math.log10(x));
-        const lMean = logD.reduce((a,b)=>a+b)/n;
-        const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
-        const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
+    const logD = data.map(x => Math.log10(x));
+    const lMean = logD.reduce((a,b)=>a+b)/n;
+    const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
+    const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
 
-        const T = [2, 5, 10, 25, 50, 100];
-        T.forEach(t => {
-            const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
-            const rN = mean + (kt * sd);
-            const rLN = Math.pow(10, lMean + (kt * lSd));
-            const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
-            const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
-            const rLP = Math.pow(10, lMean + (kLP * lSd));
-            document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP.toFixed(1)}</td></tr>`;
-        });
+    // --- PERBAIKAN DI SINI ---
+    let rLP_final = 0; // Siapkan wadah kosong di luar loop
 
-        const skCrit = { "0.05": 0.27, "0.01": 0.32 };
-        const chiCrit = { "0.05": 5.99, "0.01": 9.21 };
+    const T = [2, 5, 10, 25, 50, 100];
+    T.forEach(t => {
+        const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
+        const rN = mean + (kt * sd);
+        const rLN = Math.pow(10, lMean + (kt * lSd));
+        const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
         
-        const testData = [
-            { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
-            { id: "Log-Normal", d: 0.14, chi: 10.5, okP: Math.abs(cs - (3*cv)) < 0.1 },
-            { id: "Gumbel", d: 0.10, chi: 1.9, okP: Math.abs(cs - 1.14) < 0.2 },
-            { id: "Log-Pearson III", d: 0.08, chi: 1.2, okP: true }
-        ];
+        // Hitung rLP
+        const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
+        const rLP_val = Math.pow(10, lMean + (kLP * lSd)); // Nilai rLP untuk tahun ke-t
 
-        let winners = [];
-        testData.forEach(m => {
-            const skS = m.d < skCrit["0.05"] ? "5%" : (m.d < skCrit["0.01"] ? "1%" : "FAIL");
-            const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
-            const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
-            if(pass) winners.push(m);
-            document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
-        });
+        // Simpan nilai rLP Kala Ulang 10 Tahun untuk dipakai di Hidrolika
+        if(t === 10) {
+            rLP_final = rLP_val; 
+        }
 
-        const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
-        document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
-    }
+        document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP_val.toFixed(1)}</td></tr>`;
+    });
 
+    // Masukkan ke variabel global agar bisa dibaca tab sebelah (Hidrolika)
+    hujanRencanaTerpilih = rLP_final; 
+    luasDASTerpilih = totalAreaGlobal; // Pastikan totalAreaGlobal sudah terisi di processHydrology
+
+    // --- LANJUTAN UJI KESESUAIAN ---
+    const skCrit = { "0.05": 0.27, "0.01": 0.32 };
+    const chiCrit = { "0.05": 5.99, "0.01": 9.21 };
+    
+    const testData = [
+        { id: "Normal", d: 0.12, chi: 2.3, okP: Math.abs(cs) < 0.1 },
+        { id: "Log-Normal", d: 0.14, chi: 10.5, okP: Math.abs(cs - (3*cv)) < 0.1 },
+        { id: "Gumbel", d: 0.10, chi: 1.9, okP: Math.abs(cs - 1.14) < 0.2 },
+        { id: "Log-Pearson III", d: 0.08, chi: 1.2, okP: true }
+    ];
+
+    let winners = [];
+    testData.forEach(m => {
+        const skS = m.d < skCrit["0.05"] ? "5%" : (m.d < skCrit["0.01"] ? "1%" : "FAIL");
+        const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
+        const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
+        if(pass) winners.push(m);
+        document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
+    });
+
+    const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
+    document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
+    
     hujanRencanaTerpilih = rLP; 
-    luasDASTerpilih = totalArea; // totalArea didapat dari fungsi processHydrology
-
+    luasDASTerpilih = totalArea; 
     console.log("Data Tersinkron: R24 =", hujanRencanaTerpilih, "A =", luasDASTerpilih);
 
     }
@@ -546,11 +563,6 @@ function analyzeHydraulics() {
     renderChannelSVG(tipe, B, H, D, z, y);
     updateHydraulicTable(Q_target, y, limit, Tc_min, I, R24);
 }
-
-    // 3. PANGGIL VISUALISASI (Penting!)
-    renderChannelSVG(tipe, B, H, D, z, y);
-    updateHydraulicTable(Q_target, y, limit);
-} // <--- KURUNG PENUTUP YANG TADI HILANG
 
 function renderChannelSVG(tipe, B, H, D, z, y) {
     const box = document.getElementById('channelBox');
