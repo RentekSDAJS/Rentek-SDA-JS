@@ -262,7 +262,6 @@
     let stMarkers = L.layerGroup().addTo(map);
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
-    let rainChart = null;
 
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
@@ -668,7 +667,10 @@ function updateHydraulicTable(Q_target, y, limit, Tc, I, R24) {
     const statusBadge = document.getElementById('statusBadge');
     
     resDiv.style.display = 'block';
-    const isOverflow = y >= (limit * 0.9); 
+    
+    // Safety check jika y adalah NaN atau tidak terdefinisi
+    const waterDepth = isNaN(y) ? 0 : y;
+    const isOverflow = waterDepth >= (limit * 0.9); 
 
     statusBadge.innerHTML = isOverflow ? "⚠️ KAPASITAS TIDAK MEMENUHI" : "✅ KAPASITAS MEMENUHI";
     statusBadge.style.background = isOverflow ? "#dc2626" : "#059669";
@@ -680,11 +682,13 @@ function updateHydraulicTable(Q_target, y, limit, Tc, I, R24) {
         <tr><td>Intensitas (I)</td><td>${I.toFixed(2)} mm/jam</td></tr>
         <tr style="background:#f1f5f9"><td colspan="2"><b>HASIL ANALISIS</b></td></tr>
         <tr><td>Debit Rasional (Q)</td><td><b style="color:blue">${Q_target.toFixed(3)} m³/s</b></td></tr>
-        <tr><td>Kedalaman Air (y)</td><td>${y >= limit ? '<span style="color:red">FULL</span>' : y.toFixed(3) + ' m'}</td></tr>
-        <tr><td>Tinggi Saluran (H)</td><td>${limit.toFixed(2)} m</td></tr>
+        <tr><td>Kedalaman Air (y)</td><td>${waterDepth >= limit ? '<span style="color:red;font-weight:bold;">MELUAP (FULL)</span>' : waterDepth.toFixed(3) + ' m'}</td></tr>
+        <tr><td>Kapasitas Terpakai</td><td>${((waterDepth/limit)*100).toFixed(1)} %</td></tr>
+        <tr><td>Tinggi Saluran (H/D)</td><td>${limit.toFixed(2)} m</td></tr>
     `;
-} 
+}
 
+// Tambahkan penutup script jika belum ada
 </script>
 </body>
 </html>
