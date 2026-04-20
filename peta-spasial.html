@@ -480,40 +480,60 @@ function toggleDimensi() {
 }
 
 function analyzeHydraulics() {
-    // 1. Ambil Parameter
+    // 1. Ambil Parameter Input Manual
     const tipe = document.getElementById('h-tipe').value;
     const S = parseFloat(document.getElementById('h-S').value);
-    const n = 0.013; // Manning beton
+    const L_m = parseFloat(document.getElementById('h-L').value); // Panjang saluran (m)
+    const n_manning = 0.013;
+    
     const B = parseFloat(document.getElementById('v-B').value) || 0;
     const H = parseFloat(document.getElementById('v-H').value) || 0;
     const D = parseFloat(document.getElementById('v-D').value) || 0;
     const z = parseFloat(document.getElementById('v-Z').value) || 0;
-    
-    // Q Target: Ambil dari hasil analisis frekuensi (misal T=10) atau default jika belum ada analisis
-    const Q_target = 1.585; 
 
+    // 2. HITUNG Tc (KIRPICH)
+    // Rumus: Tc = 0.0195 * L^0.77 * S^-0.385 (L dalam meter, S dalam m/m)
+    const Tc_min = 0.0195 * Math.pow(L_m, 0.77) * Math.pow(S, -0.385);
+    const Tc_jam = Tc_min / 60;
+
+    // 3. HITUNG INTENSITAS (MONONOBE)
+    // Menggunakan R24 dari hasil analisis hidrologi sebelumnya
+    const R24 = hujanRencanaTerpilih || 150; // Default 150 jika belum upload DAS
+    const I = (R24 / 24) * Math.pow(24 / Tc_jam, 2/3);
+
+    // 4. HITUNG DEBIT (METODE RASIONAL)
+    // Q = 1/3.6 * C * I * A  --> (A dalam km2, I dalam mm/jam)
+    const C = 0.70; // Koefisien pengaliran (asumsi urban/beton, bisa dibuat input)
+    const A_km2 = luasDASTerpilih || 0.5; // Default 0.5 jika belum upload DAS
+    const Q_target = (1 / 3.6) * C * I * A_km2;
+
+    // 5. ITERASI MANNING (Mencari Kedalaman Air y)
     let y = 0.001, Q_calc = 0;
     const limit = (tipe === 'lingkaran') ? D : H;
 
-    // 2. Iterasi Numerik mencari Kedalaman Normal (y)
     while (y < limit) {
-        let A, P;
+        let Area, P;
         if (tipe === 'lingkaran') {
             let theta = 2 * Math.acos(1 - (2 * y / D));
-            A = (D * D / 8) * (theta - Math.sin(theta));
+            Area = (D * D / 8) * (theta - Math.sin(theta));
             P = (theta * D) / 2;
         } else if (tipe === 'trapesium') {
-            A = (B + z * y) * y;
+            Area = (B + z * y) * y;
             P = B + 2 * y * Math.sqrt(1 + z * z);
         } else {
-            A = B * y; P = B + 2 * y;
+            Area = B * y; P = B + 2 * y;
         }
         
-        let R = A / P;
-        Q_calc = (1/n) * A * Math.pow(R, 2/3) * Math.sqrt(S);
+        let R = Area / P;
+        Q_calc = (1 / n_manning) * Area * Math.pow(R, 2/3) * Math.sqrt(S);
         if (Q_calc >= Q_target) break;
         y += 0.001;
     }
+
+    // 6. TAMPILKAN HASIL
+    renderChannelSVG(tipe, B, H, D, z, y);
+    updateHydraulicTable(Q_target, y, limit, Tc_min, I, R24);
+}
 
     // 3. PANGGIL VISUALISASI (Penting!)
     renderChannelSVG(tipe, B, H, D, z, y);
@@ -572,22 +592,28 @@ function renderChannelSVG(tipe, B, H, D, z, y) {
     box.innerHTML = draw;
 }
 
-function updateHydraulicTable(Q_target, y, limit) {
+function updateHydraulicTable(Q_target, y, limit, Tc, I, R24) {
     const resDiv = document.getElementById('resHidrolikaVisual');
     const resultBody = document.getElementById('hResultBody');
     const statusBadge = document.getElementById('statusBadge');
     
     resDiv.style.display = 'block';
-    const isOverflow = y >= (limit * 0.95); // Toleransi freeboard 5%
-    statusBadge.innerHTML = isOverflow ? "⚠️ MELUAP / OVERFLOW" : "✅ AMAN (KAPASITAS CUKUP)";
+    const isOverflow = y >= (limit * 0.9); 
+
+    statusBadge.innerHTML = isOverflow ? "⚠️ KAPASITAS TIDAK MEMENUHI" : "✅ KAPASITAS MEMENUHI";
     statusBadge.style.background = isOverflow ? "#dc2626" : "#059669";
 
     resultBody.innerHTML = `
-        <tr><td>Q Rencana</td><td><b>${Q_target.toFixed(3)} m³/s</b></td></tr>
-        <tr><td>Tinggi Air (y)</td><td>${y >= limit ? limit.toFixed(3) : y.toFixed(3)} m</td></tr>
-        <tr><td>Tinggi Saluran (H)</td><td>${limit.toFixed(2)} m</td></tr>
+        <tr style="background:#f1f5f9"><td colspan="2"><b>PARAMETER INPUT</b></td></tr>
+        <tr><td>Hujan Rencana ($R_{24}$)</td><td>${R24.toFixed(2)} mm</td></tr>
+        <tr><td>Waktu Konsentrasi ($t_c$)</td><td>${Tc.toFixed(2)} menit</td></tr>
+        <tr><td>Intensitas ($I$)</td><td>${I.toFixed(2)} mm/jam</td></tr>
+        <tr style="background:#f1f5f9"><td colspan="2"><b>HASIL ANALISIS</b></td></tr>
+        <tr><td>Debit Rasional ($Q$)</td><td><b style="color:blue">${Q_target.toFixed(3)} m³/s</b></td></tr>
+        <tr><td>Kedalaman Air ($y$)</td><td>${y >= limit ? '<span style="color:red">FULL</span>' : y.toFixed(3) + ' m'}</td></tr>
+        <tr><td>Tinggi Saluran ($H$)</td><td>${limit.toFixed(2)} m</td></tr>
     `;
-}   
+}
     
 </script>
 </body>
