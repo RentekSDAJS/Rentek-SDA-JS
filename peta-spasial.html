@@ -222,6 +222,11 @@
 </div>
     
 <script>
+    
+// --- VARIABEL GLOBAL UNTUK MENGHUBUNGKAN HIDROLOGI & HIDROLIKA ---
+    let hujanRencanaTerpilih = 0;
+    let luasDASTerpilih = 0;
+    
     // --- KONFIGURASI PROYEKSI ---
     proj4.defs("EPSG:32748", "+proj=utm +zone=48 +south +datum=WGS84 +units=m +no_defs");
 
@@ -414,6 +419,13 @@
 
         const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
         document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
+    }
+
+    hujanRencanaTerpilih = rLP; 
+    luasDASTerpilih = totalArea; // totalArea didapat dari fungsi processHydrology
+
+    console.log("Data Tersinkron: R24 =", hujanRencanaTerpilih, "A =", luasDASTerpilih);
+
     }
 
     // --- UI HELPER: CHART ---
