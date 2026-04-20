@@ -211,6 +211,14 @@
     }
 
     function addSegment() { segments.push({...segments[segments.length-1], x: segments[segments.length-1].x + 50}); renderSegmentsUI(); }
+    function removeSegment(index) {
+        if (segments.length > 1) {
+            segments.splice(index, 1);
+            renderSegmentsUI();
+            runSimulation();
+        } else {
+            alert("Minimal harus ada 1 segmen pipa!");
+        }
 
     function runSimulation() {
         const method = document.getElementById('calc_method').value;
