@@ -489,8 +489,8 @@ function analyzeHydraulics() {
     const D = parseFloat(document.getElementById('v-D').value) || 0;
     const z = parseFloat(document.getElementById('v-Z').value) || 0;
     
-    // Q Target dari hasil hidrologi (T=10Th) atau default
-    const Q_target = parseFloat(document.getElementById('hResultBody').dataset.q) || 1.585;
+    // Q Target: Ambil dari hasil analisis frekuensi (misal T=10) atau default jika belum ada analisis
+    const Q_target = 1.585; 
 
     let y = 0.001, Q_calc = 0;
     const limit = (tipe === 'lingkaran') ? D : H;
@@ -515,18 +515,22 @@ function analyzeHydraulics() {
         y += 0.001;
     }
 
+    // 3. PANGGIL VISUALISASI (Penting!)
+    renderChannelSVG(tipe, B, H, D, z, y);
+    updateHydraulicTable(Q_target, y, limit);
+} // <--- KURUNG PENUTUP YANG TADI HILANG
+
 function renderChannelSVG(tipe, B, H, D, z, y) {
     const box = document.getElementById('channelBox');
-    const svgW = box.clientWidth;
-    const svgH = 220; // Wadah sedikit lebih tinggi
-    const margin = 40;
+    const svgW = box.clientWidth || 300;
+    const svgH = 180; 
+    const margin = 30;
     
-    // Hitung Skala berdasarkan dimensi terbesar
     const maxDim = (tipe === 'lingkaran') ? D : Math.max(B, H);
     const scale = (svgH - (2 * margin)) / (maxDim || 1);
     
     const centerX = svgW / 2;
-    const bottomY = svgH - margin; // Titik Dasar Saluran
+    const bottomY = svgH - margin;
 
     let draw = `<svg width="100%" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">
         <defs>
@@ -538,65 +542,52 @@ function renderChannelSVG(tipe, B, H, D, z, y) {
 
     if (tipe === 'lingkaran') {
         const r = (D / 2) * scale;
-        const cy = bottomY - r; // Titik pusat lingkaran
-        
-        // 1. Gambar Lingkaran Saluran (Background)
-        draw += `<circle cx="${centerX}" cy="${cy}" r="${r}" fill="#f8fafc" stroke="#475569" stroke-width="6"/>`;
-        
-        // 2. Gambar Air (Mengisi dari bawah)
+        const cy = bottomY - r;
+        draw += `<circle cx="${centerX}" cy="${cy}" r="${r}" fill="#f8fafc" stroke="#475569" stroke-width="4"/>`;
         if (y > 0) {
             const hAir = Math.min(y, D);
             const yWater = bottomY - (hAir * scale);
-            const angle = 2 * Math.acos(1 - (2 * hAir / D)); // Sudut sektor
+            const angle = 2 * Math.acos(1 - (2 * hAir / D));
             const startX = centerX - Math.sin(angle/2) * r;
             const endX = centerX + Math.sin(angle/2) * r;
             const largeArc = hAir > (D/2) ? 1 : 0;
-
-            draw += `<path d="M ${startX} ${yWater} A ${r} ${r} 0 ${largeArc} 0 ${endX} ${yWater} Z" fill="url(#waterGrad)"/>`;
-            // Garis permukaan air rata
+            draw += `<path d="M ${startX} ${yWater} A ${r} ${r} 0 ${largeArc} 0 ${endX} ${yWater} L ${centerX} ${cy} Z" fill="url(#waterGrad)" opacity="0.8"/>`;
             draw += `<line x1="${startX}" y1="${yWater}" x2="${endX}" y2="${yWater}" stroke="white" stroke-width="2" stroke-dasharray="4"/>`;
         }
     } else {
         const bHalf = (B / 2) * scale;
         const hFull = H * scale;
         const yAir = Math.min(y, H) * scale;
-        const sideSlope = (tipe === 'trapesium') ? z : 0; // U-Ditch z=0
-
+        const sideSlope = (tipe === 'trapesium') ? z : 0;
         const topW = bHalf + (sideSlope * hFull);
         const waterTopW = bHalf + (sideSlope * yAir);
 
-        // 1. Gambar Air Terlebih Dahulu (Agar di dalam saluran)
         if (y > 0) {
             draw += `<polygon points="${centerX - waterTopW},${bottomY - yAir} ${centerX + waterTopW},${bottomY - yAir} ${centerX + bHalf},${bottomY} ${centerX - bHalf},${bottomY}" fill="url(#waterGrad)"/>`;
             draw += `<line x1="${centerX - waterTopW}" y1="${bottomY - yAir}" x2="${centerX + waterTopW}" y2="${bottomY - yAir}" stroke="white" stroke-width="2" stroke-dasharray="4"/>`;
         }
-
-        // 2. Gambar Dinding Saluran (Tebal)
-        draw += `<polyline points="${centerX - topW},${bottomY - hFull} ${centerX - bHalf},${bottomY} ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - hFull}" fill="none" stroke="#1e293b" stroke-width="8" stroke-linejoin="round"/>`;
+        draw += `<polyline points="${centerX - topW},${bottomY - hFull} ${centerX - bHalf},${bottomY} ${centerX + bHalf},${bottomY} ${centerX + topW},${bottomY - hFull}" fill="none" stroke="#1e293b" stroke-width="6" stroke-linejoin="round"/>`;
     }
-
     draw += `</svg>`;
     box.innerHTML = draw;
 }
-    
-    function updateHydraulicTable(Q_target, y, limit) {
+
+function updateHydraulicTable(Q_target, y, limit) {
     const resDiv = document.getElementById('resHidrolikaVisual');
     const resultBody = document.getElementById('hResultBody');
     const statusBadge = document.getElementById('statusBadge');
     
-    resDiv.style.display = 'block'; // Munculkan card hasil
-    
-    const isOverflow = y >= limit;
-    statusBadge.innerHTML = isOverflow ? "MELUAP (OVERFLOW)" : "AMAN (KAPASITAS CUKUP)";
-    statusBadge.style.background = isOverflow ? "var(--red)" : "var(--green)";
-    statusBadge.style.color = "white";
+    resDiv.style.display = 'block';
+    const isOverflow = y >= (limit * 0.95); // Toleransi freeboard 5%
+    statusBadge.innerHTML = isOverflow ? "⚠️ MELUAP / OVERFLOW" : "✅ AMAN (KAPASITAS CUKUP)";
+    statusBadge.style.background = isOverflow ? "#dc2626" : "#059669";
 
     resultBody.innerHTML = `
         <tr><td>Q Rencana</td><td><b>${Q_target.toFixed(3)} m³/s</b></td></tr>
         <tr><td>Tinggi Air (y)</td><td>${y >= limit ? limit.toFixed(3) : y.toFixed(3)} m</td></tr>
-        <tr><td>Tinggi Saluran</td><td>${limit.toFixed(2)} m</td></tr>
+        <tr><td>Tinggi Saluran (H)</td><td>${limit.toFixed(2)} m</td></tr>
     `;
-}    
+}   
     
 </script>
 </body>
