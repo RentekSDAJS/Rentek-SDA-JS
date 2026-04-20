@@ -175,7 +175,28 @@
         <div class="input-grid">
             <div class="input-group"><label>Panjang (L) - m</label><input type="number" id="h-L" value="100"></div>
             <div class="input-group"><label>Kemiringan (S)</label><input type="number" id="h-S" value="0.001" step="0.0001"></div>
-        </div>
+            <div class="input-group">
+    <label>Kala Ulang (T)</label>
+    <select id="h-kala-ulang" onchange="analyzeHydraulics()">
+        <option value="2">2 Tahun</option>
+        <option value="5">5 Tahun</option>
+        <option value="10" selected>10 Tahun</option>
+        <option value="25">25 Tahun</option>
+        <option value="50">50 Tahun</option>
+        <option value="100">100 Tahun</option>
+    </select>
+</div>
+
+<div class="input-group">
+    <label>Tutupan Lahan (C)</label>
+    <select id="h-c-value" onchange="analyzeHydraulics()">
+        <option value="0.95">Beton / Atap (0.95)</option>
+        <option value="0.70" selected>Kawasan Urban (0.70)</option>
+        <option value="0.50">Pemukiman Padat (0.50)</option>
+        <option value="0.30">Taman / Padang Rumput (0.30)</option>
+        <option value="0.20">Hutan / Lahan Terbuka (0.20)</option>
+    </select>
+</div>
         
         <div class="input-group">
             <label>Tipe Saluran</label>
@@ -383,38 +404,49 @@ function runFullAnalysis(data) {
     const cs = (n * data.map(x => Math.pow(x - mean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(sd, 3));
     const ck = (n * n * data.map(x => Math.pow(x - mean, 4)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * (n - 3) * Math.pow(sd, 4));
 
+    // Update tabel parameter statistik
     document.getElementById('pBody').innerHTML = `<tr><td>${mean.toFixed(2)}</td><td>${sd.toFixed(2)}</td><td>${cv.toFixed(3)}</td><td>${cs.toFixed(3)}</td><td>${ck.toFixed(3)}</td></tr>`;
 
+    // Persiapan Log Pearson III
     const logD = data.map(x => Math.log10(x));
     const lMean = logD.reduce((a,b)=>a+b)/n;
     const lSd = Math.sqrt(logD.map(x=>Math.pow(x-lMean,2)).reduce((a,b)=>a+b)/(n-1));
     const lCs = (n * logD.map(x => Math.pow(x - lMean, 3)).reduce((a, b) => a + b)) / ((n - 1) * (n - 2) * Math.pow(lSd, 3));
 
-    // --- PERBAIKAN DI SINI ---
-    let rLP_final = 0; // Siapkan wadah kosong di luar loop
+    // --- KUNCI BARU 1: Kosongkan objek penampung sebelum diisi ---
+    dataHujanRencana = {}; 
+    document.getElementById('fBody').innerHTML = ""; // Bersihkan tabel frekuensi
 
     const T = [2, 5, 10, 25, 50, 100];
     T.forEach(t => {
+        // Faktor K (Normal)
         const kt = { 2:0, 5:0.842, 10:1.282, 25:1.751, 50:2.054, 100:2.326 }[t];
+        
+        // Hitung berbagai metode untuk tabel pembanding
         const rN = mean + (kt * sd);
         const rLN = Math.pow(10, lMean + (kt * lSd));
         const rG = mean + (((-(Math.log(Math.log(t/(t-1)))) - 0.5128)/1.1004) * sd);
         
-        // Hitung rLP
+        // Hitung Log Pearson III (Spesifik)
         const kLP = (2/lCs) * (Math.pow(((kt - lCs/6) * lCs/6 + 1), 3) - 1);
-        const rLP_val = Math.pow(10, lMean + (kLP * lSd)); // Nilai rLP untuk tahun ke-t
+        const rLP_val = Math.pow(10, lMean + (kLP * lSd));
 
-        // Simpan nilai rLP Kala Ulang 10 Tahun untuk dipakai di Hidrolika
-        if(t === 10) {
-            rLP_final = rLP_val; 
-        }
+        // --- KUNCI BARU 2: Simpan semua hasil t ke dalam objek global ---
+        // Ini yang akan dipanggil oleh dropdown di tab Hidrolika
+        dataHujanRencana[t] = rLP_val; 
 
-        document.getElementById('fBody').innerHTML += `<tr><td><b>${t} Th</b></td><td>${rN.toFixed(1)}</td><td>${rLN.toFixed(1)}</td><td>${rG.toFixed(1)}</td><td style="color:var(--blue);font-weight:bold">${rLP_val.toFixed(1)}</td></tr>`;
+        document.getElementById('fBody').innerHTML += `
+            <tr>
+                <td><b>${t} Th</b></td>
+                <td>${rN.toFixed(1)}</td>
+                <td>${rLN.toFixed(1)}</td>
+                <td>${rG.toFixed(1)}</td>
+                <td style="color:var(--blue);font-weight:bold">${rLP_val.toFixed(1)}</td>
+            </tr>`;
     });
 
-    // Masukkan ke variabel global agar bisa dibaca tab sebelah (Hidrolika)
-    hujanRencanaTerpilih = rLP_final; 
-    luasDASTerpilih = totalAreaGlobal; // Pastikan totalAreaGlobal sudah terisi di processHydrology
+    // --- KUNCI BARU 3: Simpan Luas DAS ke variabel global ---
+    luasDASTerpilih = totalAreaGlobal; 
 
     // --- LANJUTAN UJI KESESUAIAN ---
     const skCrit = { "0.05": 0.27, "0.01": 0.32 };
@@ -427,23 +459,28 @@ function runFullAnalysis(data) {
         { id: "Log-Pearson III", d: 0.08, chi: 1.2, okP: true }
     ];
 
+    document.getElementById('testBody').innerHTML = ""; // Bersihkan tabel uji
     let winners = [];
     testData.forEach(m => {
         const skS = m.d < skCrit["0.05"] ? "5%" : (m.d < skCrit["0.01"] ? "1%" : "FAIL");
         const chiS = m.chi < chiCrit["0.05"] ? "5%" : (m.chi < chiCrit["0.01"] ? "1%" : "FAIL");
         const pass = m.okP && skS !== "FAIL" && chiS !== "FAIL";
         if(pass) winners.push(m);
-        document.getElementById('testBody').innerHTML += `<tr><td style="text-align:left"><b>${m.id}</b></td><td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td><td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td><td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td><td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td></tr>`;
+        document.getElementById('testBody').innerHTML += `
+            <tr>
+                <td style="text-align:left"><b>${m.id}</b></td>
+                <td style="color:${m.okP?'green':'red'}">${m.okP?'OK':'NO'}</td>
+                <td style="color:${skS==='FAIL'?'red':'green'}">${m.d.toFixed(3)} (${skS})</td>
+                <td style="color:${chiS==='FAIL'?'red':'green'}">${m.chi.toFixed(1)} (${chiS})</td>
+                <td><b style="color:${pass?'green':'red'}">${pass?'DITERIMA':'DITOLAK'}</b></td>
+            </tr>`;
     });
 
     const best = winners.sort((a,b) => a.d - b.d)[0] || testData[3];
     document.getElementById('bestMethod').innerHTML = `<div class="best-badge">METODE TERPILIH: ${best.id.toUpperCase()}</div>`;
     
-    hujanRencanaTerpilih = rLP; 
-    luasDASTerpilih = totalArea; 
-    console.log("Data Tersinkron: R24 =", hujanRencanaTerpilih, "A =", luasDASTerpilih);
-
-    }
+    console.log("Analisis Selesai. Data tersimpan di dataHujanRencana:", dataHujanRencana);
+}
 
     // --- UI HELPER: CHART ---
     function updateChart(labels, data) {
@@ -509,31 +546,24 @@ function toggleDimensi() {
 }
 
 function analyzeHydraulics() {
-    // 1. Ambil Parameter Input Manual
-    const tipe = document.getElementById('h-tipe').value;
-    const S = parseFloat(document.getElementById('h-S').value);
-    const L_m = parseFloat(document.getElementById('h-L').value); // Panjang saluran (m)
-    const n_manning = 0.013;
+    // 1. Ambil Parameter dari Dropdown Baru
+    const tPilihan = document.getElementById('h-kala-ulang').value;
+    const cPilihan = parseFloat(document.getElementById('h-c-value').value);
     
-    const B = parseFloat(document.getElementById('v-B').value) || 0;
-    const H = parseFloat(document.getElementById('v-H').value) || 0;
-    const D = parseFloat(document.getElementById('v-D').value) || 0;
-    const z = parseFloat(document.getElementById('v-Z').value) || 0;
+    // Ambil R24 berdasarkan kala ulang yang dipilih user
+    const R24 = dataHujanRencana[tPilihan] || 150; 
+    const C = cPilihan;
+    
+    const S = parseFloat(document.getElementById('h-S').value);
+    const L_m = parseFloat(document.getElementById('h-L').value);
+    const tipe = document.getElementById('h-tipe').value;
+    const n_manning = 0.013;
 
-    // 2. HITUNG Tc (KIRPICH)
-    // Rumus: Tc = 0.0195 * L^0.77 * S^-0.385 (L dalam meter, S dalam m/m)
+    // ... (Sisa kode perhitungan Tc, I, dan Q_target tetap sama) ...
     const Tc_min = 0.0195 * Math.pow(L_m, 0.77) * Math.pow(S, -0.385);
     const Tc_jam = Tc_min / 60;
-
-    // 3. HITUNG INTENSITAS (MONONOBE)
-    // Menggunakan R24 dari hasil analisis hidrologi sebelumnya
-    const R24 = hujanRencanaTerpilih || 150; // Default 150 jika belum upload DAS
     const I = (R24 / 24) * Math.pow(24 / Tc_jam, 2/3);
-
-    // 4. HITUNG DEBIT (METODE RASIONAL)
-    // Q = 1/3.6 * C * I * A  --> (A dalam km2, I dalam mm/jam)
-    const C = 0.70; // Koefisien pengaliran (asumsi urban/beton, bisa dibuat input)
-    const A_km2 = luasDASTerpilih || 0.5; // Default 0.5 jika belum upload DAS
+    const A_km2 = totalAreaGlobal || 0.5; 
     const Q_target = (1 / 3.6) * C * I * A_km2;
 
     // 5. ITERASI MANNING (Mencari Kedalaman Air y)
