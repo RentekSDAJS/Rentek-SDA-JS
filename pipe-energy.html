@@ -35,6 +35,7 @@
         /* SIDEBAR */
         #sidebar { width: 450px; background: var(--white); margin-top: 85px; border-right: 1px solid #cbd5e1; overflow-y: auto; padding: 25px; }
         
+        /* GAYA JUDUL BARU (SESUAI GAMBAR REFERENSI) */
         h3 { 
             font-size: 1.1rem; 
             color: var(--gold-dark); 
@@ -52,16 +53,13 @@
         .badge-l { background: var(--navy); color: var(--gold); padding: 5px 10px; border-radius: 6px; font-weight: 900; font-size: 0.9rem; border: 1px solid var(--gold); }
         .badge-c { background: #e2e8f0; color: var(--navy); padding: 5px 10px; border-radius: 6px; font-weight: 900; font-size: 0.8rem; border: 1px solid var(--navy); }
 
-        .btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
-        .btn-delete:hover { background: #b91c1c; }
-
         label { display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; margin-bottom: 10px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; margin-bottom: 10px; }
 
         .fitting-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
         .fitting-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--gold); background: #f8fafc; color: var(--navy); }
         .fitting-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
-        .fitting-table input { width: 45px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; margin-bottom: 0; }
+        .fitting-table input { width: 45px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; }
 
         #main { flex-grow: 1; margin-top: 85px; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         #canvas-wrapper { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position: relative;}
@@ -82,7 +80,7 @@
         <div class="main-title">Pipe Energy Calculator</div>
         <div class="sub-title">Seksi Perencanaan Sudin Sumber Daya Air Kota Jakarta Selatan</div>
     </div>
-    <div class="credit-tag">Rentek_SDA_JS</div>
+    <div class="credit-tag">AsproXSudinJS</div>
 </div>
 
 <div id="sidebar">
@@ -94,14 +92,14 @@
 
     <div class="card">
         <div style="display:flex; gap:10px">
-            <div style="flex:1"><label>El. Dasar Res (m)</label><input type="number" id="el_dasar" value="28.088" onchange="runSimulation()"></div>
-            <div style="flex:1"><label>El. As Pompa (m)</label><input type="number" id="el_pmp" value="29.300" onchange="runSimulation()"></div>
+            <div style="flex:1"><label>El. Dasar Res (m)</label><input type="number" id="el_dasar" value="28.088"></div>
+            <div style="flex:1"><label>El. As Pompa (m)</label><input type="number" id="el_pmp" value="29.300"></div>
         </div>
         <div style="display:flex; gap:10px">
-            <div style="flex:1"><label>Tinggi Air (m)</label><input type="number" id="t_air" value="1.442" onchange="runSimulation()"></div>
-            <div style="flex:1"><label>Debit Aliran (m³/s)</label><input type="number" id="debit" value="0.25" step="0.01" onchange="runSimulation()"></div>
+            <div style="flex:1"><label>Tinggi Air (m)</label><input type="number" id="t_air" value="1.442"></div>
+            <div style="flex:1"><label>Debit Aliran (m³/s)</label><input type="number" id="debit" value="0.25" step="0.01"></div>
         </div>
-        <label>Head Pompa (m)</label><input type="number" id="head_pmp" value="20" onchange="runSimulation()">
+        <label>Head Pompa (m)</label><input type="number" id="head_pmp" value="20">
     </div>
 
     <h3>Konfigurasi Jaringan Pipa</h3>
@@ -195,10 +193,7 @@
             return `<div class="card">
                 <div class="seg-header">
                     <span class="badge-l">Panjang: ${L} m</span>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge-c">${coefVal}</span>
-                        <button class="btn-delete" onclick="removeSegment(${i})">HAPUS</button>
-                    </div>
+                    <span class="badge-c">${coefVal}</span>
                 </div>
                 <div style="display:flex; gap:10px">
                     <div style="flex:1"><label>Posisi X (m)</label><input type="number" value="${s.x}" onchange="segments[${i}].x=parseFloat(this.value); renderSegmentsUI(); runSimulation();"></div>
@@ -212,22 +207,7 @@
         }).join('');
     }
 
-    function addSegment() { 
-        const lastSeg = segments[segments.length-1];
-        segments.push({...lastSeg, x: lastSeg.x + 50}); 
-        renderSegmentsUI(); 
-        runSimulation();
-    }
-
-    function removeSegment(index) {
-        if (segments.length > 1) {
-            segments.splice(index, 1);
-            renderSegmentsUI();
-            runSimulation();
-        } else {
-            alert("Minimal harus ada 1 segmen pipa!");
-        }
-    }
+    function addSegment() { segments.push({...segments[segments.length-1], x: segments[segments.length-1].x + 50}); renderSegmentsUI(); }
 
     function runSimulation() {
         const method = document.getElementById('calc_method').value;
@@ -237,7 +217,7 @@
         const elD = parseFloat(document.getElementById('el_dasar').value);
         const tA = parseFloat(document.getElementById('t_air').value);
         const elPmp = parseFloat(document.getElementById('el_pmp').value);
-        const g = 9.81; const nu = 1.004e-6;
+        const g = 9.81; const nu = 1.004e-6; // viskositas air
 
         let waterSurface = elD + tA;
         let results = [];
@@ -306,30 +286,17 @@
         const gX = v => margin + (v - minX) * scaleX;
         const gY = v => c.height - margin - (v - minY) * scaleY;
 
-        ctx.clearRect(0,0,c.width,c.height);
-
         // LEGENDA
         ctx.font = "11px Arial"; ctx.textAlign = "left";
         ctx.fillStyle = "red"; ctx.fillRect(c.width-150, 20, 15, 2); ctx.fillStyle = "black"; ctx.fillText("HGL (Tekanan)", c.width-130, 25);
         ctx.fillStyle = "blue"; ctx.fillRect(c.width-150, 40, 15, 2); ctx.fillStyle = "black"; ctx.fillText("EGL (Total Energy)", c.width-130, 45);
         ctx.fillStyle = "#334155"; ctx.fillRect(c.width-150, 60, 15, 6); ctx.fillStyle = "black"; ctx.fillText("Pipa Jalur", c.width-130, 66);
 
-        // RESERVOIR (Ukuran Fix)
-const resWidth = 60; // Lebar tetap dalam pixel
-const resHeight = tA * scaleY; // Tinggi mengikuti data input
-const resX = margin; // Posisi X tetap di margin kiri
-const resY = c.height - margin - resHeight; // Posisi Y tetap di bawah
-
-ctx.fillStyle = "rgba(14, 165, 233, 0.2)";
-ctx.fillRect(resX, resY, resWidth, resHeight);
-ctx.strokeStyle = "#0f172a";
-ctx.lineWidth = 2;
-ctx.strokeRect(resX, resY, resWidth, resHeight);
-
-ctx.fillStyle = "#0f172a";
-ctx.font = "bold 13px Segoe UI";
-ctx.textAlign = "center";
-ctx.fillText("RESERVOIR", resX + (resWidth/2), resY - 10);
+        // RESERVOIR
+        ctx.fillStyle = "rgba(14, 165, 233, 0.2)"; ctx.fillRect(gX(-40), gY(elD+tA), 40*scaleX, tA*scaleY);
+        ctx.strokeStyle = "#0f172a"; ctx.lineWidth = 2; ctx.strokeRect(gX(-40), gY(elD+tA), 40*scaleX, tA*scaleY);
+        ctx.fillStyle = "#0f172a"; ctx.font = "bold 13px Segoe UI"; ctx.textAlign = "center";
+        ctx.fillText("RESERVOIR", gX(-20), gY(elD+tA) - 15);
         
         // HGL STARTING
         ctx.setLineDash([6,4]); ctx.strokeStyle="red"; ctx.beginPath();
@@ -345,16 +312,16 @@ ctx.fillText("RESERVOIR", resX + (resWidth/2), resY - 10);
                 ctx.fillText(`SEGMEN ${idx-1}`, (gX(r.x1)+gX(r.x2))/2, (gY(r.y1)+gY(r.y2))/2 - 20);
                 
                 ctx.lineWidth=2; ctx.setLineDash([6,4]); ctx.strokeStyle="red"; 
-                ctx.beginPath(); ctx.moveTo(gX(r.x1), gY(res[idx-1].hgl)); ctx.lineTo(gX(r.x2), gY(r.hgl)); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(gX(r.x1), gY(res[idx-1].hgl)); ctx.lineTo(gX(r.x2), gY(r.hgl).toFixed(2)); ctx.stroke();
                 ctx.setLineDash([]); ctx.strokeStyle="blue"; 
                 ctx.beginPath(); ctx.moveTo(gX(r.x1), gY(res[idx-1].hgl+r.vH)); ctx.lineTo(gX(r.x2), gY(r.hgl+r.vH)); ctx.stroke();
             }
         });
 
-        // POMPA ICON
+        // POMPA ICON & NOTATION
         ctx.beginPath(); ctx.fillStyle = "#0f172a"; ctx.arc(gX(0), gY(res[1].y1), 16, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center";
-        ctx.fillText("P", gX(0), gY(res[1].y1)+5);
+        ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.fillText("P", gX(0), gY(res[1].y1)+5);
+        ctx.fillStyle = "#0f172a"; ctx.font = "bold 13px Segoe UI"; ctx.fillText("POMPA", gX(0), gY(res[1].y1) + 38);
     }
 
     window.onload = () => { renderFitting(); renderSegmentsUI(); runSimulation(); };
