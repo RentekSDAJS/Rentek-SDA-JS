@@ -209,7 +209,7 @@
         }).join('');
     }
 
-    f function addSegment() { 
+    function addSegment() { 
         const lastSeg = segments[segments.length-1];
         segments.push({...lastSeg, x: lastSeg.x + 50}); 
         renderSegmentsUI(); 
