@@ -209,7 +209,13 @@
         }).join('');
     }
 
-    function addSegment() { segments.push({...segments[segments.length-1], x: segments[segments.length-1].x + 50}); renderSegmentsUI(); }
+    f function addSegment() { 
+        const lastSeg = segments[segments.length-1];
+        segments.push({...lastSeg, x: lastSeg.x + 50}); 
+        renderSegmentsUI(); 
+        runSimulation();
+ }
+
 
     function removeSegment(index) {
         if (segments.length > 1) {
