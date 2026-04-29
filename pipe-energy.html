@@ -56,9 +56,6 @@
         label { display: block; font-size: 0.7rem; font-weight: 800; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
         input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; margin-bottom: 10px; }
 
-        btn-delete { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.7rem; }
-        .btn-delete:hover { background: #b91c1c; }
-        
         .fitting-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
         .fitting-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--gold); background: #f8fafc; color: var(--navy); }
         .fitting-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
@@ -193,12 +190,10 @@
             let mat = materialsData[s.matIdx];
             let coefVal = (method === "HW") ? `C=${mat.c}` : `ε=${mat.eps}`;
             
-           return `<div class="card">
+            return `<div class="card">
                 <div class="seg-header">
                     <span class="badge-l">Panjang: ${L} m</span>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span class="badge-c">${coefVal}</span>
-                        <button class="btn-delete" onclick="removeSegment(${i})">HAPUS</button>
+                    <span class="badge-c">${coefVal}</span>
                 </div>
                 <div style="display:flex; gap:10px">
                     <div style="flex:1"><label>Posisi X (m)</label><input type="number" value="${s.x}" onchange="segments[${i}].x=parseFloat(this.value); renderSegmentsUI(); runSimulation();"></div>
@@ -213,18 +208,6 @@
     }
 
     function addSegment() { segments.push({...segments[segments.length-1], x: segments[segments.length-1].x + 50}); renderSegmentsUI(); }
-
-     }
-
-    function removeSegment(index) {
-        if (segments.length > 1) {
-            segments.splice(index, 1);
-            renderSegmentsUI();
-            runSimulation();
-        } else {
-            alert("Minimal harus ada 1 segmen pipa!");
-        }
-    }
 
     function runSimulation() {
         const method = document.getElementById('calc_method').value;
