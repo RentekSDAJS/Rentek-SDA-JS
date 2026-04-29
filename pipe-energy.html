@@ -190,10 +190,12 @@
             let mat = materialsData[s.matIdx];
             let coefVal = (method === "HW") ? `C=${mat.c}` : `ε=${mat.eps}`;
             
-            return `<div class="card">
+             return `<div class="card">
                 <div class="seg-header">
                     <span class="badge-l">Panjang: ${L} m</span>
-                    <span class="badge-c">${coefVal}</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge-c">${coefVal}</span>
+                        <button class="btn-delete" onclick="removeSegment(${i})">HAPUS</button>
                 </div>
                 <div style="display:flex; gap:10px">
                     <div style="flex:1"><label>Posisi X (m)</label><input type="number" value="${s.x}" onchange="segments[${i}].x=parseFloat(this.value); renderSegmentsUI(); runSimulation();"></div>
@@ -209,6 +211,15 @@
 
     function addSegment() { segments.push({...segments[segments.length-1], x: segments[segments.length-1].x + 50}); renderSegmentsUI(); }
 
+    function removeSegment(index) {
+        if (segments.length > 1) {
+            segments.splice(index, 1);
+            renderSegmentsUI();
+            runSimulation();
+        } else {
+            alert("Minimal harus ada 1 segmen pipa!");
+        }
+    }
     function runSimulation() {
         const method = document.getElementById('calc_method').value;
         const totalK = renderFitting();
