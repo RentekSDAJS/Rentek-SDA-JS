@@ -115,6 +115,15 @@
 
 <div id="hidrologi" class="tab-content active">
              <div class="card">
+             <h3>0. Input Peta Isohyet (Gambar)</h3>
+            <button class="upload-btn" style="background: var(--blue);" onclick="document.getElementById('fIsohyet').click()">
+        🖼️ UPLOAD PETA HUJAN ISOHYET BMKG
+            </button>
+            <input type="file" id="fIsohyet" style="display:none" accept="image/*">
+            <p style="font-size: 9px; color: gray; margin: 5px 0;">*Gunakan file .jpg atau .png hasil download BMKG</p>
+            </div>
+
+                 
             <h3>1. Input Area DAS (GeoJSON/UTM)</h3>
             <button class="upload-btn" onclick="document.getElementById('fDAS').click()">📁 PILIH FILE DAS UNTUK ANALISIS</button>
             <input type="file" id="fDAS" style="display:none" accept=".json,.geojson">
@@ -269,7 +278,7 @@
     [-6.941948, 106.284998], // South, West
     [-5.463524, 107.656099]  // North, East
 ];
-    
+
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
     // --- RENDER SALURAN (Mikro & PHB) ---
@@ -696,22 +705,29 @@ function updateHydraulicTable(Q_target, y, limit, Tc, I, R24) {
     `;
 }
 
-// --- FUNGSI UNTUK MENAMPILKAN GAMBAR (Tambahkan di bagian bawah) ---
-function updateIsohyetMap(imageUrl) {
-    // Hapus overlay lama jika ada
-    if (isohyetOverlay) {
-        layerHujanIsohyet.removeLayer(isohyetOverlay);
-    }
+document.getElementById('fIsohyet').onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    // Tambahkan overlay baru berdasarkan koordinat Google Earth
-    isohyetOverlay = L.imageOverlay(imageUrl, ISOHYET_BOUNDS, {
-        opacity: 0.6, // Transparansi agar peta dasar terlihat
-        interactive: false
-    });
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const imageUrl = event.target.result;
 
-    isohyetOverlay.addTo(layerHujanIsohyet);
-}
-    
+        if (isohyetOverlay) {
+            layerHujanIsohyet.removeLayer(isohyetOverlay);
+        }
+
+        isohyetOverlay = L.imageOverlay(imageUrl, ISOHYET_BOUNDS, {
+            opacity: 0.6,
+            interactive: false
+        });
+
+        isohyetOverlay.addTo(layerHujanIsohyet);
+        map.fitBounds(ISOHYET_BOUNDS);
+        alert("Peta Isohyet Berhasil Dipasang!");
+    };
+    reader.readAsDataURL(file);
+};
 // Tambahkan penutup script jika belum ada
 </script>
 </body>
