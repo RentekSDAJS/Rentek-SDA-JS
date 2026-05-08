@@ -262,7 +262,14 @@
     let stMarkers = L.layerGroup().addTo(map);
     let layerMikro = L.layerGroup().addTo(map);
     let layerPHB = L.layerGroup().addTo(map);
-
+    let layerHujanIsohyet = L.layerGroup().addTo(map); 
+    let isohyetOverlay = null; 
+    
+    const ISOHYET_BOUNDS = [
+    [-6.941948, 106.284998], // South, West
+    [-5.463524, 107.656099]  // North, East
+];
+    
     L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
 
     // --- RENDER SALURAN (Mikro & PHB) ---
@@ -284,12 +291,13 @@
     renderChannels();
 
     const baseMaps = { "Peta Jalan": osm, "Satelit": satelit };
-    const overlayMaps = { 
-        "Saluran Mikro": layerMikro, 
-        "Saluran PHB": layerPHB, 
-        "Analisis Hidrologi": analysisLayer, 
-        "Stasiun Hujan": stMarkers 
-    };
+const overlayMaps = { 
+    "Peta Hujan (BMKG)": layerHujanIsohyet, // <-- Tambahkan baris ini
+    "Saluran Mikro": layerMikro, 
+    "Saluran PHB": layerPHB, 
+    "Analisis Hidrologi": analysisLayer, 
+    "Stasiun Hujan": stMarkers 
+};
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
     // --- DATABASE HANDLER ---
@@ -688,6 +696,22 @@ function updateHydraulicTable(Q_target, y, limit, Tc, I, R24) {
     `;
 }
 
+// --- FUNGSI UNTUK MENAMPILKAN GAMBAR (Tambahkan di bagian bawah) ---
+function updateIsohyetMap(imageUrl) {
+    // Hapus overlay lama jika ada
+    if (isohyetOverlay) {
+        layerHujanIsohyet.removeLayer(isohyetOverlay);
+    }
+
+    // Tambahkan overlay baru berdasarkan koordinat Google Earth
+    isohyetOverlay = L.imageOverlay(imageUrl, ISOHYET_BOUNDS, {
+        opacity: 0.6, // Transparansi agar peta dasar terlihat
+        interactive: false
+    });
+
+    isohyetOverlay.addTo(layerHujanIsohyet);
+}
+    
 // Tambahkan penutup script jika belum ada
 </script>
 </body>
